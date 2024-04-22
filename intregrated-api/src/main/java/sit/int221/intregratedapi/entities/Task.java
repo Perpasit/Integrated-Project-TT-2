@@ -17,14 +17,14 @@ import java.time.LocalDateTime;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long taskID;
+    private int taskID;
     private String taskTitle;
     private String taskDescription;
+    private String taskAssignees;
     private String taskStatus;
     private LocalDateTime createdOn;
     private LocalDateTime updatedOn;
 
-    @OneToMany(mappedBy = "task")
-    private List<Assignee> assignees;
+
 }
 

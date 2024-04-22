@@ -2,7 +2,6 @@ package sit.int221.intregratedapi.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import sit.int221.intregratedapi.dtos.TaskDTO;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 
@@ -18,6 +17,8 @@ public class TaskController {
     public List<Task> getAllTasks() {
         return taskService.getAllTasks();
     }
+
+
 
     @PostMapping
     public Task createTask(@RequestBody Task task) {
