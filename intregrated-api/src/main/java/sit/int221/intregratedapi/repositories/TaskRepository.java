@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import sit.int221.intregratedapi.entities.Task;
 
 @Repository
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Integer> {
 }
+
