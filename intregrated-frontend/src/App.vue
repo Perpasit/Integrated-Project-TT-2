@@ -1,30 +1,39 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import HelloWorld from "./components/HelloWorld.vue"
+import TaskManager from "./components/TaskManager.vue"
+
+const tasksData = [
+  {
+    id: 1,
+    title: "Task 1",
+    description: "Description for Task 1",
+    assignees: [
+      { id: 1, name: "John Doe" },
+      { id: 2, name: "Jane Smith" }
+    ],
+    status: "In Progress",
+    createdAt: "2024-04-22 10:00:00",
+    updatedAt: "2024-04-22 12:30:00",
+    completed: false
+  },
+  {
+    id: 2,
+    title: "Task 2",
+    description: "Description for Task 2",
+    assignees: [{ id: 3, name: "Alice Johnson" }],
+    status: "Not Started",
+    createdAt: "2024-04-21 09:00:00",
+    updatedAt: "2024-04-21 09:30:00",
+    completed: true
+  }
+]
 </script>
 
 <template>
   <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+    <!-- <HelloWorld msg="Vite + Vue" /> -->
+    <TaskManager :tasks="tasksData" />
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<style scoped></style>
