@@ -10,7 +10,11 @@ import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -36,9 +40,21 @@ public class TaskController {
 
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Integer taskId) {
+    public ResponseEntity<?> getTaskById(@PathVariable Integer taskId) {
         Task task = taskService.getTaskById(taskId);
-        return new ResponseEntity<>(task, task == null ? HttpStatus.NOT_FOUND : HttpStatus.OK);
+        if (task == null) {
+            Map<String, Object> body = new LinkedHashMap<>();
+
+            String formattedTimestamp = OffsetDateTime.now(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")).replace("Z","+00:00");
+            body.put("timestamp", formattedTimestamp);
+            body.put("status", 404);
+            body.put("error", "Not Found");
+            body.put("message", "Task " + taskId + " does not exist !!!");
+            body.put("path", "/itb-kk/v1/tasks/"+taskId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        }
+        return ResponseEntity.ok(task);
     }
 
 }

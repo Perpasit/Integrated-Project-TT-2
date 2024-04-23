@@ -6,4 +6,5 @@ import sit.int221.intregratedapi.entities.Task;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Integer> {
+
 }

@@ -1,5 +1,6 @@
 package sit.int221.intregratedapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,7 @@ import java.util.Date;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private Integer taskId;
     @Column(name = "taskTitle", length = 100, nullable = false)
     private String title;
@@ -31,3 +33,4 @@ public class Task {
     @Column(name = "updatedOn")
     private Date updatedOn = new Date();
 }
+
