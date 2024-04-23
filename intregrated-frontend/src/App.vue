@@ -1,39 +1,32 @@
 <script setup>
-import HelloWorld from "./components/HelloWorld.vue"
-import TaskManager from "./components/TaskManager.vue"
+// import HelloWorld from './components/HelloWorld.vue'
+import DemoGrid from './components/Grid.vue'
+import { ref } from 'vue'
 
-const tasksData = [
-  {
-    id: 1,
-    title: "Task 1",
-    description: "Description for Task 1",
-    assignees: [
-      { id: 1, name: "John Doe" },
-      { id: 2, name: "Jane Smith" }
-    ],
-    status: "In Progress",
-    createdAt: "2024-04-22 10:00:00",
-    updatedAt: "2024-04-22 12:30:00",
-    completed: false
-  },
-  {
-    id: 2,
-    title: "Task 2",
-    description: "Description for Task 2",
-    assignees: [{ id: 3, name: "Alice Johnson" }],
-    status: "Not Started",
-    createdAt: "2024-04-21 09:00:00",
-    updatedAt: "2024-04-21 09:30:00",
-    completed: true
-  }
+const searchQuery = ref('')
+const gridColumns = ['id','Title', 'Assignees','Status']
+const gridData = [
+  {'id':'1',Title: 'Chuck Norris', Assignees: Infinity ,Status:'to do'},
+  { 'id':'2',Title: 'Bruce Lee', Assignees: 9000,Status:'doing' },
+  { 'id':'3',Title: 'Jackie Chan', Assignees: 7000 ,Status:'done'},
+  { 'id':'4',Title: 'Jet Li', Assignees: 8000 ,Status:'No status'}
 ]
 </script>
 
 <template>
-  <div>
-    <!-- <HelloWorld msg="Vite + Vue" /> -->
-    <TaskManager :tasks="tasksData" />
-  </div>
+  <h1>IT-Bangmod Kradan Kandan</h1>
+  <div class=" flex  justify-center ">
+  <div><form id="search" class=" justify">
+    Search <input name="query" v-model="searchQuery">
+  </form>
+  <DemoGrid
+    :data="gridData"
+    :columns="gridColumns"
+    :filter-key="searchQuery">
+  </DemoGrid></div>
+</div>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+</style>
