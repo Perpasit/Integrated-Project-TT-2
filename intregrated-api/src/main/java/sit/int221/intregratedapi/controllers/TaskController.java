@@ -28,10 +28,10 @@ public class TaskController {
         this.listMapper = listMapper;
     }
 
-    @GetMapping
+    @GetMapping("")
     public ResponseEntity<List<TaskDTO>> getTasks() {
-        return ResponseEntity.ok(listMapper.mapList(taskService.getAllTasks(),
-                TaskDTO.class));
+        List<TaskDTO> taskDTOs = listMapper.mapList(taskService.getAllTasks(), TaskDTO.class);
+        return ResponseEntity.ok(taskDTOs);
     }
 
 
