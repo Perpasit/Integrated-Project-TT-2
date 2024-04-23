@@ -1,76 +1,65 @@
-async function getItems(url) {
-    try {
-      const data = await fetch(url)
-      const items = await data.json().then((response) => {
-        return response
-      })
-      return items
-    } catch (error) {
+async function getAllTasks() {
+  try {
+      const data = await fetch(`${url}`)
+      const tasks = await data.json()
+      return tasks
+  } catch (error) {
       console.log(`error: ${error}`)
-    }
   }
-  async function getItemById(url, id) {
-    try {
+}
+
+async function getTaskById(id) {
+  try {
       const data = await fetch(`${url}/${id}`)
-      const item = await data.json()
-      return item
-    } catch (error) {
+      const task = await data.json()
+      return task
+  } catch (error) {
       console.log(`error: ${error}`)
-    }
   }
-  
-  async function deleteTaskById(url, id) {
-    try {
-      const res = await fetch(`${url}/${id}`, {
-        method: 'DELETE',
+}
+
+async function addTask(task) {
+  try {
+      const response = await fetch(`${url}`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...task })
       })
-  
-      return res.status
-    } catch (error) {
-      console.log(`Error: ${error}`)
-    }
+      const newTask = await response.json()
+      return newUser
+  } catch (error) {
+      console.error(`Error adding user: ${error}`)
   }
-  
-  async function addItem(url, newItem) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST', // add
-        headers: {
-          'content-type': 'application/json', // add contents
-        },
-        body: JSON.stringify({
-          ...newItem, // sent add data . destructuring object
-        }), // js to  json
+}
+
+async function updateTask(task) {
+  try {
+      const response = await fetch(`${url}/${user.id}`, {
+          method: 'PATCH',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ...task })
       })
-      const addedItem = await res.json()
-      return addedItem
-    } catch (error) {
-      console.log(`error: ${error}`)
-    }
+      const updatedUser = await response.json()
+      return updatedUser
+  } catch (error) {
+      console.error(`Error updating user: ${error}`)
   }
-  
-  async function editItem(url, id, editItem) {
-    try {
-      const res = await fetch(`${url}/${id}`, {
-        method: 'PUT',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...editItem,
-        }),
+}
+
+async function deleteTask(id) {
+  try {
+      const response = await fetch(`${url}/${id}`, {
+          method: 'DELETE'
       })
-      const editedItem = await res.json()
-      return editedItem
-    } catch (error) {
-      console.log(`error: ${error}`)
-    }
+      const deletedTask = await response.json()
+      return deletedTask
+  } catch (error) {
+      console.error(`Error deleting user: ${error}`)
   }
-  export {
-    getItems,
-    getItemById,
-    deleteTaskById,
-    addItem,
-    editItem,
-  }
-  
+}
+
+export { getAllTasks, getTaskById, addTask, updateTask, deleteTask }
