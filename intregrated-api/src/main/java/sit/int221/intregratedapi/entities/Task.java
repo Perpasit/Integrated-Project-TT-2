@@ -26,8 +26,11 @@ public class Task {
     private String description;
     @Column(name = "taskAssignees", length = 30)
     private String assignees;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "taskStatus")
-    private String status;
+    private TaskStatus status;
+
     @Column(name = "createdOn")
     private Date createdOn = new Date();
     @Column(name = "updatedOn")
