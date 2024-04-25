@@ -58,6 +58,6 @@ onMounted(() => {
         </tr>
       </tbody>
     </table>
-    <modal :task="selectedTask" @close="closeModal" @save="saveTask" />
+    <modal v-if="selectedTask" :task="selectedTask" @close="closeModal" @save="saveTask" />
   </div>
 </template>
