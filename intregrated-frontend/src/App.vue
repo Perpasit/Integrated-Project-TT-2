@@ -1,5 +1,26 @@
+<<<<<<< Updated upstream
+<template>
+  <div id="app" class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">IT-Bangmod Kradan Kanban (ITB-KK)</h1>
+    <task-table />
+  </div>
+</template>
+
+<script>
+import TaskTable from './components/TaskTable.vue'
+
+export default {
+  name: 'App',
+  components: {
+    TaskTable
+  }
+}
+</script>
+=======
 <script setup>
 import DemoGrid from "./components/Grid.vue"
+import test from "./components/test.vue"
+
 import { ref } from "vue"
 
 const searchQuery = ref("")
@@ -14,9 +35,11 @@ const gridData = [
 // getItems(`${import.meta.env.VITE_API_ENDPOINT}tasks`).then((res) => {
 //   tasks.value = res
 // })
+
 </script>
 
 <template>
+  <test> </test>
   <h1 class="flex justify-center font-bold text-6xl">IT-Bangmod Kradan Kandan</h1>
   <div class="flex justify-end">
     <form id="search" class="">
@@ -33,3 +56,4 @@ const gridData = [
 </template>
 
 <style scoped></style>
+>>>>>>> Stashed changes
