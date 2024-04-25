@@ -1,11 +1,16 @@
 <script>
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
+import Modal from './Modal.vue';
 
 export default {
+  components: {
+    Modal
+  },
   data() {
     return {
       tasks: [],
-      url: "../data/data.json"
+      url: "../data/data.json",
+      selectedTask: null
     }
   },
   async created() {
@@ -25,6 +30,22 @@ export default {
         default:
           return "bg-gray-400 text-white"
       }
+    },
+    changeStatus(task) {
+      const statusOptions = ['No status', 'Todo', 'Doing', 'Done'];
+      const currentIndex = statusOptions.indexOf(task.status);
+      const nextIndex = (currentIndex + 1) % statusOptions.length;
+      task.status = statusOptions[nextIndex];
+    },
+    showModal(task) {
+      this.selectedTask = task;
+    },
+    closeModal() {
+      this.selectedTask = null;
+    },
+    saveTask(editedTask) {
+      Object.assign(this.selectedTask, editedTask);
+      this.closeModal();
     },
     async addTask(task) {
       await postItem(this.url, task)
@@ -53,32 +74,24 @@ export default {
           <th class="w-1/6 px-4 py-2 border">Status</th>
         </tr>
       </thead>
+
+
       <tbody>
-        <tr
-          v-for="(task, index) in tasks"
-          :key="index"
-          class="border-b hover:bg-gray-100"
-        >
+        <tr v-for="(task, index) in tasks" :key="index" class="border-b hover:bg-gray-100">
           <td class="px-4 py-2 text-center">{{ index + 1 }}</td>
-          <td
-            class="px-4 py-2 itbkk-title"
-            @click="showModal(task)"
-            style="word-break: break-word; overflow-wrap: break-word"
-          >
+          <td class="px-4 py-2 itbkk-title" @click="showModal(task)"
+            style="word-break: break-word; overflow-wrap: break-word">
             {{ task.title }}
           </td>
           <td class="px-4 py-2 itbkk-assignees text-center">
             <span v-if="task.assignees && task.assignees.trim() !== ''">{{
-              task.assignees
-            }}</span>
+          task.assignees
+        }}</span>
             <span v-else class="italic text-gray-400">Unassigned</span>
           </td>
           <td class="px-4 py-2 itbkk-status text-center">
-            <span
-              class="inline-block px-2 py-1 rounded-full text-center"
-              :class="getStatusClass(task.status)"
-              >{{ task.status }}</span
-            >
+            <span class="inline-block px-2 py-1 rounded-full text-center" :class="getStatusClass(task.status)">{{
+          task.status }}</span>
           </td>
         </tr>
       </tbody>
