@@ -7,6 +7,8 @@ import Modal from './Modal.vue'
 const taskStore = useTaskStore()
 const tasks = ref([])
 const selectedTask = ref(null)
+const sortOrder = ref('asc')
+
 
 const showModal = (task) => {
   selectedTask.value = task
@@ -32,6 +34,20 @@ const formattedStatus = computed(() => {
   }
 })
 
+const sortedTasks = computed(() => {
+  return [...tasks.value].sort((a, b) => {
+    if (sortOrder.value === 'asc') {
+      return new Date(a.createdOn) - new Date(b.createdOn)
+    } else {
+      return new Date(b.createdOn) - new Date(a.createdOn)
+    }
+  })
+})
+
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+}
+
 
 onMounted(async () => {
   await taskStore.fetchAllTasks()
@@ -46,24 +62,30 @@ onMounted(async () => {
       <thead>
         <tr class="bg-gray-200">
           <th class="w-12 px-4 py-2 border">#</th>
-          <th class="w-1/3 px-4 py-2 border">Title</th>
+          <th class="w-1/3 px-4 py-2 border cursor-pointer" @click="toggleSortOrder">Title</th>
           <th class="w-1/3 px-4 py-2 border">Assignees</th>
           <th class="w-1/6 px-4 py-2 border">Status</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(task, index) in tasks" :key="index" class="border-b hover:bg-gray-100">
+        <tr v-for="(task, index) in sortedTasks" :key="index" class="border-b hover:bg-gray-100">
           <td class="px-4 py-2 text-center">{{ index + 1 }}</td>
-          <td class="px-4 py-2 itbkk-title" @click="showModal(task)" style="word-break: break-word; overflow-wrap: break-word">
-            <button>{{ task.title }}</button>
+          <td class="px-4 py-2 itbkk-title" @click="showModal(task)"  >  
+            <button style="word-break: break-word; overflow-wrap: break-word"> 
+              {{ task.title }}</button>
           </td>
           <td class="px-4 py-2 itbkk-assignees text-center">
-            <span v-if="task.assignees && task.assignees.trim() !== ''">{{ task.assignees }}</span>
+            <template v-if="task.assignees">
+              <span v-for="(assignee, index) in task.assignees.split(',')" :key="index">
+                {{ assignee.trim() }}
+              </span>
+            </template>
             <span v-else class="italic text-gray-400">Unassigned</span>
           </td>
           <td class="px-4 py-2 itbkk-status text-center">
-            <span class="inline-block px-2 py-1 rounded-full text-center" :class="taskStore.getStatusClass(formattedStatus(task))">
-              {{ formattedStatus(task) }}
+            <span class="inline-block px-2 py-1 rounded-full text-center"
+              :class="taskStore.getStatusClass(formattedStatus(task))">
+              {{ formattedStatus(task).toUpperCase() }}
             </span>
           </td>
         </tr>
