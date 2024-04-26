@@ -73,8 +73,8 @@ const convertToThaiTime = (utcTime) => {
               <p class="text-sm text-gray-500 mt-2">
                 <strong>Status:</strong>
                 <select v-model="editedTask.status" class="w-full border">
-                  <option value="No Status">No Status</option>
-                  <option value="To Do">To Do</option>
+                  <option value="No_Status">No Status</option>
+                  <option value="To_Do">To Do</option>
                   <option value="Doing">Doing</option>
                   <option value="Done">Done</option>
                 </select>
