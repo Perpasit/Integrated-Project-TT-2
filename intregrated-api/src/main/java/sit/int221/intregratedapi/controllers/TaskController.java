@@ -17,9 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/tasks")
+@CrossOrigin(origins = "http://localhost:4173")
 public class TaskController {
     private final TaskService taskService;
     private final ModelMapper modelMapper;
@@ -31,12 +33,17 @@ public class TaskController {
         this.modelMapper = modelMapper;
         this.listMapper = listMapper;
     }
-
     @GetMapping("")
-    public ResponseEntity<List<TaskDTO>> getTasks() {
-        List<TaskDTO> taskDTOs = listMapper.mapList(taskService.getAllTasks(), TaskDTO.class);
-        return ResponseEntity.ok(taskDTOs);
+    public ResponseEntity<List<Task>> getTasks() {
+        List<Task> tasks = taskService.getAllTasks();
+        return ResponseEntity.ok().body(tasks);
     }
+
+//    @GetMapping("")
+//    public ResponseEntity<List<TaskDTO>> getTasks() {
+//        List<TaskDTO> taskDTOs = listMapper.mapList(taskService.getAllTasks(), TaskDTO.class);
+//        return ResponseEntity.ok(taskDTOs);
+//    }
 
 
     @GetMapping("/{taskId}")
