@@ -10,12 +10,14 @@ export const useTaskStore = defineStore('task', {
   actions: {
     async fetchAllTasks() {
       try {
-        const data = await getItems('/data/data.json') 
-        this.tasks = data.tasks || []
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks`)
+        this.tasks = data || []
       } catch (error) {
         console.error('Error fetching tasks:', error)
       }
     },
+    
+    
 
     async addTask(newTask) {
       try {

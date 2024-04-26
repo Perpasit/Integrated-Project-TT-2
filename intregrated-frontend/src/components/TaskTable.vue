@@ -23,12 +23,11 @@ const saveTask = async (updatedTask) => {
   }
   closeModal()
 }
-
-onMounted(() => {
-  taskStore.fetchAllTasks().then(() => {
-    tasks.value = taskStore.getTasks
-  })
+onMounted(async () => {
+  await taskStore.fetchAllTasks()
+  tasks.value = taskStore.getTasks
 })
+
 </script>
 
 <template>
