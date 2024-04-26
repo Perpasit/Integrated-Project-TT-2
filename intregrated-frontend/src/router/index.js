@@ -1,4 +1,5 @@
 import App from '../App.vue'
+import Modal from '../components/Modal.vue'
 import {createRouter,createWebHistory} from 'vue-router'
 
 
@@ -13,6 +14,12 @@ const router = createRouter({
             path: '/task',
             name: 'home',
             component: App,
+        },
+        {
+            path: '/task/:taskId',
+            name: 'TaskDetailsPage',
+            component: Modal,
+            props: true,
         },
      
     ],

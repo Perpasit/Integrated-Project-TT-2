@@ -5,7 +5,7 @@
             "title": "Design UI Mockups",
             "description": "Create mockups for the new project",
             "assignees": "John Doe",
-            "status": "To Do",
+            "status": "To_Do",
             "createdOn": "2024-04-24T17:23:18.000+00:00",
             "updatedOn": "2024-04-24T17:23:18.000+00:00"
         },
@@ -23,7 +23,7 @@
             "title": "Write Documentation",
             "description": "Document the project requirements and architecture",
             "assignees": "John Doe, Jane Smith",
-            "status": "To Do",
+            "status": "To_Do",
             "createdOn": "2024-04-24T17:23:18.000+00:00",
             "updatedOn": "2024-04-24T17:23:18.000+00:00"
         },
@@ -50,7 +50,7 @@
             "title": "TaskTitle1TaskTitle2TaskTitle3TaskTitle4TaskTitle5TaskTitle6TaskTitle7TaskTitle8TaskTitle9TaskTitle0",
             "description": "Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti4Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti5",
             "assignees": "Assignees1Assignees2Assignees3",
-            "status": "No Status",
+            "status": "No_Status",
             "createdOn": "2024-04-22T02:00:00.000+00:00",
             "updatedOn": "2024-04-22T02:00:00.000+00:00"
         },
@@ -59,7 +59,7 @@
             "title": "Repository",
             "description": null,
             "assignees": null,
-            "status": "To Do",
+            "status": "To_Do",
             "createdOn": "2024-04-22T02:05:00.000+00:00",
             "updatedOn": "2024-04-22T07:00:00.000+00:00"
         },
@@ -86,7 +86,7 @@
             "title": "Task 1",
             "description": "Description for Task 1",
             "assignees": "Assignee Name",
-            "status": "To Do",
+            "status": "To_Do",
             "createdOn": "2024-04-24T17:23:18.000+00:00",
             "updatedOn": "2024-04-24T17:23:18.000+00:00"
         },
@@ -104,7 +104,7 @@
             "title": "Task 3",
             "description": "Description for Task 3",
             "assignees": "",
-            "status": "No Status",
+            "status": "No_Status",
             "createdOn": "2024-04-24T17:23:18.000+00:00",
             "updatedOn": "2024-04-24T17:23:18.000+00:00"
         }
