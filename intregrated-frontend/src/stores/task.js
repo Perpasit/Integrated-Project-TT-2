@@ -8,6 +8,17 @@ export const useTaskStore = defineStore('task', {
   }),
 
   actions: {
+//////////////////
+    async getTask(id) {
+      const response = await fetch(`/api/tasks/${id}`)
+      if (response.status === 404) {
+        throw new Error("The requested task does not exist")
+      }
+      const data = await response.json()
+      return data
+    },
+
+
     async fetchAllTasks() {
       try {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks`)
@@ -28,13 +39,19 @@ export const useTaskStore = defineStore('task', {
       }
     },
 
-    async updateTask(taskId, updatedTask) {
-      try {
-        await putItem('/data/data.json', taskId, updatedTask) 
-        await this.fetchAllTasks() 
-      } catch (error) {
-        console.error('Error updating task:', error)
+    async updateTask(id, updatedTask) {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedTask)
+      })
+      if (response.status === 404) {
+        throw new Error("The requested task does not exist")
       }
+      const data = await response.json()
+      return data
     },
 
     async deleteTask(taskId) {
@@ -49,15 +66,15 @@ export const useTaskStore = defineStore('task', {
     getStatusClass(status) {
       switch (status) {
         case "No Status":
-          return "bg-gray-400 text-white"
+          return "bg-gray-300 text-white rounded-md px-3 py-1";
         case "To Do":
-          return "bg-yellow-400 text-black"
+          return "bg-indigo-500	 text-white rounded-md px-3 py-1";
         case "Doing":
-          return "bg-blue-400 text-white"
+          return " bg-amber-400	 text-white rounded-md px-3 py-1";
         case "Done":
-          return "bg-green-400 text-white"
+          return "bg-green-400 text-white rounded-md px-3 py-1";
         default:
-          return "bg-gray-400 text-white"
+          return "bg-violet-400	 text-white rounded-md px-3 py-1";
       }
     },
   },
