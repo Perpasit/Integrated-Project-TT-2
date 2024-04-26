@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useTaskStore } from '../stores/task'
 import Modal from './Modal.vue'
+
 
 const taskStore = useTaskStore()
 const tasks = ref([])
@@ -23,6 +24,15 @@ const saveTask = async (updatedTask) => {
   }
   closeModal()
 }
+
+const formattedStatus = computed(() => {
+  return (task) => {
+    const status = task.status
+    return status.replace(/_/g, ' ')
+  }
+})
+
+
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   tasks.value = taskStore.getTasks
@@ -52,7 +62,9 @@ onMounted(async () => {
             <span v-else class="italic text-gray-400">Unassigned</span>
           </td>
           <td class="px-4 py-2 itbkk-status text-center">
-            <span class="inline-block px-2 py-1 rounded-full text-center" :class="taskStore.getStatusClass(task.status)">{{ task.status }}</span>
+            <span class="inline-block px-2 py-1 rounded-full text-center" :class="taskStore.getStatusClass(formattedStatus(task))">
+              {{ formattedStatus(task) }}
+            </span>
           </td>
         </tr>
       </tbody>

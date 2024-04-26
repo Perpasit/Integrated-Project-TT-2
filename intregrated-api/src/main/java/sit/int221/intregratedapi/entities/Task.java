@@ -18,7 +18,7 @@ import java.util.Date;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
+//    @JsonIgnore
     private Integer taskId;
     @Column(name = "taskTitle", length = 100, nullable = false)
     private String title;
