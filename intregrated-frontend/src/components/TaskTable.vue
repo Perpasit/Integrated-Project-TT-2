@@ -68,11 +68,11 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(task, index) in sortedTasks" :key="index" class="border-b hover:bg-gray-100">
+        <tr v-for="(task, index) in sortedTasks" :key="index" class="border-b hover:bg-gray-100 itbkk-item">
           <td class="px-4 py-2 text-center">{{ index + 1 }}</td>
-          <td class="px-4 py-2 itbkk-title" @click="showModal(task)"  >  
-            <button style="word-break: break-word; overflow-wrap: break-word"> 
-              {{ task.title }}</button>
+          <td class="px-4 py-2 itbkk-title"  >  
+            <p style="word-break: break-word; overflow-wrap: break-word" @click="showModal(task)" class="cursor-pointer" > 
+              {{ task.title }}</p>
           </td>
           <td class="px-4 py-2 itbkk-assignees text-center">
             <template v-if="task.assignees">
@@ -80,14 +80,21 @@ onMounted(async () => {
                 {{ assignee.trim() }}
               </span>
             </template>
-            <span v-else class="italic text-gray-400">Unassigned</span>
+            <span v-else class="text-gray-400 italic itbkk-assignees">Unassigned</span>
           </td>
           <td class="px-4 py-2 itbkk-status text-center">
             <span class="inline-block px-2 py-1 rounded-full text-center"
               :class="taskStore.getStatusClass(formattedStatus(task))">
-              {{ formattedStatus(task).toUpperCase() }}
+              {{ formattedStatus(task) }}
             </span>
           </td>
+          <!-- <td class="px-4 py-2 itbkk-status text-center"> -->
+            <!-- <span class="inline-block px-2 py-1 rounded-full text-center"
+              :class="taskStore.getStatusClass(formattedStatus(task))">
+              {{ formattedStatus(task).toUpperCase() }}
+            </span> -->
+            <!-- {{ formattedStatus(task.status) }}
+          </td> -->
         </tr>
       </tbody>
     </table>
