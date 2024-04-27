@@ -29,10 +29,26 @@ const saveTask = async (updatedTask) => {
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = task.status
-    return status.replace(/_/g, ' ')
+    const status = task.status.toLowerCase();
+    let formatted = '';
+    let capitalizeNext = true;
+
+    for (let i = 0; i < status.length; i++) {
+      const char = status[i];
+      if (char === '_') {
+        formatted += ' ';
+        capitalizeNext = true;
+      } else {
+        formatted += capitalizeNext ? char.toUpperCase() : char;
+        capitalizeNext = false;
+      }
+    }
+
+    return formatted;
   }
 })
+
+
 
 const sortedTasks = computed(() => {
   return [...tasks.value].sort((a, b) => {
@@ -59,8 +75,11 @@ onMounted(async () => {
 </script>
 
 <template>
+  
   <div class="container mx-auto p-4">
+    
     <table class="table-fixed w-full max-w-4xl mx-auto border-collapse">
+      
       <thead>
         <tr class="bg-gray-200">
           <th class="w-12 px-4 py-2 border">#</th>
@@ -100,6 +119,7 @@ onMounted(async () => {
         </tr>
       </tbody>
     </table>
+    <span v-if="tasks.length<=0" class="flex justify-center">No task</span>
     <modal v-if="selectedTask" :task="selectedTask" @close="closeModal" @save="saveTask" />
   </div>
 </template>
