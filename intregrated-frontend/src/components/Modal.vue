@@ -1,12 +1,13 @@
 <script setup>
-import { reactive, ref } from "vue"
+import { reactive,onMounted,ref } from "vue"
+import { getItems, postItem, putItem, deleteItem } from '../utils/fetch'
 
 const props = defineProps({
   task: { type: Object, required: true }
 })
 
-const editedTask = reactive({
-  ...props.task
+const editedTask = ref({
+
 })
 
 const saveTask = async (updatedTask) => {
@@ -56,9 +57,19 @@ const parseAndFormatDate = (dateString) => {
 };
 
 // Example usage:
-console.log(parseAndFormatDate("1481-05-01T09:05:00Z")); // Outputs the parsed date or 'Invalid Date'
-console.log(props.task.createdOn);
+// console.log(parseAndFormatDate("1481-05-01T09:05:00Z")); // Outputs the parsed date or 'Invalid Date'
+// console.log(props.task);
+// console.log(props.task.createdOn);
 
+onMounted(async () => {
+      try {
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${props.task.id}`)
+        editedTask.value = data 
+        console.log(editedTask.value)
+      } catch (error) {
+        console.error('Error fetching tasks:', error)
+      }
+})
 </script>
 
 <template>
@@ -152,11 +163,11 @@ console.log(props.task.createdOn);
 
             <p class="text-sm text-gray-500 mt-2 itbkk-created-on">
               <strong>Created On:</strong>
-              {{ parseAndFormatDate(task.createdOn) }}
+              {{ parseAndFormatDate(editedTask.createdOn) }}
             </p>
             <p class="text-sm text-gray-500 mt-2 itbkk-updated-on">
               <strong>Updated On:</strong>
-              {{ parseAndFormatDate(task.updatedOn) }}
+              {{ parseAndFormatDate(editedTask.updatedOn) }}
             </p>
           </div>
         </div>

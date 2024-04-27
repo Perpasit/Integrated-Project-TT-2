@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/tasks")
-@CrossOrigin(origins = "http://localhost:4173/")
+@CrossOrigin(origins = {"http://localhost:4173/","http://localhost:5173/"})
 public class TaskController {
     private final TaskService taskService;
     private final ModelMapper modelMapper;

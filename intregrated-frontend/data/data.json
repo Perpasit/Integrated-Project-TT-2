@@ -5,7 +5,7 @@
             "title": "TaskTitle1TaskTitle2TaskTitle3TaskTitle4TaskTitle5TaskTitle6TaskTitle7TaskTitle8TaskTitle9TaskTitle0",
             "description": "Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti1Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti2Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti3Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti4Descripti1Descripti2Descripti3Descripti4Descripti5Descripti6Descripti7Descripti8Descripti9Descripti5",
             "assignees": "Assignees1Assignees2Assignees3",
-            "status": "No Status",
+            "status": "NO_STATUS",
             "createdOn": "1481-05-01T09:05:00Z",
             "updatedOn": "1481-05-01T09:05:00Z"
         },
@@ -14,7 +14,7 @@
             "title": "Repository",
             "description": null,
             "assignees": null,
-            "status": "To Do",
+            "status": "TO_DO",
             "createdOn": "1481-05-01T09:05:00Z",
             "updatedOn": "1481-05-01T09:05:00Z"
         },
@@ -23,18 +23,18 @@
             "title": "ดาต้าเบส",
             "description": "ສ້າງຖານຂໍ້ມູນ",
             "assignees": "あなた、彼、彼女 (私ではありません)",
-            "status": "Doing",
-            "createdOn": "2024-4-22T9:05:00Z",
-            "updatedOn": "2024-4-22T09:05:00Z"
+            "status": "DOING",
+            "createdOn": "2024-04-22T09:05:00Z",
+            "updatedOn": "2024-04-22T09:05:00Z"
         },
         {
             "taskId": 4,
             "title": "_Infrastructure_",
             "description": "_Setup containers_",
             "assignees": "ไก่งวง กับ เพนกวิน",
-            "status": "Done",
-            "createdOn": "2024-4-22T09:00:00:00Z",
-            "updatedOn": "2024-4-22T09:00:00:00Z"
+            "status": "DONE",
+            "createdOn": "2024-04-22T09:00:00Z",
+            "updatedOn": "2024-04-22T09:00:00Z"
         }
     ]
   

@@ -35,5 +35,6 @@ public class Task {
     private ZonedDateTime createdOn = ZonedDateTime.now();
     @Column(name = "updatedOn")
     private ZonedDateTime updatedOn = ZonedDateTime.now();
+
 }
 
