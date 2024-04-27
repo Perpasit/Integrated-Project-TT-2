@@ -4,9 +4,9 @@ CREATE TABLE tasks (
     taskTitle VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     taskDescription VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     taskAssignees VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    taskStatus ENUM('No_Status', 'To_Do', 'Doing', 'Done') NOT NULL DEFAULT 'No_Status',
-    createdOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    taskStatus ENUM('NO_STATUS', 'TO_DO', 'DOING', 'DONE') NOT NULL DEFAULT 'NO_STATUS',
+    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT CHK_taskTitle_not_empty CHECK (taskTitle <> ''),
     CONSTRAINT CHK_updatedOn_not_empty CHECK (updatedOn >= createdOn)
 );
