@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Entity
@@ -18,7 +19,6 @@ import java.util.Date;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    @JsonIgnore
     private Integer taskId;
     @Column(name = "taskTitle", length = 100, nullable = false)
     private String title;
@@ -32,8 +32,8 @@ public class Task {
     private TaskStatus status;
 
     @Column(name = "createdOn")
-    private Date createdOn = new Date();
+    private ZonedDateTime createdOn = ZonedDateTime.now();
     @Column(name = "updatedOn")
-    private Date updatedOn = new Date();
+    private ZonedDateTime updatedOn = ZonedDateTime.now();
 }
 
