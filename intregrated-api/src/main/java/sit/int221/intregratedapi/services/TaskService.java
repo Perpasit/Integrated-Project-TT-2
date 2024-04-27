@@ -4,8 +4,11 @@ package sit.int221.intregratedapi.services;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import sit.int221.intregratedapi.entities.Task;
+import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.repositories.TaskRepository;
 
 import java.util.Date;
@@ -24,7 +27,11 @@ public class TaskService {
     }
 
     public Task getTaskById(Integer id) {
-        return taskRepository.findById(id).orElse(null);
+        return taskRepository.findById(id).orElseThrow(
+                () -> new ItemNotFoundException(
+                        "Task " + id + " does not exist !!!!")
+        );
+
     }
 
     public List<Task> getAllTasks() {
