@@ -139,11 +139,11 @@ const showModal = async (task) => {
 
             <p class="text-sm text-gray-500 mt-2 itbkk-created-on">
               <strong>Created On:</strong>
-              {{ task.createdOn.switchTimeZone }}
+              {{ task.createdOn }}
             </p>
             <p class="text-sm text-gray-500 mt-2 itbkk-updated-on">
               <strong>Updated On:</strong>
-              {{ task.updatedOn.switchTimeZone }}
+              {{ task.updatedOn }}
             </p>
           </div>
         </div>
