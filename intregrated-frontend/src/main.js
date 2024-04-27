@@ -5,8 +5,8 @@ import "./assets/main.css"
 import router from './router/index.js'
 
 const pinia = createPinia()
-const app = createApp(App).use(router)
-
+const app = createApp(App)
+app.use(router)
 app.use(pinia)
 app.mount('#app')
 
