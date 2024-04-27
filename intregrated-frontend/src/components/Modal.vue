@@ -56,16 +56,13 @@ const parseAndFormatDate = (dateString) => {
   return date.toLocaleString('en-GB', { timeZone: localTimeZone });
 };
 
-// Example usage:
-// console.log(parseAndFormatDate("1481-05-01T09:05:00Z")); // Outputs the parsed date or 'Invalid Date'
-// console.log(props.task);
-// console.log(props.task.createdOn);
+
 
 onMounted(async () => {
       try {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${props.task.id}`)
         editedTask.value = data 
-        console.log(editedTask.value)
+ 
       } catch (error) {
         console.error('Error fetching tasks:', error)
       }
