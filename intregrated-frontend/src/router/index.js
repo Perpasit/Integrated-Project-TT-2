@@ -1,6 +1,7 @@
 import App from '../App.vue'
 import Modal from '../components/Modal.vue'
 import {createRouter,createWebHistory} from 'vue-router'
+import TaskTable from '../components/TaskTable.vue'
 
 
 const router = createRouter({
