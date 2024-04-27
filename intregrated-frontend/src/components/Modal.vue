@@ -46,6 +46,19 @@ const showModal = async (task) => {
   }
 }
 
+const parseAndFormatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date)) {
+    return 'Invalid Date'; // Handle invalid dates
+  }
+  const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return date.toLocaleString('en-GB', { timeZone: localTimeZone });
+};
+
+// Example usage:
+console.log(parseAndFormatDate("1481-05-01T09:05:00Z")); // Outputs the parsed date or 'Invalid Date'
+console.log(props.task.createdOn);
+
 </script>
 
 <template>
@@ -123,12 +136,12 @@ const showModal = async (task) => {
                 v-model="editedTask.status"
                 class="w-full border itbkk-status"
               >
-                <option value="No_Status" class="itbkk-status">
+                <option value="NO_STATUS" class="itbkk-status">
                   No Status
                 </option>
-                <option value="To_Do" class="itbkk-status">To Do</option>
-                <option value="Doing" class="itbkk-status">Doing</option>
-                <option value="Done" class="itbkk-status">Done</option>
+                <option value="TO_DO" class="itbkk-status">To Do</option>
+                <option value="DOING" class="itbkk-status">Doing</option>
+                <option value="DONE" class="itbkk-status">Done</option>
               </select>
             </p>
 
@@ -139,11 +152,11 @@ const showModal = async (task) => {
 
             <p class="text-sm text-gray-500 mt-2 itbkk-created-on">
               <strong>Created On:</strong>
-              {{ task.createdOn }}
+              {{ parseAndFormatDate(task.createdOn) }}
             </p>
             <p class="text-sm text-gray-500 mt-2 itbkk-updated-on">
               <strong>Updated On:</strong>
-              {{ task.updatedOn }}
+              {{ parseAndFormatDate(task.updatedOn) }}
             </p>
           </div>
         </div>

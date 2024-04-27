@@ -49,9 +49,11 @@ const toggleSortOrder = () => {
 }
 
 
+
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   tasks.value = taskStore.getTasks
+
 })
 
 </script>
@@ -72,7 +74,7 @@ onMounted(async () => {
           <td class="px-4 py-2 text-center">{{ index + 1 }}</td>
           <td class="px-4 py-2 itbkk-title"  >  
             <p style="word-break: break-word; overflow-wrap: break-word" @click="showModal(task)" class="cursor-pointer" > 
-              {{ task.title }}</p>
+              {{ task.title }} </p>
           </td>
           <td class="px-4 py-2 itbkk-assignees text-center">
             <template v-if="task.assignees">
