@@ -111,7 +111,7 @@ onMounted(async () => {
                   class="w-full border itbkk-description"
                 /> -->
                 <input class="px-4 py-2 itbkk-description text-center">
-                    <template v-if="task.description">
+                    <template v-if="editedTask.description">
                     <p class="itbkk-description">{{ editedTask.description }}</p>
                     </template>
                     <p v-else class="text-gray-400 italic itbkk-description">No Description Provided</p>

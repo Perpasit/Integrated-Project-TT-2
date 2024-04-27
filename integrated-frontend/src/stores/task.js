@@ -65,13 +65,13 @@ export const useTaskStore = defineStore('task', {
 
     getStatusClass(status) {
       switch (status) {
-        case "NO STATUS":
+        case "No Status":
           return "bg-gray-300 text-white rounded-md px-3 py-1";
-        case "TO DO":
+        case "To Do":
           return "bg-indigo-500	 text-white rounded-md px-3 py-1";
-        case "DOING":
+        case "Doing":
           return " bg-amber-400	 text-white rounded-md px-3 py-1";
-        case "DONE":
+        case "Done":
           return "bg-green-400 text-white rounded-md px-3 py-1";
         default:
           return "bg-violet-400	 text-white rounded-md px-3 py-1";
