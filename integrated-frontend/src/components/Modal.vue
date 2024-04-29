@@ -27,9 +27,6 @@ const saveTask = async (updatedTask) => {
   }
 }
 
-
-
-
 const showModal = async (task) => {
   try {
     const response = await taskStore.getTask(task.id)
@@ -40,29 +37,23 @@ const showModal = async (task) => {
   } catch (error) {
     alert(error.message)
     window.history.back()
-
   }
 }
 
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString)
   if (isNaN(date)) {
-
-    return 'Invalid Date'; 
+    return "Invalid Date"
   }
-  return date.toLocaleString('en-GB', { timeZone: localTimeZone})
-};
-
-
-
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
+}
 
 const closeModal = () => {
   editedTask.value = {}
   focusedOnDescription.value = false
   // Add your modal close logic here
 }
-
 
 onMounted(async () => {
   try {
@@ -108,13 +99,21 @@ onMounted(async () => {
                 class="w-full border itbkk-title"
               />
             </h3>
+
             <strong class="text-sm text-gray-500">Description:</strong>
-        <template v-if="editedTask.description">
-          <textarea v-model="editedTask.description" class="w-full border itbkk-description h-36 text-sm text-gray-600 mt-2"></textarea>
-        </template>
-        <template v-else>
-          <textarea v-model="editedTask.description" class="w-full border itbkk-description h-48 text-gray-400 italic" placeholder="No Description Provided"></textarea>
-        </template>
+
+            <textarea
+              v-if="editedTask.description"
+              v-model="editedTask.description"
+              class="w-full border itbkk-description h-36 text-sm text-gray-600 mt-2"
+              >{{ editedTask.description }}</textarea
+            >
+            <textarea
+              v-else
+              v-model="editedTask.description"
+              class="w-full border itbkk-description h-36 text-gray-400 italic"
+              placeholder="No Description Provided"
+              >No Description Provided</textarea>
 
             <p class="text-sm text-gray-600 mt-2">
               <strong>Assignees:</strong>
@@ -151,7 +150,7 @@ onMounted(async () => {
 
             <p class="text-sm text-gray-600 mt-2">
               <strong>TimeZone: </strong>
-              <span class="itbkk-timezone">{{localTimeZone}}</span>
+              <span class="itbkk-timezone">{{ localTimeZone }}</span>
             </p>
 
             <p class="text-sm text-gray-600 mt-2 itbkk-created-on">
