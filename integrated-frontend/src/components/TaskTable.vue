@@ -77,7 +77,7 @@ onMounted(async () => {
 <template>
   
   <div class="container mx-auto p-4">
-    
+
     <table class="table-fixed w-full max-w-4xl mx-auto border-collapse">
       
       <thead>

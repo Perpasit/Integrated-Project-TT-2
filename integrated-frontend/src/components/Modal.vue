@@ -27,11 +27,7 @@ const saveTask = async (updatedTask) => {
   }
 }
 
-const convertToThaiTime = (utcTime) => {
-  const thaiTime = new Date(utcTime)
-  thaiTime.setHours(thaiTime.getHours() + 7)
-  return thaiTime.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })
-}
+
 
 
 const showModal = async (task) => {
@@ -47,15 +43,14 @@ const showModal = async (task) => {
   }
 }
 
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date)) {
-    return 'Invalid Date'; // Handle invalid dates
+    return 'Invalid Date'; 
   }
-  const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return date.toLocaleString('en-GB', { timeZone: localTimeZone });
+  return date.toLocaleString('en-GB', { timeZone: localTimeZone})
 };
-
 
 
 onMounted(async () => {
@@ -155,7 +150,7 @@ onMounted(async () => {
 
             <p class="text-sm text-gray-500 mt-2">
               <strong>TimeZone: </strong>
-              <span class="itbkk-timezone">Asia/Bangkok</span>
+              <span class="itbkk-timezone">{{localTimeZone}}</span>
             </p>
 
             <p class="text-sm text-gray-500 mt-2 itbkk-created-on">
