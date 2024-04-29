@@ -1,28 +1,28 @@
 <script setup>
-import { reactive,onMounted,ref } from "vue"
-import { getItems, postItem, putItem, deleteItem } from '../utils/fetch'
+import { onMounted, ref } from "vue"
+import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
 const props = defineProps({
   task: { type: Object, required: true }
 })
 
-const editedTask = ref({
-
-})
+const editedTask = ref({})
+const focusedOnDescription = ref(false)
 
 const saveTask = async (updatedTask) => {
   try {
     if (updatedTask.id) {
-      const response = await taskStore.updateTask(updatedTask.id, updatedTask)
-      if (response.status === 404) {
-        throw new Error("The requested task does not exist")
-      }
+      await putItem(
+        `${import.meta.env.VITE_API_ENDPOINT}/tasks/${updatedTask.id}`,
+        updatedTask
+      )
     } else {
-      await taskStore.addTask(updatedTask)
+      await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, updatedTask)
     }
     closeModal()
   } catch (error) {
     alert(error.message)
+
     window.history.back()
   }
 }
@@ -40,27 +40,39 @@ const showModal = async (task) => {
   } catch (error) {
     alert(error.message)
     window.history.back()
+
   }
 }
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const parseAndFormatDate = (dateString) => {
-  const date = new Date(dateString);
+  const date = new Date(dateString)
   if (isNaN(date)) {
+
     return 'Invalid Date'; 
   }
   return date.toLocaleString('en-GB', { timeZone: localTimeZone})
 };
 
 
+
+
+const closeModal = () => {
+  editedTask.value = {}
+  focusedOnDescription.value = false
+  // Add your modal close logic here
+}
+
+
 onMounted(async () => {
-      try {
-        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${props.task.id}`)
-        editedTask.value = data 
- 
-      } catch (error) {
-        console.error('Error fetching tasks:', error)
-      }
+  try {
+    const data = await getItems(
+      `${import.meta.env.VITE_API_ENDPOINT}/tasks/${props.task.id}`
+    )
+    editedTask.value = data
+  } catch (error) {
+    console.error("Error fetching tasks:", error)
+  }
 })
 </script>
 
@@ -90,32 +102,21 @@ onMounted(async () => {
               id="modal-headline"
             >
               <strong>Title:</strong>
-              <input
+              <textarea
                 type="text"
                 v-model="editedTask.title"
                 class="w-full border itbkk-title"
               />
             </h3>
+            <strong class="text-sm text-gray-500">Description:</strong>
+        <template v-if="editedTask.description">
+          <textarea v-model="editedTask.description" class="w-full border itbkk-description h-36 text-sm text-gray-600 mt-2"></textarea>
+        </template>
+        <template v-else>
+          <textarea v-model="editedTask.description" class="w-full border itbkk-description h-48 text-gray-400 italic" placeholder="No Description Provided"></textarea>
+        </template>
 
-            <p class="text-sm text-gray-500">
-              <strong>Description:</strong>
-              
-                <!-- <input
-                    type="text"
-                  v-model="editedTask.description"
-                  class="w-full border itbkk-description"
-                /> -->
-                <input class="px-4 py-2 itbkk-description text-center">
-                    <template v-if="editedTask.description">
-                    <p class="itbkk-description">{{ editedTask.description }}</p>
-                    </template>
-                    <p v-else class="text-gray-400 italic itbkk-description">No Description Provided</p>
-                </input>
-
-             
-
-            </p>
-            <p class="text-sm text-gray-500 mt-2">
+            <p class="text-sm text-gray-600 mt-2">
               <strong>Assignees:</strong>
               <template v-if="editedTask.assignees">
                 <input
@@ -133,7 +134,7 @@ onMounted(async () => {
                 />
               </template>
             </p>
-            <p class="text-sm text-gray-500 mt-2">
+            <p class="text-sm text-gray-600 mt-2">
               <strong>Status:</strong>
               <select
                 v-model="editedTask.status"
@@ -148,16 +149,16 @@ onMounted(async () => {
               </select>
             </p>
 
-            <p class="text-sm text-gray-500 mt-2">
+            <p class="text-sm text-gray-600 mt-2">
               <strong>TimeZone: </strong>
               <span class="itbkk-timezone">{{localTimeZone}}</span>
             </p>
 
-            <p class="text-sm text-gray-500 mt-2 itbkk-created-on">
+            <p class="text-sm text-gray-600 mt-2 itbkk-created-on">
               <strong>Created On:</strong>
               {{ parseAndFormatDate(editedTask.createdOn) }}
             </p>
-            <p class="text-sm text-gray-500 mt-2 itbkk-updated-on">
+            <p class="text-sm text-gray-600 mt-2 itbkk-updated-on">
               <strong>Updated On:</strong>
               {{ parseAndFormatDate(editedTask.updatedOn) }}
             </p>
