@@ -1,5 +1,6 @@
 package sit.int221.intregratedapi.controllers;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,9 @@ public class TaskController {
         this.modelMapper = modelMapper;
         this.listMapper = listMapper;
     }
+
 //    @GetMapping("")
-//    public ResponseEntity<List<Task>> getTasks() {
+//    public ResponseEntity<List<Task>> getTasksDetail() {
 //        List<Task> tasks = taskService.getAllTasks();
 //        return ResponseEntity.ok().body(tasks);
 //    }
@@ -44,5 +46,23 @@ public class TaskController {
     public ResponseEntity<Task> getTaskById(@PathVariable Integer taskId) {
         return ResponseEntity.ok(taskService.getTaskById(taskId));
     }
+
+    @PostMapping("")
+    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
+        return taskService.createNewTask(task);
+    }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer taskId) {
+        return taskService.removeTask(taskId);
+    }
+
+    @PutMapping("/{taskId}")
+    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer taskId) {
+        TaskDTO updatedTaskDTO = taskService.updateTask(taskId, task);
+        return ResponseEntity.ok(updatedTaskDTO);
+    }
+
+
 
 }
