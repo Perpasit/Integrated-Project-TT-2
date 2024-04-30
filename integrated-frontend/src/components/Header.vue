@@ -1,16 +1,166 @@
-<script setup></script>
+<script setup>
+import { ref, computed, watch } from 'vue';
+
+const showModal = ref(false);
+
+const editedTask = ref({
+  title: '',
+  description: '',
+  assignees: '',
+  status: 'NO_STATUS',
+});
+
+const titleError = ref('');
+
+const isTitleValid = computed(() => {
+  return editedTask.value.title.trim() !== '';
+});
+
+watch(() => editedTask.value.title, (newTitle) => {
+  if (newTitle.trim() === '') {
+    titleError.value = 'Title is required';
+  } else {
+    titleError.value = '';
+  }
+});
+
+function openModal() {
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  resetForm();
+}
+
+async function saveTask() {
+  if (!isTitleValid.value) {
+    titleError.value = 'Title is required';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editedTask.value),
+    });
+
+    if (response.ok) {
+      console.log('Task saved successfully');
+      closeModal();
+      resetForm();
+    } else {
+      console.error('Error saving task:', response.status);
+    }
+  } catch (error) {
+    console.error('Error saving task:', error);
+  }
+}
+
+function resetForm() {
+  editedTask.value = {
+    title: '',
+    description: '',
+    assignees: '',
+    status: 'NO_STATUS',
+  };
+  titleError.value = '';
+}
+</script>
 
 <template>
   <div class="container mx-auto px-0 pt-5 flex flex-row justify-between">
-      <h1 class="text-4xl font-bold font-italiana pt-2 text-lime-100">
-        Kanban
-      </h1>
+    <h1 class="text-4xl font-bold font-italiana pt-2 text-lime-100">Kanban</h1>
 
-      <button class="bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded">
-        + NEW TASK
-      </button>
+    <button @click="openModal"
+      class="itbkk-button-add bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold 
+      hover:text-white py-2 px-4 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded">+ NEW TASK</button>
+
+  </div>
+
+
+  <div v-if="showModal" class="fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+      </div>
+
+
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+          <div class="text-lg leading-6 font-medium text-gray-900 mb-4">New Task</div>
+
+          <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:mt-5 sm:text-left w-1/2 mr-6 ml-6">
+
+              <div>
+                <label class="block text-sm font-bold mb-1">Title :</label>
+                <textarea rows="2" v-model="editedTask.title"
+                  class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                <p v-if="titleError" class="text-red-500 text-sm mt-1">{{ titleError }}</p>
+              </div>
+
+
+              <div class="mt-4">
+                <label class="block text-sm font-bold mb-1">Description :</label>
+                <textarea rows="10" v-model="editedTask.description"
+                  class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  placeholder="No Description Provided"></textarea>
+              </div>
+            </div>
+
+            <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
+              <div class="mt-4 mb-4">
+                <label class="block text-sm font-bold mb-1">Assignees :</label>
+                <textarea rows="2" v-model="editedTask.assignees"
+                  class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  placeholder="Unassigned"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold mb-1">Status :</label>
+                <select v-model="editedTask.status"
+                  class="itbkk-status shadow-sm p-3 mt-1 block w-1/2 sm:text-sm border border-gray-300 rounded-md">
+                  <option value="NO_STATUS">No Status</option>
+                  <option value="TO_DO">To Do</option>
+                  <option value="DOING">Doing</option>
+                  <option value="DONE">Done</option>
+                </select>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+
+
+
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+            :class="{ 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isTitleValid, 'bg-gray-300 cursor-not-allowed': !isTitleValid }"
+            @click="saveTask" :disabled="!isTitleValid">
+            SAVE
+          </button>
+
+
+          <button type="button"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium
+             text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            @click="closeModal"> Cancel </button>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 </template>
+
+
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Italiana&display=swap");

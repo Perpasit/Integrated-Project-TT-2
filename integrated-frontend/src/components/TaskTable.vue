@@ -99,7 +99,7 @@ onMounted(async () => {
                 {{ task.title }}
               </p>
             </td>
-            <td class="px-4 py-5 text-center itbkk-assignees">
+            <td class="truncate px-4 py-5 text-center itbkk-assignees">
               <span v-if="task.assignees">
                 {{ task.assignees.split(",").map((a) => a.trim()).join(", ") }}
               </span>
