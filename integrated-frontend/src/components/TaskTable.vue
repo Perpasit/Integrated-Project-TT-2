@@ -91,7 +91,7 @@ onMounted(async () => {
             :key="index"
             class="bg-white shadow hover:bg-gray-100 itbkk-item"
           >
-            <td class="px-4 py-2 text-center rounded-l-lg">{{ index + 1 }}</td>
+            <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
               <p
                 class="truncate cursor-pointer itbkk-title"
@@ -100,13 +100,13 @@ onMounted(async () => {
                 {{ task.title }}
               </p>
             </td>
-            <td class="px-4 py-2 text-center itbkk-assignees">
+            <td class="px-4 py-5 text-center itbkk-assignees">
               <span v-if="task.assignees">
                 {{ task.assignees.split(",").map((a) => a.trim()).join(", ") }}
               </span>
               <span v-else class="text-gray-400 italic itbkk-assignees">Unassigned</span>
             </td>
-            <td class="px-4 py-2 text-center rounded-r-lg">
+            <td class="px-5 py-2 text-center rounded-r-lg">
               <span
                 class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
                 :class="taskStore.getStatusClass(formattedStatus(task))"
