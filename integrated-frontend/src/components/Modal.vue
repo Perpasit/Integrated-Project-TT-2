@@ -67,119 +67,76 @@ onMounted(async () => {
 })
 </script>
 
-<template>
+
+ <template>
   <div v-if="task" class="fixed z-10 inset-0 overflow-y-auto">
-    <div
-      class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-    >
+    <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <span
-        class="hidden sm:inline-block sm:align-middle sm:h-screen"
-        aria-hidden="true"
-        >&#8203;</span
-      >
-      <div
-        class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-headline"
-      >
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div>
-            <h3
-              class="text-lg leading-6 font-medium text-gray-900"
-              id="modal-headline"
-            >
-              <strong>Title:</strong>
-              <textarea
-                type="text"
-                v-model="editedTask.title"
-                class="w-full border itbkk-title"
-              />
-            </h3>
 
-            <strong class="text-sm text-gray-500">Description:</strong>
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+          <div class="sm:flex sm:items-start">
 
-            <textarea
-              v-if="editedTask.description"
-              v-model="editedTask.description"
-              class="w-full border itbkk-description h-36 text-sm text-gray-600 mt-2"
-              >{{ editedTask.description }}</textarea
-            >
-            <textarea
-              v-else
-              v-model="editedTask.description"
-              class="w-full border itbkk-description h-36 text-gray-400 italic"
-              placeholder="No Description Provided"
-              >No Description Provided</textarea>
+            <div class="mt-3 text-center sm:mt-5 sm:text-left w-1/2 mr-6 ml-6 ">
+              
+              <div class="text-lg leading-6 font-medium text-gray-900">
+                <label class="block text-sm font-bold mb-1">Title :</label>
+                <textarea rows="2" v-model="editedTask.title" class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+              </div>
 
-            <p class="text-sm text-gray-600 mt-2">
-              <strong>Assignees:</strong>
-              <template v-if="editedTask.assignees">
-                <input
-                  type="text"
-                  v-model="editedTask.assignees"
-                  class="w-full border itbkk-assignees"
-                />
-              </template>
-              <template v-else>
-                <input
-                  type="text"
-                  class="w-full border italic text-gray-400 itbkk-assignees"
-                  readonly
-                  value="Unassigned"
-                />
-              </template>
-            </p>
-            <p class="text-sm text-gray-600 mt-2">
-              <strong>Status:</strong>
-              <select
-                v-model="editedTask.status"
-                class="w-full border itbkk-status"
-              >
-                <option value="NO_STATUS" class="itbkk-status">
-                  No Status
-                </option>
-                <option value="TO_DO" class="itbkk-status">To Do</option>
-                <option value="DOING" class="itbkk-status">Doing</option>
-                <option value="DONE" class="itbkk-status">Done</option>
-              </select>
-            </p>
+              <div class="mt-4">  
+                <label class="block text-sm font-bold mb-1">Description :</label>
+                <textarea rows="10" v-model="editedTask.description" class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="No Description Provided"></textarea>
+              </div>
+              
+            </div>
 
-            <p class="text-sm text-gray-600 mt-2">
-              <strong>TimeZone: </strong>
-              <span class="itbkk-timezone">{{ localTimeZone }}</span>
-            </p>
+            <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
 
-            <p class="text-sm text-gray-600 mt-2 itbkk-created-on">
-              <strong>Created On:</strong>
-              {{ parseAndFormatDate(editedTask.createdOn) }}
-            </p>
-            <p class="text-sm text-gray-600 mt-2 itbkk-updated-on">
-              <strong>Updated On:</strong>
-              {{ parseAndFormatDate(editedTask.updatedOn) }}
-            </p>
+              <div class="mt-4 mb-4">
+                <label class="block text-sm font-bold mb-1">Assignees :</label>
+                <textarea rows="2" v-model="editedTask.assignees" class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="Unassigned" ></textarea>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-bold mb-1">Status :</label>
+                <select v-model="editedTask.status" class="shadow-sm p-3 mt-1 block w-1/2 sm:text-sm border border-gray-300 rounded-md">
+                  <option value="NO_STATUS">No Status</option>
+                  <option value="TO_DO">To Do</option>
+                  <option value="DOING">Doing</option>
+                  <option value="DONE">Done</option>
+                </select>
+              </div>
+              <div class="mt-4">
+                <label class="block text-sm font-bold mb-1">TimeZone :</label>
+                <p class="mt-1 text-sm text-gray-900">{{ localTimeZone }}</p>
+              </div>
+              <div class="mt-4">
+                <label class="block text-sm font-bold mb-1">Created On :</label>
+                <p class="mt-1 text-sm text-gray-900">{{ parseAndFormatDate(editedTask.createdOn) }}</p>
+              </div>
+              <div class="mt-4">
+                <label class="block text-sm font-bold mb-1">Updated On :</label>
+                <p class="mt-1 text-sm text-gray-900">{{ parseAndFormatDate(editedTask.updatedOn) }}</p>
+              </div>
+            </div>
           </div>
         </div>
+
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="saveTask"
-          >
-            OK
+          <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  @click="saveTask">
+            SAVE
           </button>
-          <button
-            type="button"
-            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="$emit('close')"
-          >
-            Close
+          <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  @click="$emit('close')">
+            CANCEL
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </div>  
 </template>
