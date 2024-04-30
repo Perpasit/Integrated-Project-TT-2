@@ -16,6 +16,7 @@ import lombok.Setter;
 public class TaskDTO {
     private String id;
     private String title;
+    private String description;
     private String assignees;
     private String status;
 }
