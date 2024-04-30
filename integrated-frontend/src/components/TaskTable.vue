@@ -66,9 +66,7 @@ onMounted(async () => {
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex justify-end mb-10 ">
-      <button class="bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded">
-        + NEW TASK
-      </button>
+
     </div>
     
     <div class="overflow-x-auto">
