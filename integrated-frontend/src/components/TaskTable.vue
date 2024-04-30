@@ -64,7 +64,7 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 pt-5">
     <div class="flex justify-end mb-4">
       <button class="bg-white text-purple-600 font-semibold py-2 px-4 rounded">
         + NEW TASK
