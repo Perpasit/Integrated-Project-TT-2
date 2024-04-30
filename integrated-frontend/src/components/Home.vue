@@ -1,19 +1,18 @@
 <template>
-    <div id="app" class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen">
-      <div class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4 font-italiana">Kanban</h1>
-        
-      </div>
-      <TaskTable />
-    </div>
-  </template>
-  <script setup>
-  import TaskTable from "./TaskTable.vue"
-  </script>
-  <style>
-  @import url('https://fonts.googleapis.com/css2?family=Italiana&display=swap');
-  
-  .font-italiana {
-    font-family: 'Italiana', serif;
-  }
-  </style>
+  <div id="app" class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen ">
+      <Header/>
+      <TaskTable />   
+  </div>
+
+</template>
+<script setup>
+import TaskTable from "./TaskTable.vue"
+import Header from "./Header.vue"
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Italiana&display=swap');
+
+.font-italiana {
+  font-family: 'Italiana', serif;
+}
+</style>
