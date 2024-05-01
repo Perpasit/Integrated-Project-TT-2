@@ -1,10 +1,7 @@
-
-import Home from "../components/Home.vue"
-import Modal from "../components/Modal.vue"
-import { createRouter, createWebHistory } from "vue-router"
-
-import Error from "../components/Error.vue"
-
+import { createRouter, createWebHistory } from "vue-router";
+import Home from "../components/Home.vue";
+// import Modal from "../components/Modal.vue";
+import Error from "../components/Error.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +10,7 @@ const router = createRouter({
       path: "/",
       redirect: "/task"
     },
+    
     {
       path: "/task",
       name: "home",
@@ -27,7 +25,13 @@ const router = createRouter({
       name: "error",
       component:Error ,
     //   redirect:"/task"
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "NotFound",
+      component: Error
     }
   ]
-})
-export default router
+});
+
+export default router;
