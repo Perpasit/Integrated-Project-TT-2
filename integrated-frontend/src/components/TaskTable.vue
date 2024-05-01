@@ -7,6 +7,8 @@ const taskStore = useTaskStore()
 const tasks = ref([])
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
+const showDeleteConfirmation = ref(false); // Define showDeleteConfirmation here
+let selectedTaskToDelete = null;
 
 const showModal = (task) => {
   selectedTask.value = task
@@ -57,6 +59,22 @@ const sortedTasks = computed(() => {
 const toggleSortOrder = () => {
   sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc"
 }
+
+const confirmDelete = (task) => {
+  selectedTaskToDelete = task;
+  showDeleteConfirmation.value = true;
+};
+
+const deleteTask = async () => {
+    await taskStore.deleteTask(selectedTaskToDelete.id);
+    selectedTaskToDelete = null;
+    showDeleteConfirmation.value = false;
+}
+const cancelDelete = () => {
+  selectedTaskToDelete = null;
+  showDeleteConfirmation.value = false;
+};
+
 
 onMounted(async () => {
   await taskStore.fetchAllTasks()
@@ -116,7 +134,8 @@ onMounted(async () => {
                 </svg>
               </button>
 
-              <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2">
+   
+              <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2" @click="confirmDelete(task)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -133,5 +152,17 @@ onMounted(async () => {
       No task
     </div>
     <modal v-if="selectedTask" :task="selectedTask" @close="closeModal" @save="saveTask" />
+   
   </div>
+  <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
+      <div class="bg-white p-8 rounded-lg">
+        <p class="text-lg mb-4">Are you sure you want to delete <span class="text-red-500">{{selectedTaskToDelete.title}}</span> task?</p>
+        <div class="flex justify-end">
+          <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2" @click="cancelDelete">Cancel</button>
+          <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded " @click="deleteTask(selectedTask)">Delete</button>
+        </div>
+      </div>
+    </div>
+
+
 </template>
