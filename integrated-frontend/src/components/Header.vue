@@ -94,8 +94,8 @@ function resetForm() {
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div class="text-lg leading-6 font-medium text-gray-900 mb-4">New Task</div>
 
-          <div class="sm:flex sm:items-start">
-            <div class="mt-3 text-center sm:mt-5 sm:text-left w-1/2 mr-6 ml-6">
+          <div class="sm:flex sm:items-start ">
+            <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6">
 
               <div>
                 <label class="block text-sm font-bold mb-1">Title :</label>
@@ -114,9 +114,9 @@ function resetForm() {
             </div>
 
             <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
-              <div class="mt-4 mb-4">
+              <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Assignees :</label>
-                <textarea rows="2" v-model="editedTask.assignees"
+                <textarea rows="6" v-model="editedTask.assignees"
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="Unassigned"></textarea>
               </div>
@@ -124,7 +124,7 @@ function resetForm() {
               <div>
                 <label class="block text-sm font-bold mb-1">Status :</label>
                 <select v-model="editedTask.status"
-                  class="itbkk-status shadow-sm p-3 mt-1 block w-1/2 sm:text-sm border border-gray-300 rounded-md">
+                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">
                   <option value="NO_STATUS">No Status</option>
                   <option value="TO_DO">To Do</option>
                   <option value="DOING">Doing</option>
@@ -136,7 +136,6 @@ function resetForm() {
             </div>
           </div>
         </div>
-
 
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
