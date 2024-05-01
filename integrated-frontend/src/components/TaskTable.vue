@@ -68,51 +68,63 @@ onMounted(async () => {
     <div class="flex justify-end mb-10 ">
 
     </div>
-    
+
     <div class="overflow-x-auto">
-      <table class="table-fixed w-full max-w-4xl mx-auto border-separate border-spacing-y-2">
+      <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
         <thead>
-          <tr class="bg-purple-100">
-            <th class="w-12 px-4 py-2 rounded-l-lg">No.</th>
-            <th
-              class="w-1/3 px-4 py-2 cursor-pointer"
-              @click="toggleSortOrder('title')"
-            >
+          <tr class="text-white w-full">
+            <!-- bg-purple-100 -->
+            <th class="w-19 px-4 py-2 rounded-l-lg">No.</th>
+            <th class="w-1/3 px-4 py-2 cursor-pointer" @click="toggleSortOrder('title')">
               Title
             </th>
             <th class="w-1/3 px-4 py-2">Assignees</th>
-            <th class="w-1/6 px-4 py-2 rounded-r-lg">Status</th>
+            <th class="w-1/6 px-4 py-2 ">Status</th>
+            <th class="w-1/8 px-4 py-2 rounded-r-lg"> </th>
+
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="(task, index) in sortedTasks"
-            :key="index"
-            class="bg-white shadow hover:bg-gray-100 itbkk-item"
-          >
+          <tr v-for="(task, index) in sortedTasks" :key="index" class="bg-white shadow-lg hover:bg-gray-100 itbkk-item">
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
-              <p
-                class="truncate cursor-pointer itbkk-title"
-                @click="showModal(task)"
-              >
+              <p class="truncate cursor-pointer itbkk-title" @click="showModal(task)">
                 {{ task.title }}
               </p>
             </td>
+
             <td class="truncate px-4 py-5 text-center itbkk-assignees">
               <span v-if="task.assignees">
                 {{ task.assignees.split(",").map((a) => a.trim()).join(", ") }}
               </span>
               <span v-else class="text-gray-400 italic itbkk-assignees">Unassigned</span>
             </td>
-            <td class="px-5 py-2 text-center rounded-r-lg">
-              <span
-                class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
-                :class="taskStore.getStatusClass(formattedStatus(task))"
-              >
+
+            <td class="px-5 py-2 text-center ">
+              <span class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
+                :class="taskStore.getStatusClass(formattedStatus(task))">
                 {{ formattedStatus(task) }}
               </span>
             </td>
+
+            <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
+              <button class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+
+              <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+
+            </td>
+
           </tr>
         </tbody>
       </table>
@@ -120,11 +132,6 @@ onMounted(async () => {
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No task
     </div>
-    <modal
-      v-if="selectedTask"
-      :task="selectedTask"
-      @close="closeModal"
-      @save="saveTask"
-    />
+    <modal v-if="selectedTask" :task="selectedTask" @close="closeModal" @save="saveTask" />
   </div>
 </template>
