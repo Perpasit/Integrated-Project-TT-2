@@ -8,7 +8,7 @@ const tasks = ref([])
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
 
-const showDeleteConfirmation = ref(false) // Define showDeleteConfirmation here
+const showDeleteConfirmation = ref(false) 
 let selectedTaskToDelete = null
 const showSuccessModal = ref(false)
 

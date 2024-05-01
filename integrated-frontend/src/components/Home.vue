@@ -10,10 +10,13 @@ const showModal = (flagModal) => {
   showTask.value = flagModal
 }
 
-const clearTask = (flagModal , newTask) =>{
-  showTask.value = flagModal
-}
-
+const clearTask = (flagModal, newTask) => {
+  showTask.value = flagModal;
+  if (newTask) {
+    
+    console.log("New task saved:", newTask);
+  }
+};
 
 </script>
 
