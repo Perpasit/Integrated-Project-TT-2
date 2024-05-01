@@ -19,7 +19,8 @@ import java.util.Date;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer taskId;
+    @Column(name = "taskId")
+    private Integer id;
     @Column(name = "taskTitle", length = 100, nullable = false)
     private String title;
     @Column(name = "taskDescription", length = 500)

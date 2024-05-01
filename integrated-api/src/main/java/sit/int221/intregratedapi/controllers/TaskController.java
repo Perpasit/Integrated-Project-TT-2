@@ -42,9 +42,9 @@ public class TaskController {
     }
 
 
-    @GetMapping("/{taskId}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Integer taskId) {
-        return ResponseEntity.ok(taskService.getTaskById(taskId));
+    @GetMapping("/{id}")
+    public ResponseEntity<Task> getTaskById(@PathVariable Integer id) {
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
 
     @PostMapping("")
@@ -52,14 +52,14 @@ public class TaskController {
         return taskService.createNewTask(task);
     }
 
-    @DeleteMapping("/{taskId}")
-    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer taskId) {
-        return taskService.removeTask(taskId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer id) {
+        return taskService.removeTask(id);
     }
 
-    @PutMapping("/{taskId}")
-    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer taskId) {
-        TaskDTO updatedTaskDTO = taskService.updateTask(taskId, task);
+    @PutMapping("/{id}")
+    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
+        TaskDTO updatedTaskDTO = taskService.updateTask(id, task);
         return ResponseEntity.ok(updatedTaskDTO);
     }
 
