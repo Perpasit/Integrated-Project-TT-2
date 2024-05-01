@@ -70,22 +70,16 @@ onMounted(async () => {
                 <textarea rows="2" readonly v-model="editedTask.title" class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
               </div>
 
-              <textarea
-              v-if="editedTask.description"
-              rows="12" 
-              v-model="editedTask.description"
-              class="w-full border itbkk-description text-sm text-gray-600 mt-2 shadow-sm p-1 block  sm:text-sm border-gray-300 rounded-md"
-              readonly
-              >{{ editedTask.description }}</textarea
-            >
-            <textarea
-              v-else
-              rows="12" 
-              v-model="editedTask.description"
-              class="w-full border itbkk-description text-sm text-gray-400 italic mt-2 shadow-sm p-1 block  sm:text-sm border-gray-300 rounded-md"
-              placeholder="No Description Provided"
-              readonly
-              >No Description Provided</textarea>
+              <div class="mt-4">
+
+                <label class="block text-sm font-bold mb-1">Description :</label>
+                <textarea v-if="editedTask.description" rows="12" v-model="editedTask.description"
+                  class="w-full border itbkk-description text-sm text-gray-600 mt-2 shadow-sm p-1 block  sm:text-sm border-gray-300 rounded-md"
+                  readonly> {{ editedTask.description }}</textarea>
+                <textarea v-else rows="12" v-model="editedTask.description"
+                  class="w-full border itbkk-description text-sm text-gray-400 italic mt-2 shadow-sm p-1 block  sm:text-sm border-gray-300 rounded-md"
+                  placeholder="No Description Provided" readonly>No Description Provided</textarea>
+              </div>
               
             </div>
 
