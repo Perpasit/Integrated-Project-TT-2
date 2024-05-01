@@ -117,7 +117,7 @@ function closeSuccessModal() {
         class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto"
       >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          <div class="text-lg leading-6 font-medium text-gray-900 mb-4">
+          <div class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4">
             New Task
           </div>
 
