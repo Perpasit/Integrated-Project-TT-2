@@ -47,7 +47,7 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         TaskDTO postedTaskDTO = new TaskDTO();
-        postedTaskDTO.setId(savedTask.getTaskId().toString());
+        postedTaskDTO.setId(savedTask.getId().toString());
         postedTaskDTO.setTitle(savedTask.getTitle());
         postedTaskDTO.setDescription(savedTask.getDescription());
         postedTaskDTO.setAssignees(savedTask.getAssignees());
@@ -66,7 +66,7 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!"));
 
         TaskDTO deletedTaskDTO = new TaskDTO();
-        deletedTaskDTO.setId(task.getTaskId().toString());
+        deletedTaskDTO.setId(task.getId().toString());
         deletedTaskDTO.setTitle(task.getTitle());
         deletedTaskDTO.setDescription(task.getDescription());
         deletedTaskDTO.setAssignees(task.getAssignees());
@@ -90,7 +90,7 @@ public class TaskService {
         Task updatedTask = taskRepository.save(existingTask);
 
         TaskDTO updatedTaskDTO = new TaskDTO();
-        updatedTaskDTO.setId(String.valueOf(updatedTask.getTaskId()));
+        updatedTaskDTO.setId(String.valueOf(updatedTask.getId()));
         updatedTaskDTO.setTitle(updatedTask.getTitle());
         updatedTaskDTO.setDescription(updatedTask.getDescription());
         updatedTaskDTO.setAssignees(updatedTask.getAssignees());
