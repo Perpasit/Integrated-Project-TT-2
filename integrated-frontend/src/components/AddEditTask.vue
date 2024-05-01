@@ -41,7 +41,22 @@ function closeModal() {
   resetForm()
 }
 
-async function saveTMoask() {
+
+// async function saveTask() {
+//   if (!isTitleValid.value) {
+//     titleError.value = "Title is required";
+//     return;
+//   }
+
+//   try {
+//     await taskStore.addTask(editedTask.value);
+//     emit("closeModal", false, editedTask.value); // Emit the closeModal event with the editedTask data
+//   } catch (error) {
+//     console.error("Error saving task:", error);
+//   }
+// }
+
+async function saveTask() {
   if (!isTitleValid.value) {
     titleError.value = "Title is required";
     return;
@@ -49,19 +64,12 @@ async function saveTMoask() {
 
   try {
     await taskStore.addTask(editedTask.value);
-    savedTask.value = editedTask.value;
-    showSuccessModal.value = true;
-    setTimeout(() => {
-      closeSuccessModal();
-      resetForm();
-    }, 3000);
+    emit("closeModal", false, editedTask.value);
+    showSuccessModal.value = true; // Show the success modal
   } catch (error) {
     console.error("Error saving task:", error);
   }
-
-  showModal.value = false;
 }
-
 
 
 function closeSuccessModal() {
@@ -71,6 +79,8 @@ function closeSuccessModal() {
 
 const emit = defineEmits(["closeModal"])
 </script>
+
+
 
 <template>
   <div class="fixed z-10 inset-0 overflow-y-auto">
@@ -145,19 +155,17 @@ const emit = defineEmits(["closeModal"])
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid,
-            }"
-            @click="saveTask"
-            
-            :disabled="!isTitleValid"
-          >
-            SAVE
-          </button>
+  type="button"
+  class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+  :class="{
+    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isTitleValid,
+    'bg-gray-300 cursor-not-allowed': !isTitleValid,
+  }"
+  @click="saveTask"
+  :disabled="!isTitleValid"
+>
+  SAVE
+</button>
 
           <button
             type="button"
@@ -166,6 +174,50 @@ const emit = defineEmits(["closeModal"])
           >
             Cancel
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-start justify-center min-h-screen">
+      <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-gray-900">
+              Success
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="showSuccessModal = false"
+            >
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+              The Task is saved successfully.
+            </p>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="showSuccessModal = false"
+            >
+              OK
+            </button>
+          </span>
         </div>
       </div>
     </div>
