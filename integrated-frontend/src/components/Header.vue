@@ -43,40 +43,23 @@ function closeModal() {
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required"
-
-    return
+    titleError.value = "Title is required";
+    return;
   }
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(editedTask.value)
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      console.log("Task saved successfully:", data)
-
-      await taskStore.addTask(data)
-
-      savedTask.value = data
-      showSuccessModal.value = true
-
-      setTimeout(() => {
-        closeSuccessModal()
-        resetForm()
-      }, 3000)
-    } else {
-      console.error("Error saving task:", response.status)
-    }
+    await taskStore.addTask(editedTask.value);
+    savedTask.value = editedTask.value;
+    showSuccessModal.value = true;
+    setTimeout(() => {
+      closeSuccessModal();
+      resetForm();
+    }, 3000);
   } catch (error) {
-    console.error("Error saving task:", error)
+    console.error("Error saving task:", error);
   }
-  showModal.value = false
+
+  showModal.value = false;
 }
 
 function resetForm() {

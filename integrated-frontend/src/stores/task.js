@@ -15,13 +15,13 @@ export const useTaskStore = defineStore('task', {
      }
    },
    async addTask(newTask) {
-     try {
-       const createdTask = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, newTask);
-       this.tasks.push(createdTask);
-     } catch (error) {
-       console.error('Error adding task:', error);
-     }
-   },
+    try {
+      const createdTask = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, newTask);
+      this.tasks.push(createdTask);
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
+  },
    async updateTask(id, updatedTask) {
      try {
        const updatedData = await putItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`, updatedTask);
