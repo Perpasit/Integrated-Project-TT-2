@@ -83,6 +83,8 @@ function closeSuccessModal() {
       </div>
     </div>
   </div>
+  <router-view/>
+
 </template>
 
 <style>

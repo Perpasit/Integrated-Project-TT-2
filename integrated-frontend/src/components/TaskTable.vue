@@ -2,11 +2,15 @@
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import Modal from "./Modal.vue"
+import { routerKey } from "vue-router";
+import { useRoute, useRouter } from 'vue-router';
 
 const taskStore = useTaskStore()
 const tasks = ref([])
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
+const route = useRoute();
+const router = useRouter();
 
 const showDeleteConfirmation = ref(false) 
 let selectedTaskToDelete = null
@@ -14,7 +18,8 @@ const showSuccessModal = ref(false)
 
 
 const showModal = (task) => {
-  selectedTask.value = task
+
+  router.push(`/task/${task.id}`)
 }
 
 const closeModal = () => {
