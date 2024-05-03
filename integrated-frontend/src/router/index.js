@@ -22,6 +22,13 @@ const router = createRouter({
         component: Modal
       },]
     }
+    // ,
+    // { 
+    //   path: "/task/:taskId",
+    //   name: "taskDetail", 
+    //   component: Modal,
+    //   props: true
+    // }
     
     // {
     //   path: "/task/:pathMatch(.*)*",

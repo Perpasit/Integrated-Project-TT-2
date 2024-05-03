@@ -3,13 +3,34 @@ import { onMounted, ref } from "vue"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 import { useRoute, useRouter } from 'vue-router';
 
-const route = useRoute();
+
 const router = useRouter();
 const props = defineProps({
   task: { type: Object }
 })
 
-const editedTask = ref({})
+const route = useRoute();
+const editedTask = ref({});
+
+const loading = ref(true);
+
+onMounted(async () => {
+  if (route.state && route.state.task) {
+    editedTask.value = route.state.task;
+  } else {
+    const id = route.params.taskId;
+    const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+    if (data.status == 404) {
+      setTimeout(() => {
+        router.push('/task');
+      }, 3000);
+    }
+    editedTask.value = data;
+  }
+  loading.value = false;
+});
+
+
 const focusedOnDescription = ref(false)
 
 
@@ -46,35 +67,34 @@ const goBack = () => {
   router.push('/')
 }
 
-onMounted(async () => {
-    const id = route.params.taskId ? route.params.taskId : props.task.id ? props.task.id : null
-    const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-    )
-    // console.log(data.status)
-    if(data.status == 404) {
-      setTimeout(() => {
-    router.push('/task')
-  }, 3000);
-      }
-    editedTask.value = data
- 
-
-
-
-})
+// onMounted(async () => {
+//     const id = route.params.taskId ? route.params.taskId : props.task.id ? props.task.id : null
+//     const data = await getItems(
+//       `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+//     )
+//     // console.log(data.status)
+//     if(data.status == 404) {
+//       setTimeout(() => {
+//     router.push('/task')
+//   }, 3000);
+//       }
+//     editedTask.value = data
+// })
 </script>
 
 
 <template>
-  <div class="fixed z-10 inset-0 overflow-y-auto">
-    <div  class="flex items-center justify-center min-h-screen px-4">
+   <div class="fixed z-10 inset-0 overflow-y-auto" v-if="!loading">
+    <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
 
       <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full">
-        <div v-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+        <div v-if="loading" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+  Loading task...
+</div>
+<div v-else-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div class="sm:flex sm:items-start">
 
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6 ">
