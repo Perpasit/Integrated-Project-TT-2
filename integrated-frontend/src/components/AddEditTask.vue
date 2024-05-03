@@ -1,10 +1,16 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch , watchEffect  } from "vue";
 import { useTaskStore } from "../stores/task";
+import { useRoute } from 'vue-router';
 
+const route = useRoute();
 const taskStore = useTaskStore();
 const showModal = ref(false);
-const savedTask = ref(null);
+
+
+const props = defineProps({
+  taskId: Number  // Receive taskId if using routing
+});
 
 const editedTask = ref({
   title: "",
@@ -19,16 +25,14 @@ const isTitleValid = computed(() => {
   return editedTask.value.title.trim() !== "";
 });
 
-watch(
-  () => editedTask.value.title,
-  (newTitle) => {
-    if (newTitle.trim() === "") {
-      titleError.value = "Title is required";
-    } else {
-      titleError.value = "";
-    }
+
+
+watchEffect(async () => {
+  const taskId = route.params.id;
+  if (taskId) {
+    editedTask.value = await taskStore.fetchTaskById(taskId);
   }
-);
+});
 
 function openModal() {
   resetForm();
@@ -37,7 +41,7 @@ function openModal() {
 
 function closeModal() {
   showModal.value = false;
-  resetForm();
+  this.$router.back();  // If using router, navigate back on close
 }
 
 async function saveTask() {
@@ -55,6 +59,9 @@ async function saveTask() {
   }
 }
 
+const goBack = () => {
+  router.push('/')
+}
 const emit = defineEmits(["closeModal", "showSuccessModal"]);
 </script>
 
@@ -142,14 +149,16 @@ const emit = defineEmits(["closeModal", "showSuccessModal"]);
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="$emit('closeModal', false)"
+            @click="goBack()"
           >
+          
             Cancel
           </button>
         </div>
       </div>
     </div>
   </div>
+  
 </template>
 
 <style scoped></style>

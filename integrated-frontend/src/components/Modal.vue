@@ -14,18 +14,18 @@ const focusedOnDescription = ref(false)
 
 
 
-const showModal = async (task) => {
-  try {
-    const response = await taskStore.getTask(task.id)
-    if (response.status === 404) {
-      throw new Error("The requested task does not exist")
-    }
-    selectedTask.value = task
-  } catch (error) {
-    alert(error.message)
-    window.history.back()
-  }
-}
+// const showModal = async (task) => {
+//   try {
+//     const response = await taskStore.getTask(task.id)
+//     if (response.status === 404) {
+//       throw new Error("The requested task does not exist")
+//     }
+//     selectedTask.value = task
+//   } catch (error) {
+//     alert(error.message)
+//     window.history.back()
+//   }
+// }
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
@@ -36,11 +36,11 @@ const parseAndFormatDate = (dateString) => {
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
 
-const closeModal = () => {
-  editedTask.value = {}
-  focusedOnDescription.value = false
-  // Add your modal close logic here
-}
+// const closeModal = () => {
+//   editedTask.value = {}
+//   focusedOnDescription.value = false
+//   // Add your modal close logic here
+// }
 
 const goBack = () => {
   router.push('/')

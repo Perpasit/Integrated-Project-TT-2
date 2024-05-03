@@ -2,23 +2,21 @@
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import Modal from "./Modal.vue"
-import { routerKey } from "vue-router";
-import { useRoute, useRouter } from 'vue-router';
+import { routerKey } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 
 const taskStore = useTaskStore()
 const tasks = ref([])
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
-const showDeleteConfirmation = ref(false) 
+const showDeleteConfirmation = ref(false)
 let selectedTaskToDelete = null
 const showSuccessModal = ref(false)
 
-
 const showModal = (task) => {
-
   router.push(`/task/${task.id}`)
 }
 
@@ -68,6 +66,7 @@ const toggleSortOrder = () => {
   sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc"
 }
 
+
 const confirmDelete = (task) => {
   selectedTaskToDelete = task
   showDeleteConfirmation.value = true
@@ -95,6 +94,11 @@ const cancelDelete = () => {
   selectedTaskToDelete = null
   showDeleteConfirmation.value = false
 }
+
+const editTask = (task) => {
+  selectedTask.value = task;
+  router.push({ name: 'edit-task', params: { id: task.id } }); // Assuming you have a route named 'edit-task'
+};
 
 onMounted(async () => {
   await taskStore.fetchAllTasks()
@@ -166,6 +170,7 @@ onMounted(async () => {
             <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
               <button
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
+                @click="editTask(task)"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -239,12 +244,9 @@ onMounted(async () => {
         >
           Delete
         </button>
-
       </div>
     </div>
   </div>
-
-
 
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
@@ -293,7 +295,6 @@ onMounted(async () => {
             </button>
           </span>
         </div>
-
       </div>
     </div>
   </div>

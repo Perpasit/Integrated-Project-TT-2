@@ -14,6 +14,16 @@ export const useTaskStore = defineStore('task', {
        console.error('Error fetching tasks:', error);
      }
    },
+   
+   async fetchTaskById(id) {
+     try {
+       const task = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+       return task;
+     } catch (error) {
+       console.error('Error fetching task:', error);
+       throw new Error('Task not found');
+     }
+   },
    async addTask(newTask) {
     try {
       const createdTask = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, newTask);
