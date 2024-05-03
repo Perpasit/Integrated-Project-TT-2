@@ -1,25 +1,27 @@
 <script setup>
-import { ref, onMounted, computed } from "vue"
-import { useTaskStore } from "../stores/task"
-import Modal from "./Modal.vue"
-import { routerKey } from "vue-router";
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, computed } from "vue";
+import { useTaskStore } from "../stores/task";
+import AddEditTask from "./AddEditTask.vue";
+import { useRouter } from 'vue-router';
 
+
+
+const router = useRouter();
 const taskStore = useTaskStore()
 const tasks = ref([])
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
-const route = useRoute();
-const router = useRouter();
 
-const showDeleteConfirmation = ref(false) 
+const showDeleteConfirmation = ref(false)
 let selectedTaskToDelete = null
 const showSuccessModal = ref(false)
 
+const showTaskDetail = (task) => {
+  router.push({ name: 'taskDetail', params: { taskId: task.id }, state: { task } });
+};
 
 const showModal = (task) => {
-
-  router.push(`/task/${task.id}`)
+  selectedTask.value = task
 }
 
 const closeModal = () => {
@@ -33,6 +35,7 @@ const saveTask = async (updatedTask) => {
     await taskStore.addTask(updatedTask)
   }
   closeModal()
+  await fetchTasks()
 }
 
 const formattedStatus = computed(() => {
@@ -77,10 +80,7 @@ const deleteTask = async () => {
   await taskStore.deleteTask(selectedTaskToDelete.id)
   selectedTaskToDelete = null
   showDeleteConfirmation.value = false
-
-  await taskStore.fetchAllTasks()
-  tasks.value = taskStore.getTasks
-
+  await fetchTasks()
   showSuccessModal.value = true
   setTimeout(() => {
     closeSuccessModal()
@@ -96,11 +96,16 @@ const cancelDelete = () => {
   showDeleteConfirmation.value = false
 }
 
-onMounted(async () => {
+const fetchTasks = async () => {
   await taskStore.fetchAllTasks()
   tasks.value = taskStore.getTasks
+}
+
+onMounted(async () => {
+  await fetchTasks()
 })
 </script>
+
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex justify-end mb-10"></div>
@@ -111,7 +116,6 @@ onMounted(async () => {
       >
         <thead>
           <tr class="text-white w-full">
-            <!-- bg-purple-100 -->
             <th class="w-19 px-4 py-2 rounded-l-lg">No.</th>
             <th
               class="w-1/3 px-4 py-2 cursor-pointer"
@@ -134,7 +138,7 @@ onMounted(async () => {
             <td class="px-4 py-2">
               <p
                 class="truncate cursor-pointer itbkk-title"
-                @click="showModal(task)"
+                @click="showTaskDetail(task)"
               >
                 {{ task.title }}
               </p>
@@ -166,6 +170,7 @@ onMounted(async () => {
             <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
               <button
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
+                @click="showModal(task)"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -207,16 +212,21 @@ onMounted(async () => {
         </tbody>
       </table>
     </div>
+
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No task
     </div>
-    <modal
+
+    <AddEditTask
       v-if="selectedTask"
+      :show="!!selectedTask"
       :task="selectedTask"
+      mode="edit"
       @close="closeModal"
       @save="saveTask"
     />
   </div>
+
   <div
     v-if="showDeleteConfirmation"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
@@ -239,12 +249,9 @@ onMounted(async () => {
         >
           Delete
         </button>
-
       </div>
     </div>
   </div>
-
-
 
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
@@ -293,7 +300,6 @@ onMounted(async () => {
             </button>
           </span>
         </div>
-
       </div>
     </div>
   </div>
