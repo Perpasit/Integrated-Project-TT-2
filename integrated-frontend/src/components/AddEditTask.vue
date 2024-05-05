@@ -1,6 +1,8 @@
+<!-- AddEditTask.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue";
 import { useTaskStore } from "../stores/task";
+import { useModalStore } from "../stores/useModalStore";
 
 const props = defineProps({
   show: {
@@ -17,7 +19,9 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["close", "save"]);
+const emit = defineEmits(["close", "taskSaved"]);
+const modalStore = useModalStore();
+
 
 const taskStore = useTaskStore();
 const editedTask = ref({
@@ -73,11 +77,12 @@ async function saveTask() {
     } else {
       await taskStore.addTask(editedTask.value);
     }
-    emit("save", editedTask.value);
+    modalStore.openSuccessModal();
     closeModal();
   } catch (error) {
     console.error("Error saving task:", error);
   }
+  
 }
 
 function closeModal() {
