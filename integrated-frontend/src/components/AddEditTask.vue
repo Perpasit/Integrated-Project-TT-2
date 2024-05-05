@@ -21,6 +21,7 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "taskSaved"]);
 const modalStore = useModalStore();
+const originalTask = ref(null);
 
 
 const taskStore = useTaskStore();
@@ -34,7 +35,15 @@ const editedTask = ref({
 const titleError = ref("");
 
 const isTitleValid = computed(() => {
-  return editedTask.value.title.trim() !== "";
+  return (
+    editedTask.value.title.trim() !== "" &&
+    (props.mode === "add" ||
+      (props.mode === "edit" &&
+        (editedTask.value.title !== originalTask.value.title ||
+          editedTask.value.description !== originalTask.value.description ||
+          editedTask.value.assignees !== originalTask.value.assignees ||
+          editedTask.value.status !== originalTask.value.status)))
+  );
 });
 
 watch(
@@ -51,6 +60,7 @@ watch(
 onMounted(() => {
   if (props.mode === "edit" && props.task) {
     editedTask.value = { ...props.task };
+    originalTask.value = { ...props.task }; // เก็บค่าข้อมูลเดิมไว้
   } else {
     resetForm();
   }
