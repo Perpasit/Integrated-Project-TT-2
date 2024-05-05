@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from "vue-router";
-import Home from "../components/Home.vue";
+import { createRouter, createWebHistory } from "vue-router"
+import Home from "../components/Home.vue"
 // import Modal from "../components/Modal.vue";
-import Error from "../components/Error.vue";
-import Modal from "../components/Modal.vue";
+import Error from "../components/Error.vue"
+import Modal from "../components/Modal.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,25 +11,27 @@ const router = createRouter({
       path: "/",
       redirect: "/task"
     },
-    
+
     {
       path: "/task",
       name: "home",
       component: Home,
-      children:[{
-        path: "/task/:taskId",
-        name: "taskDetail",
-        component: Modal
-      },]
+      children: [
+        {
+          path: "/task/:taskId",
+          name: "taskDetail",
+          component: Modal
+        }
+      ]
     }
     // ,
-    // { 
+    // {
     //   path: "/task/:taskId",
-    //   name: "taskDetail", 
+    //   name: "taskDetail",
     //   component: Modal,
     //   props: true
     // }
-    
+
     // {
     //   path: "/task/:pathMatch(.*)*",
     //   name: "error",
@@ -41,6 +43,6 @@ const router = createRouter({
     //   component: Error
     // }
   ]
-});
+})
 
-export default router;
+export default router
