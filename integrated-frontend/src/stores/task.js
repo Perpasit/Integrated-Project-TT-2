@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { getItems, postItem, putItem, deleteItem } from '../utils/fetch';
 
+
+
 export const useTaskStore = defineStore('task', {
   state: () => ({
     tasks: [],
@@ -64,4 +66,5 @@ export const useTaskStore = defineStore('task', {
       return state.tasks.find(task => task.id === id);
     },
   },
+  
 });
