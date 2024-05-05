@@ -1,38 +1,36 @@
-<!-- AddEditTask.vue -->
 <script setup>
-import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue";
-import { useTaskStore } from "../stores/task";
-import { useModalStore } from "../stores/useModalStore";
+import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
+import { useTaskStore } from "../stores/task"
+import { useModalStore } from "../stores/useModalStore"
 
 const props = defineProps({
   show: {
     type: Boolean,
-    default: false,
+    default: false
   },
   task: {
     type: Object,
-    default: null,
+    default: null
   },
   mode: {
     type: String,
-    default: "add",
-  },
-});
+    default: "add"
+  }
+})
 
-const emit = defineEmits(["close", "taskSaved"]);
-const modalStore = useModalStore();
-const originalTask = ref(null);
+const emit = defineEmits(["close", "taskSaved"])
+const modalStore = useModalStore()
+const originalTask = ref(null)
 
-
-const taskStore = useTaskStore();
+const taskStore = useTaskStore()
 const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: "NO_STATUS",
-});
+  status: "NO_STATUS"
+})
 
-const titleError = ref("");
+const titleError = ref("")
 
 const isTitleValid = computed(() => {
   return (
@@ -43,63 +41,62 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  );
-});
+  )
+})
 
 watch(
   () => editedTask.value.title,
   (newTitle) => {
     if (newTitle.trim() === "") {
-      titleError.value = "Title is required";
+      titleError.value = "Title is required"
     } else {
-      titleError.value = "";
+      titleError.value = ""
     }
   }
-);
+)
 
 onMounted(() => {
   if (props.mode === "edit" && props.task) {
-    editedTask.value = { ...props.task };
-    originalTask.value = { ...props.task }; // เก็บค่าข้อมูลเดิมไว้
+    editedTask.value = { ...props.task }
+    originalTask.value = { ...props.task }
   } else {
-    resetForm();
+    resetForm()
   }
-});
+})
 
 function resetForm() {
   editedTask.value = {
     title: "",
     description: "",
     assignees: "",
-    status: "NO_STATUS",
-  };
+    status: "NO_STATUS"
+  }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required";
-    return;
+    titleError.value = "Title is required"
+    return
   }
 
   try {
-    editedTask.value.updatedOn = new Date().toISOString(); 
+    editedTask.value.updatedOn = new Date().toISOString()
 
     if (props.mode === "edit") {
-      await taskStore.updateTask(editedTask.value.id, editedTask.value);
+      await taskStore.updateTask(editedTask.value.id, editedTask.value)
     } else {
-      await taskStore.addTask(editedTask.value);
+      await taskStore.addTask(editedTask.value)
     }
-    modalStore.openSuccessModal();
-    closeModal();
+    modalStore.openSuccessModal(editedTask.value.title, props.mode)
+    closeModal()
   } catch (error) {
-    console.error("Error saving task:", error);
+    console.error("Error saving task:", error)
   }
-  
 }
 
 function closeModal() {
-  emit("close");
-  resetForm();
+  emit("close")
+  resetForm()
 }
 </script>
 
@@ -114,8 +111,10 @@ function closeModal() {
         class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto"
       >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          <div class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4">
-            {{ mode === 'add' ? 'New Task' : 'Edit Task' }}
+          <div
+            class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4"
+          >
+            {{ mode === "add" ? "New Task" : "Edit Task" }}
           </div>
 
           <div class="sm:flex sm:items-start">
@@ -175,13 +174,14 @@ function closeModal() {
             type="button"
             class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
             :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid,
+              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                isTitleValid,
+              'bg-gray-300 cursor-not-allowed': !isTitleValid
             }"
             @click="saveTask"
             :disabled="!isTitleValid"
           >
-            SAVE
+            {{ mode === "add" ? "Add" : "Save" }}
           </button>
           <button
             type="button"
