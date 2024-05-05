@@ -116,15 +116,15 @@ onMounted(async () => {
       >
         <thead>
           <tr class="text-white w-full">
-            <th class="w-19 px-4 py-2 rounded-l-lg">No.</th>
+            <th class="w-19 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
             <th
-              class="w-1/3 px-4 py-2 cursor-pointer"
+              class="w-1/3 px-4 py-2 cursor-pointer text-xl font-medium"
               @click="toggleSortOrder('title')"
             >
               Title
             </th>
-            <th class="w-1/3 px-4 py-2">Assignees</th>
-            <th class="w-1/6 px-4 py-2">Status</th>
+            <th class="w-1/3 px-4 py-2 text-xl font-medium ">Assignees</th>
+            <th class="w-1/6 px-4 py-2 text-xl font-medium">Status</th>
             <th class="w-1/8 px-4 py-2 rounded-r-lg"></th>
           </tr>
         </thead>
