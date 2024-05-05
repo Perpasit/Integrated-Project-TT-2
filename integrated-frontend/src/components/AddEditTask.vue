@@ -72,6 +72,8 @@ async function saveTask() {
   }
 
   try {
+    editedTask.value.updatedOn = new Date().toISOString(); 
+
     if (props.mode === "edit") {
       await taskStore.updateTask(editedTask.value.id, editedTask.value);
     } else {

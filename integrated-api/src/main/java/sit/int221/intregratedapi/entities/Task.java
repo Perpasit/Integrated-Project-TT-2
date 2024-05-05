@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 @Entity
 @Table(name = "tasks")
@@ -36,6 +38,18 @@ public class Task {
     private ZonedDateTime createdOn = ZonedDateTime.now();
     @Column(name = "updatedOn")
     private ZonedDateTime updatedOn = ZonedDateTime.now();
+
+
+    @PrePersist
+    protected void onCreate() {
+        createdOn = ZonedDateTime.now();
+        updatedOn = ZonedDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedOn = ZonedDateTime.now();
+    }
 
 }
 
