@@ -1,3 +1,4 @@
+<!-- Home.vue -->
 <script setup>
 import { ref } from "vue"
 import TaskTable from "./TaskTable.vue"

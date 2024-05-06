@@ -1,14 +1,52 @@
+<!-- Header.vue -->
 <script setup>
 import { ref } from "vue"
 import AddEditTask from "./AddEditTask.vue"
+import { useRouter } from "vue-router"
+
+const router = useRouter()
 
 const emits = defineEmits(["openModal"])
-
 const showAddModal = ref(false)
 
-const openModal = () => {
-  showAddModal.value = true
-  emits("openModal")
+const openModal = async () => {
+  try {
+    const newTaskId = await generateNewTaskId()
+    router.push({ name: "AddTask", params: { id: newTaskId } })
+  } catch (error) {
+    console.error("Error occurred while navigating to add task:", error)
+  }
+}
+
+// const generateNewTaskId = async () => {
+//   try {
+//     const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/tasks`);
+//     const tasks = await response.json();
+
+//     const taskCount = tasks.length;
+//     const newTaskNumber = taskCount + 1;
+//     console.log('Task count from backend:', taskCount);
+//     console.log('New task number:', newTaskNumber);
+//     return `${newTaskNumber}`;
+//   } catch (error) {
+//     console.error('Error fetching tasks:', error);
+//     return 'task-1';
+//   }
+// };
+
+const generateNewTaskId = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/tasks`)
+    const tasks = await response.json()
+    const taskCount = tasks.length
+    const tasksData = tasks[taskCount - 1]
+
+    const newTaskNumber = parseInt(tasksData.id) + 1
+    return `${newTaskNumber}`
+  } catch (error) {
+    console.error("Error fetching tasks:", error)
+    return "1"
+  }
 }
 
 const closeModal = () => {

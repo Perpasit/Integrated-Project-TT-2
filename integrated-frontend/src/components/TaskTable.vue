@@ -1,3 +1,4 @@
+<!-- TaskTable.vue -->
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -28,6 +29,7 @@ const showModal = (task) => {
 
 const closeModal = () => {
   selectedTask.value = null
+  
 }
 
 const saveTask = async (updatedTask) => {
@@ -102,7 +104,17 @@ const fetchTasks = async () => {
   await taskStore.fetchAllTasks()
   tasks.value = taskStore.getTasks
 }
-
+const editTask = (task) => {
+  try {
+    if (task && task.id) {
+      router.push({ name: "EditTask", params: { id: task.id } });
+    } else {
+      console.error("Task ID is missing");
+    }
+  } catch (error) {
+    console.error("Error occurred in editTask:", error);
+  }
+};
 onMounted(async () => {
   await fetchTasks()
 })
@@ -172,7 +184,7 @@ onMounted(async () => {
             <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
               <button
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
-                @click="showModal(task)"
+                @click="editTask(task)"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

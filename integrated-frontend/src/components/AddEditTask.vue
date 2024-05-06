@@ -1,8 +1,11 @@
+<!-- AddEditTask.vue -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useModalStore } from "../stores/useModalStore"
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 const props = defineProps({
   show: {
     type: Boolean,
@@ -92,10 +95,11 @@ async function saveTask() {
   } catch (error) {
     console.error("Error saving task:", error)
   }
+  router.push('/')
 }
 
 function closeModal() {
-  emit("close")
+  router.push('/')
   resetForm()
 }
 </script>

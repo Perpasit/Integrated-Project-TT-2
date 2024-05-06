@@ -5,6 +5,11 @@ export const useTaskStore = defineStore("task", {
   state: () => ({
     tasks: []
   }),
+  getters: {
+    getTasks: (state) => state.tasks,
+    getTaskById: (state) => (taskId) =>
+      state.tasks.find((task) => task.id === taskId),
+  },
   actions: {
     async fetchAllTasks() {
       try {
@@ -16,6 +21,7 @@ export const useTaskStore = defineStore("task", {
         console.error("Error fetching tasks:", error)
       }
     },
+    
     async addTask(newTask) {
       try {
         const createdTask = await postItem(
@@ -27,6 +33,7 @@ export const useTaskStore = defineStore("task", {
         console.error("Error adding task:", error)
       }
     },
+
     async updateTask(id, updatedTask) {
       try {
         const updatedData = await putItem(
@@ -41,6 +48,7 @@ export const useTaskStore = defineStore("task", {
         console.error("Error updating task:", error)
       }
     },
+
     async deleteTask(id) {
       try {
         await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
@@ -49,6 +57,7 @@ export const useTaskStore = defineStore("task", {
         console.error("Error deleting task:", error)
       }
     },
+
     getStatusClass(status) {
       switch (status) {
         case "No Status":
@@ -64,6 +73,7 @@ export const useTaskStore = defineStore("task", {
       }
     }
   },
+
   getters: {
     getTasks(state) {
       return state.tasks

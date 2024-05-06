@@ -9,6 +9,7 @@ export const useModalStore = defineStore({
   }),
   actions: {
     openSuccessModal(title, mode) {
+      // ทำclearTimeOute ก่อน ค่อย setTimeOut
       this.showSuccessModal = true
       this.taskTitle = title
       this.mode = mode
@@ -21,6 +22,7 @@ export const useModalStore = defineStore({
       this.showSuccessModal = false
       this.taskTitle = ""
       this.mode = ""
+
     }
   }
 })
