@@ -238,6 +238,7 @@ onMounted(async () => {
       mode="edit"
       @close="closeModal"
       @save="saveTask"
+      @taskSaved="fetchTasks"
     />
   </div>
 

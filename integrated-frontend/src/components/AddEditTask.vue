@@ -1,3 +1,4 @@
+<!-- AddEditTask -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -99,13 +100,14 @@ async function saveTask() {
   }
 
   try {
-    editedTask.value.title = editedTask.value.title.trim() 
-    editedTask.value.description = editedTask.value.description.trim()
-    editedTask.value.assignees = editedTask.value.assignees.trim()
+    editedTask.value.title = editedTask.value.title ? editedTask.value.title.trim() : ""
+    editedTask.value.description = editedTask.value.description ? editedTask.value.description.trim() : ""
+    editedTask.value.assignees = editedTask.value.assignees ? editedTask.value.assignees.trim() : ""
     editedTask.value.updatedOn = new Date().toISOString()
 
     if (props.mode === "edit") {
       await taskStore.updateTask(editedTask.value.id, editedTask.value)
+      emit("taskSaved") // Emit the event after updating the task
     } else {
       await taskStore.addTask(editedTask.value)
     }
