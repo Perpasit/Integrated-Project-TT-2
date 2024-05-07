@@ -56,7 +56,7 @@ const router = createRouter({
       ]
     },
     {
-      path: "/manage-status",
+      path: "/status/manage",
       name: "ManageStatus",
       component: ManageStatus,
     },
