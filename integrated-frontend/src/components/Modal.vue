@@ -94,7 +94,7 @@ const goBack = () => {
         <div v-if="loading" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
   Loading task...
 </div>
-<div v-else-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+        <div v-else-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div class="sm:flex sm:items-start">
 
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6 ">
@@ -151,12 +151,12 @@ const goBack = () => {
               </div>
               <div class="mt-4">
                 <label class="itbkk-created-on block text-sm font-bold mb-1">Created On : {{
-      parseAndFormatDate(editedTask.createdOn) }} </label>
+        parseAndFormatDate(editedTask.createdOn) }} </label>
                 <!-- <p class="mt-1 text-sm text-gray-900"></p> -->
               </div>
               <div class="mt-4">
                 <label class="itbkk-updated-on block text-sm font-bold mb-1">Updated On : {{
-      parseAndFormatDate(editedTask.updatedOn) }}</label>
+        parseAndFormatDate(editedTask.updatedOn) }}</label>
                 <p class="mt-1 text-sm text-gray-900"></p>
               </div>
             </div>
