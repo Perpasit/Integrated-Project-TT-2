@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../components/Home.vue"
 import { useTaskStore } from "../stores/task";
-// import Modal from "../components/Modal.vue";
 import Error from "../components/Error.vue"
 import Modal from "../components/Modal.vue"
 import AddEditTask from "../components/AddEditTask.vue"
+import TaskTable from "../components/TaskTable.vue"
+import ManageStatus from "../components/ManageStatus.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +14,6 @@ const router = createRouter({
       path: "/",
       redirect: "/task"
     },
-
     {
       path: "/task",
       name: "home",
@@ -55,10 +55,19 @@ const router = createRouter({
         },
       ]
     },
+    {
+      path: "/manage-status",
+      name: "ManageStatus",
+      component: ManageStatus,
+    },
     
-   
+  ]
+})
 
-    // ,
+export default router
+
+
+// ,
     // {
     //   path: "/task/:taskId",
     //   name: "taskDetail",
@@ -76,7 +85,3 @@ const router = createRouter({
     //   name: "NotFound",
     //   component: Error
     // }
-  ]
-})
-
-export default router
