@@ -79,7 +79,7 @@ onMounted(async () => {
     }
   } else {
     resetForm();
-    titleError.value = "Title is required";
+    titleError.value = "Title is required.";
   }
 });
 
@@ -94,7 +94,7 @@ function resetForm() {
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required"
+    titleError.value = "Title is required."
     return
   }
 
