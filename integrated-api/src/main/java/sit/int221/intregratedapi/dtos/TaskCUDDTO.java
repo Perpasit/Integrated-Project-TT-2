@@ -1,11 +1,10 @@
 package sit.int221.intregratedapi.dtos;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import sit.int221.intregratedapi.entities.TaskStatus;
 
 @Data
-public class TaskNewDTO {
+public class TaskCUDDTO {
     private Integer id;
     private String title;
     private String description;

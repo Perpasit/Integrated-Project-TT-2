@@ -162,7 +162,7 @@ const goBack = () => {
             </div>
           </div>
         </div>
-        <div v-else class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">No Task</div>
+        <div v-else class="bg-white px-2 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl">The task does not exist.</div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"

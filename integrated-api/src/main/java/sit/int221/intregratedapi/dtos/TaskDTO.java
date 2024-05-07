@@ -6,15 +6,10 @@ import sit.int221.intregratedapi.entities.TaskStatus;
 
 @Data
 public class TaskDTO {
-    private Integer id;
+    private String id;
     private String title;
-//    private String description;
     private String assignees;
     private TaskStatus status;
-
-//    public void setDescription(String description) {
-//        this.description = description;
-//    }
 
 
     public void setStatus(String statusStr) {
