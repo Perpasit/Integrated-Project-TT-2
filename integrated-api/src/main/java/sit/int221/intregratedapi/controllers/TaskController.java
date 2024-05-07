@@ -1,11 +1,11 @@
 package sit.int221.intregratedapi.controllers;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.intregratedapi.dtos.TaskDTO;
+import sit.int221.intregratedapi.dtos.TaskCUDDTO;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
@@ -48,18 +48,18 @@ public class TaskController {
     }
 
     @PostMapping("")
-    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
+    public ResponseEntity<TaskCUDDTO> addNewTask(@RequestBody Task task) {
         return taskService.createNewTask(task);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer id) {
+    public ResponseEntity<TaskCUDDTO> removeTask(@PathVariable Integer id) {
         return taskService.removeTask(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
-        TaskDTO updatedTaskDTO = taskService.updateTask(id, task);
+    public ResponseEntity<TaskCUDDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
+        TaskCUDDTO updatedTaskDTO = taskService.updateTask(id, task);
         return ResponseEntity.ok(updatedTaskDTO);
     }
 

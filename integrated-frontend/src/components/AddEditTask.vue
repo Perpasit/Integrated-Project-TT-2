@@ -1,4 +1,3 @@
-<!-- AddEditTask.vue -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -78,24 +77,27 @@ function resetForm() {
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required"
-    return
+    titleError.value = "Title is required";
+    return;
   }
 
   try {
-    editedTask.value.updatedOn = new Date().toISOString()
+    editedTask.value.title = editedTask.value.title.trim(); // trim the title
+    editedTask.value.description = editedTask.value.description.trim(); // trim the description
+    editedTask.value.assignees = editedTask.value.assignees.trim(); // trim the assignees
+    editedTask.value.updatedOn = new Date().toISOString();
 
     if (props.mode === "edit") {
-      await taskStore.updateTask(editedTask.value.id, editedTask.value)
+      await taskStore.updateTask(editedTask.value.id, editedTask.value);
     } else {
-      await taskStore.addTask(editedTask.value)
+      await taskStore.addTask(editedTask.value);
     }
-    modalStore.openSuccessModal(editedTask.value.title, props.mode)
-    closeModal()
+    modalStore.openSuccessModal(editedTask.value.title, props.mode);
+    closeModal();
   } catch (error) {
-    console.error("Error saving task:", error)
+    console.error("Error saving task:", error);
   }
-  router.push('/')
+  router.push('/');
 }
 
 function closeModal() {
@@ -196,7 +198,21 @@ function closeModal() {
           </button>
         </div>
       </div>
+      
     </div>
+    
+  </div>
+  <div v-else-if="props.task === null" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl">
+    The task does not exist.
+  </div>
+  <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+    <button
+      type="button"
+      class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+      @click="goBack()"
+    >
+      OK
+    </button>
   </div>
 </template>
 

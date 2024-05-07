@@ -24,28 +24,34 @@ export const useTaskStore = defineStore("task", {
     
     async addTask(newTask) {
       try {
+        newTask.title = newTask.title.trim(); // trim the title
+        newTask.description = newTask.description.trim(); // trim the description
+        newTask.assignees = newTask.assignees.trim(); // trim the assignees
         const createdTask = await postItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
           newTask
-        )
-        this.tasks.push(createdTask)
+        );
+        this.tasks.push(createdTask);
       } catch (error) {
-        console.error("Error adding task:", error)
+        console.error("Error adding task:", error);
       }
     },
-
+    
     async updateTask(id, updatedTask) {
       try {
+        updatedTask.title = updatedTask.title.trim(); // trim the title
+        updatedTask.description = updatedTask.description.trim(); // trim the description
+        updatedTask.assignees = updatedTask.assignees.trim(); // trim the assignees
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
           updatedTask
-        )
-        const index = this.tasks.findIndex((task) => task.id === id)
+        );
+        const index = this.tasks.findIndex((task) => task.id === id);
         if (index !== -1) {
-          this.tasks.splice(index, 1, updatedData)
+          this.tasks.splice(index, 1, updatedData);
         }
       } catch (error) {
-        console.error("Error updating task:", error)
+        console.error("Error updating task:", error);
       }
     },
 

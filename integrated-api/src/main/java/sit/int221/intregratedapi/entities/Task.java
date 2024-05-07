@@ -6,11 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.ZonedDateTime;
-import java.util.Date;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 
 @Entity
 @Table(name = "tasks")
@@ -23,22 +19,25 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "taskId")
     private Integer id;
+
     @Column(name = "taskTitle", length = 100, nullable = false)
     private String title;
+
     @Column(name = "taskDescription", length = 500)
     private String description;
+
     @Column(name = "taskAssignees", length = 30)
     private String assignees;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "taskStatus")
-    private TaskStatus status;
+    private TaskStatus status = TaskStatus.NO_STATUS;
 
     @Column(name = "createdOn")
     private ZonedDateTime createdOn = ZonedDateTime.now();
+
     @Column(name = "updatedOn")
     private ZonedDateTime updatedOn = ZonedDateTime.now();
-
 
     @PrePersist
     protected void onCreate() {
@@ -50,6 +49,4 @@ public class Task {
     protected void onUpdate() {
         updatedOn = ZonedDateTime.now();
     }
-
 }
-
