@@ -2,15 +2,14 @@ package sit.int221.intregratedapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.time.ZonedDateTime;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tasks")
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,32 +20,33 @@ public class Task {
     private Integer id;
 
     @Column(name = "taskTitle", length = 100, nullable = false)
-    private String title;
+    private String taskTitle;
 
     @Column(name = "taskDescription", length = 500)
-    private String description;
+    private String taskDescription;
 
     @Column(name = "taskAssignees", length = 30)
-    private String assignees;
+    private String taskAssignees;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "taskStatus")
-    private TaskStatus status = TaskStatus.NO_STATUS;
+    @ManyToOne
+    @JoinColumn(name = "statusId", foreignKey = @ForeignKey(name = "fk_status"))
+    @JsonIgnore
+    private Status status;
 
-    @Column(name = "createdOn")
-    private ZonedDateTime createdOn = ZonedDateTime.now();
+    @Column(name = "createdOn", nullable = false)
+    private LocalDateTime createdOn;
 
-    @Column(name = "updatedOn")
-    private ZonedDateTime updatedOn = ZonedDateTime.now();
+    @Column(name = "updatedOn", nullable = false)
+    private LocalDateTime updatedOn;
 
     @PrePersist
     protected void onCreate() {
-        createdOn = ZonedDateTime.now();
-        updatedOn = ZonedDateTime.now();
+        createdOn = LocalDateTime.now();
+        updatedOn = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedOn = ZonedDateTime.now();
+        updatedOn = LocalDateTime.now();
     }
 }
