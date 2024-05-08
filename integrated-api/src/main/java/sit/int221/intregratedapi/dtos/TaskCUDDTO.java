@@ -1,7 +1,8 @@
 package sit.int221.intregratedapi.dtos;
 
 import lombok.Data;
-import sit.int221.intregratedapi.entities.TaskStatus;
+
+
 
 @Data
 public class TaskCUDDTO {
@@ -9,23 +10,9 @@ public class TaskCUDDTO {
     private String title;
     private String description;
     private String assignees;
-    private TaskStatus status;
+    private StatusDTO status; // Using StatusDTO instead of TaskStatus enum
 
     public void setDescription(String description) {
-        this.description = description;
-    }
-
-
-    public void setStatus(String statusStr) {
-        if (statusStr == null || statusStr.isEmpty()) {
-            this.status = TaskStatus.NO_STATUS;
-        } else {
-            try {
-                this.status = TaskStatus.valueOf(statusStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Handle invalid status value
-                this.status = TaskStatus.NO_STATUS;
-            }
-        }
+        this.description = description.trim();
     }
 }

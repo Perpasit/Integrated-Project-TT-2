@@ -8,12 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 
-@Entity
-@Table(name = "tasks")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Table(name = "tasks")
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,9 +29,9 @@ public class Task {
     @Column(name = "taskAssignees", length = 30)
     private String assignees;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "taskStatus")
-    private TaskStatus status = TaskStatus.NO_STATUS;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "statusId")
+    private Status status;
 
     @Column(name = "createdOn")
     private ZonedDateTime createdOn = ZonedDateTime.now();

@@ -6,22 +6,8 @@ import sit.int221.intregratedapi.entities.TaskStatus;
 
 @Data
 public class TaskDTO {
-    private String id;
+    private Integer id;
     private String title;
     private String assignees;
-    private TaskStatus status;
-
-
-    public void setStatus(String statusStr) {
-        if (statusStr == null || statusStr.isEmpty()) {
-            this.status = TaskStatus.NO_STATUS;
-        } else {
-            try {
-                this.status = TaskStatus.valueOf(statusStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Handle invalid status value
-                this.status = TaskStatus.NO_STATUS;
-            }
-        }
-    }
+    private StatusDTO status; // Make sure this matches your mappings
 }
