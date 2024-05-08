@@ -35,18 +35,18 @@ public class TaskController {
         return ResponseEntity.ok(taskRDTO);
     }
 
-//    @PostMapping
-//    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
-//        return taskService.createNewTask(task);
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer id) {
-//        return taskService.removeTask(id);
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
-//        return taskService.updateTask(id, task);
-//    }
+    @PostMapping
+    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
+        return taskService.createNewTask(task);
+    }
+
+    // @DeleteMapping("/{id}")
+    // public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer id) {
+    //     return taskService.removeTask(id);
+    // }
+    //
+    // @PutMapping("/{id}")
+    // public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
+    //     return taskService.updateTask(id, task);
+    // }
 }

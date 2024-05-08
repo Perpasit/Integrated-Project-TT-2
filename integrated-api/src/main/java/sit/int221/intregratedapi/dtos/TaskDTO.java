@@ -12,11 +12,16 @@ import lombok.NoArgsConstructor;
 public class TaskDTO {
     private String id;
     private StringBuilder title;
+    private StringBuilder description;
     private StringBuilder assignees;
     private String status;
 
     public void setTitle(String title) {
         this.title = (title == null) ? new StringBuilder() : new StringBuilder(title);
+    }
+
+    public void setDescription(String description) {
+        this.description = (description == null) ? new StringBuilder() : new StringBuilder(description);
     }
 
     public void setAssignees(String assignees) {
