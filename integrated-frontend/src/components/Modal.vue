@@ -94,7 +94,7 @@ const goBack = () => {
         <div v-if="loading" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
   Loading task...
 </div>
-<div v-else-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
+        <div v-else-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div class="sm:flex sm:items-start">
 
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6 ">
@@ -151,18 +151,18 @@ const goBack = () => {
               </div>
               <div class="mt-4">
                 <label class="itbkk-created-on block text-sm font-bold mb-1">Created On : {{
-      parseAndFormatDate(editedTask.createdOn) }} </label>
+        parseAndFormatDate(editedTask.createdOn) }} </label>
                 <!-- <p class="mt-1 text-sm text-gray-900"></p> -->
               </div>
               <div class="mt-4">
                 <label class="itbkk-updated-on block text-sm font-bold mb-1">Updated On : {{
-      parseAndFormatDate(editedTask.updatedOn) }}</label>
+        parseAndFormatDate(editedTask.updatedOn) }}</label>
                 <p class="mt-1 text-sm text-gray-900"></p>
               </div>
             </div>
           </div>
         </div>
-        <div v-else class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">No Task</div>
+        <div v-else class="bg-white px-2 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl">The task does not exist.</div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"

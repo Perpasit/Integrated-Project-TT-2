@@ -1,4 +1,4 @@
-<!-- AddEditTask.vue -->
+<!-- AddEditTask -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -51,21 +51,38 @@ watch(
   () => editedTask.value.title,
   (newTitle) => {
     if (newTitle.trim() === "") {
-      titleError.value = "Title is required"
+      titleError.value = "Title is required."
     } else {
       titleError.value = ""
     }
   }
 )
 
-onMounted(() => {
-  if (props.mode === "edit" && props.task) {
-    editedTask.value = { ...props.task }
-    originalTask.value = { ...props.task }
+onMounted(async () => {
+  if (props.mode === "edit") {
+    const id = router.currentRoute.value.params.id;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+      if (response.status === 404) {
+        editedTask.value = null;
+        setTimeout(() => {
+          router.push('/task');
+        }, 3000);
+      } else {
+        const data = await response.json();
+        editedTask.value = data;
+        originalTask.value = { ...data };
+        titleError.value = "";
+      }
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      editedTask.value = null;
+    }
   } else {
-    resetForm()
+    resetForm();
+    titleError.value = "Title is required.";
   }
-})
+});
 
 function resetForm() {
   editedTask.value = {
@@ -78,15 +95,19 @@ function resetForm() {
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required"
+    titleError.value = "Title is required."
     return
   }
 
   try {
+    editedTask.value.title = editedTask.value.title ? editedTask.value.title.trim() : ""
+    editedTask.value.description = editedTask.value.description ? editedTask.value.description.trim() : ""
+    editedTask.value.assignees = editedTask.value.assignees ? editedTask.value.assignees.trim() : ""
     editedTask.value.updatedOn = new Date().toISOString()
 
     if (props.mode === "edit") {
       await taskStore.updateTask(editedTask.value.id, editedTask.value)
+      emit("taskSaved") // Emit the event after updating the task
     } else {
       await taskStore.addTask(editedTask.value)
     }
@@ -95,17 +116,21 @@ async function saveTask() {
   } catch (error) {
     console.error("Error saving task:", error)
   }
-  router.push('/')
+  router.push("/")
+}
+
+function goBack() {
+  router.push('/task');
 }
 
 function closeModal() {
-  router.push('/')
+  router.push("/")
   resetForm()
 }
 </script>
 
 <template>
-  <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
+  <div v-if="editedTask !== null" class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
@@ -193,6 +218,33 @@ function closeModal() {
             @click="closeModal"
           >
             Cancel
+          </button>
+          
+        </div>
+        
+      </div>
+      
+    </div>
+    
+  </div>
+  <div v-else class="fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+      </div>
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-red-500">
+                The task does not exist.
+              </h3>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm" @click="goBack">
+            OK
           </button>
         </div>
       </div>

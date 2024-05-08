@@ -1,23 +1,21 @@
 package sit.int221.intregratedapi.services;
 
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.server.ResponseStatusException;
-import sit.int221.intregratedapi.dtos.TaskDTO;
+import sit.int221.intregratedapi.dtos.TaskCUDDTO;
 import sit.int221.intregratedapi.entities.Task;
+import sit.int221.intregratedapi.entities.TaskStatus;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.repositories.TaskRepository;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class TaskService {
@@ -35,7 +33,6 @@ public class TaskService {
                 () -> new ItemNotFoundException(
                         "Task " + id + " does not exist !!!!")
         );
-
     }
 
     public List<Task> getAllTasks() {
@@ -43,60 +40,62 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskDTO> createNewTask(Task task) {
-        Task savedTask = taskRepository.save(task);
+    public ResponseEntity<TaskCUDDTO> createNewTask(Task task) {
+        if (task.getStatus() == null || task.getStatus().toString().trim().isEmpty()) {
+            task.setStatus(TaskStatus.NO_STATUS);
+        }
 
-        TaskDTO postedTaskDTO = new TaskDTO();
-        postedTaskDTO.setId(savedTask.getId().toString());
+        task.setTitle(StringUtils.isEmpty(task.getTitle()) ? null : task.getTitle().trim());
+        task.setDescription(StringUtils.isEmpty(task.getDescription()) ? null : task.getDescription().trim());
+        task.setAssignees(StringUtils.isEmpty(task.getAssignees()) ? null : task.getAssignees().trim());
+
+        Task savedTask = taskRepository.save(task);
+        TaskCUDDTO postedTaskDTO = new TaskCUDDTO();
+        postedTaskDTO.setId(savedTask.getId());
         postedTaskDTO.setTitle(savedTask.getTitle());
         postedTaskDTO.setDescription(savedTask.getDescription());
         postedTaskDTO.setAssignees(savedTask.getAssignees());
         postedTaskDTO.setStatus(savedTask.getStatus().toString());
-
-        return ResponseEntity.ok(postedTaskDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(postedTaskDTO);
     }
 
+
     @Transactional
-    public ResponseEntity<TaskDTO> removeTask(Integer taskId) {
+    public ResponseEntity<TaskCUDDTO> removeTask(Integer taskId) {
         if (taskId == null) {
             throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Task ID cannot be null");
         }
-
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!"));
-
-        TaskDTO deletedTaskDTO = new TaskDTO();
-        deletedTaskDTO.setId(task.getId().toString());
+        TaskCUDDTO deletedTaskDTO = new TaskCUDDTO();
+        deletedTaskDTO.setId(task.getId());
         deletedTaskDTO.setTitle(task.getTitle());
         deletedTaskDTO.setDescription(task.getDescription());
         deletedTaskDTO.setAssignees(task.getAssignees());
         deletedTaskDTO.setStatus(task.getStatus().toString());
-
         taskRepository.delete(task);
-
         return ResponseEntity.ok(deletedTaskDTO);
     }
 
     @Transactional
-    public TaskDTO updateTask(Integer taskId, Task task) {
+    public TaskCUDDTO updateTask(Integer taskId, Task task) {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
-
-        existingTask.setTitle(task.getTitle());
-        existingTask.setDescription(task.getDescription());
-        existingTask.setAssignees(task.getAssignees());
-        existingTask.setStatus(task.getStatus());
-
+        existingTask.setTitle(StringUtils.isEmpty(task.getTitle()) ? null : task.getTitle().trim());
+        existingTask.setDescription(StringUtils.isEmpty(task.getDescription()) ? null : task.getDescription().trim());
+        existingTask.setAssignees(StringUtils.isEmpty(task.getAssignees()) ? null : task.getAssignees().trim());
+        if (task.getStatus() == null || task.getStatus().toString().trim().isEmpty()) {
+            existingTask.setStatus(TaskStatus.NO_STATUS);
+        } else {
+            existingTask.setStatus(task.getStatus());
+        }
         Task updatedTask = taskRepository.save(existingTask);
-
-        TaskDTO updatedTaskDTO = new TaskDTO();
-        updatedTaskDTO.setId(String.valueOf(updatedTask.getId()));
+        TaskCUDDTO updatedTaskDTO = new TaskCUDDTO();
+        updatedTaskDTO.setId(updatedTask.getId());
         updatedTaskDTO.setTitle(updatedTask.getTitle());
         updatedTaskDTO.setDescription(updatedTask.getDescription());
         updatedTaskDTO.setAssignees(updatedTask.getAssignees());
         updatedTaskDTO.setStatus(updatedTask.getStatus().toString());
-
         return updatedTaskDTO;
     }
-
 }
