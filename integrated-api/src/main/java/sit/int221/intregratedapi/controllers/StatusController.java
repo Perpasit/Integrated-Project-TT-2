@@ -44,6 +44,9 @@ public class StatusController {
         return statusService.removeStatus(id);
     }
 
-//    @PutMapping()
+    @PutMapping("/{id}")
+    public ResponseEntity<StatusUDTO> updateStatus(@RequestBody Status status,@PathVariable Integer id) {
+        return statusService.updateStatus(id, status);
+    }
 
 }
