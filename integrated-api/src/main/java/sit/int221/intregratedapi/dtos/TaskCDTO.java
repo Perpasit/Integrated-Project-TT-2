@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TaskCUDDTO {
+public class TaskCDTO {
     private String id;
     private String title;
     private String description;

@@ -1,14 +1,13 @@
 package sit.int221.intregratedapi.services;
 
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import sit.int221.intregratedapi.dtos.TaskCUDDTO;
+import sit.int221.intregratedapi.dtos.TaskCDTO;
+import sit.int221.intregratedapi.dtos.TaskDDTO;
 import sit.int221.intregratedapi.dtos.TaskDTO;
 import sit.int221.intregratedapi.dtos.TaskRDTO;
 import sit.int221.intregratedapi.entities.Status;
@@ -49,20 +48,20 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskCUDDTO> createNewTask(Task task) {
+    public ResponseEntity<TaskCDTO> createNewTask(Task task) {
         setDefaultValuesForTask(task);
         taskRepository.save(task);
-        TaskCUDDTO taskCUDDTO = toTaskCUDDTO(task);
-        return ResponseEntity.status(HttpStatus.CREATED).body(taskCUDDTO);
+        TaskCDTO taskCDTO = toTaskCUDDTO(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskCDTO);
     }
 
     @Transactional
-    public ResponseEntity<TaskRDTO> removeTaskAndGetRDTO(Integer taskId) {
+    public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
         taskRepository.delete(task);
-        TaskRDTO taskRDTO = toTaskRDTO(task);
-        return ResponseEntity.ok(taskRDTO);
+        TaskDDTO taskDDTO = toTaskDDTO(task);
+        return ResponseEntity.ok(taskDDTO);
     }
 
     @Transactional
@@ -161,7 +160,7 @@ public class TaskService {
                 .build();
     }
 
-    private TaskCUDDTO toTaskCUDDTO(Task task) {
+    private TaskCDTO toTaskCUDDTO(Task task) {
         String statusName;
         if (task.getStatus() != null) {
             statusName = statusRepository.findById(task.getStatus().getId())
@@ -171,12 +170,20 @@ public class TaskService {
             statusName = "No Status";
         }
 
-        return TaskCUDDTO.builder()
+        return TaskCDTO.builder()
                 .id(task.getId().toString())
                 .title(task.getTaskTitle() != null ? task.getTaskTitle() : "")
                 .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
                 .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
                 .status(statusName)
+                .build();
+    }
+    private TaskDDTO toTaskDDTO(Task task) {
+        return TaskDDTO.builder()
+                .id(task.getId().toString())
+                .title(task.getTaskTitle())
+                .assignees(task.getTaskAssignees())
+                .status(task.getStatus().getStatusName())
                 .build();
     }
 }
