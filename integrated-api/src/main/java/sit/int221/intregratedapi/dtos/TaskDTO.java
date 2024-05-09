@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TaskDTO {
+    private String id;
     private StringBuilder title;
-    private StringBuilder description;
     private StringBuilder assignees;
     private String status;
 
@@ -19,9 +19,6 @@ public class TaskDTO {
         this.title = (title == null) ? new StringBuilder() : new StringBuilder(title);
     }
 
-    public void setDescription(String description) {
-        this.description = (description == null) ? new StringBuilder() : new StringBuilder(description);
-    }
 
     public void setAssignees(String assignees) {
         this.assignees = (assignees == null) ? new StringBuilder() : new StringBuilder(assignees);

@@ -137,8 +137,8 @@ public class TaskService {
 
     private TaskDTO toTaskDTO(Task task) {
         return TaskDTO.builder()
+                .id(task.getId().toString())
                 .title(new StringBuilder(task.getTaskTitle()))
-                .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
                 .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
                 .status(statusRepository.findById(task.getStatus().getId())
                         .map(Status::getStatusName)
