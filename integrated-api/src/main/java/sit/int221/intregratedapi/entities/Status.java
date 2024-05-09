@@ -1,5 +1,6 @@
 package sit.int221.intregratedapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -55,5 +56,15 @@ public class Status {
     @PreUpdate
     protected void onUpdate() {
         updatedOn = LocalDateTime.now();
+    }
+
+    @JsonProperty("name")
+    public String getStatusName() {
+        return statusName;
+    }
+
+    @JsonProperty("description")
+    public String getStatusDescription() {
+        return statusDescription;
     }
 }

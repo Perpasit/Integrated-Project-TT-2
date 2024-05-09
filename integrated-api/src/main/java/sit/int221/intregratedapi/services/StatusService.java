@@ -20,7 +20,9 @@ public class StatusService {
     }
 
     public List<Status> getAllStatuses() {
-        return statusRepository.findAll();
+        List<Status> statuses = statusRepository.findAll();
+        System.out.println("Retrieved statuses: " + statuses);
+        return statuses;
     }
 
     public Status getStatusById(Integer id) {
