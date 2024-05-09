@@ -125,6 +125,8 @@ const editTask = (task) => {
 onMounted(async () => {
   await fetchTasks()
 })
+
+console.log(tasks)
 </script>
 
 <template>
