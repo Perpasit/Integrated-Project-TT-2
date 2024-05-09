@@ -11,6 +11,9 @@ const statuses = ref([
     { id: 2, name: 'To Do', description: '' },
     { id: 3, name: 'Doing', description: '' },
     { id: 4, name: 'Done', description: '' },
+    { id: 5, name: 'Guy', description: '' },
+    { id: 6, name: 'Teaw', description: '' },
+
 ])
 const selectedStatus = ref(null)
 const showDeleteConfirmation = ref(false)
