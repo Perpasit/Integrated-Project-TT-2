@@ -29,7 +29,7 @@ public class Status {
     @Column(name = "statusDescription")
     private String statusDescription;
 
-    @Column(name = "colorCode", nullable = false)
+    @Column(name = "colorCode")
     @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "Invalid color code format")
     private String colorCode;
 

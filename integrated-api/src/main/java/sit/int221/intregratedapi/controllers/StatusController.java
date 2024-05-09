@@ -2,6 +2,7 @@ package sit.int221.intregratedapi.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sit.int221.intregratedapi.dtos.StatusCDTO;
 import sit.int221.intregratedapi.dtos.StatusDTO;
 import sit.int221.intregratedapi.dtos.StatusRDTO;
 import sit.int221.intregratedapi.entities.Status;
@@ -34,4 +35,10 @@ public class StatusController {
         StatusRDTO statusRDTO = statusService.getStatusById(id);
         return ResponseEntity.ok(statusRDTO);
     }
+
+    @PostMapping("")
+    public ResponseEntity<StatusCDTO> addNewStatus(@RequestBody Status status) {
+        return statusService.createStatus(status);
+    }
+
 }
