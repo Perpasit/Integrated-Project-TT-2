@@ -5,13 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import sit.int221.intregratedapi.dtos.StatusCDTO;
-import sit.int221.intregratedapi.dtos.StatusDDTO;
-import sit.int221.intregratedapi.dtos.TaskDDTO;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.repositories.StatusRepository;
-import sit.int221.intregratedapi.dtos.StatusRDTO;
 import sit.int221.intregratedapi.utils.ListMapper;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 
@@ -44,22 +41,13 @@ public class StatusService {
         throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
+    @Transactional
     public ResponseEntity<StatusCDTO> createStatus(Status status) {
         setDefaultValuesForStatus(status);
         Status savedStatus = statusRepository.save(status);
         return ResponseEntity.status(HttpStatus.CREATED).body(toStatusCDTO(savedStatus));
     }
 
-    public Status updateStatus(Integer id, Status status) {
-        Status existingStatus = statusRepository.findById(id).orElse(null);
-        if (existingStatus != null) {
-            existingStatus.setStatusName(status.getStatusName().trim());
-            existingStatus.setStatusDescription(status.getStatusDescription() != null ? status.getStatusDescription().trim() : null);
-            existingStatus.setColorCode(status.getColorCode());
-            return statusRepository.save(existingStatus);
-        }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
-    }
 
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
@@ -68,6 +56,31 @@ public class StatusService {
         statusRepository.delete(status);
         StatusDDTO statusDDTO = toStatusDDTO(status);
         return ResponseEntity.ok(statusDDTO);
+    }
+
+    @Transactional
+    public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
+        Status existingStatus = statusRepository.findById(id).orElse(null);
+        if (existingStatus != null) {
+            existingStatus.setStatusName(status.getStatusName().trim());
+            existingStatus.setStatusDescription(status.getStatusDescription() != null ? status.getStatusDescription().trim() : null);
+            existingStatus.setColorCode(status.getColorCode());
+            Status savedStatus = statusRepository.save(existingStatus);
+            return ResponseEntity.ok(toStatusUDTO(savedStatus));
+        }
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
+    }
+
+    private void setDefaultValuesForStatus(Status status) {
+        if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
+            status.setColorCode("#000000");
+        }
+        if (status.getCreatedOn() == null) {
+            status.setCreatedOn(LocalDateTime.now());
+        }
+        if (status.getUpdatedOn() == null) {
+            status.setUpdatedOn(LocalDateTime.now());
+        }
     }
 
     private StatusRDTO toStatusRDTO(Status status) {
@@ -89,17 +102,6 @@ public class StatusService {
                 .build();
     }
 
-    private void setDefaultValuesForStatus(Status status) {
-        if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
-            status.setColorCode("#000000");
-        }
-        if (status.getCreatedOn() == null) {
-            status.setCreatedOn(LocalDateTime.now());
-        }
-        if (status.getUpdatedOn() == null) {
-            status.setUpdatedOn(LocalDateTime.now());
-        }
-    }
 
     private StatusDDTO toStatusDDTO(Status status) {
         return StatusDDTO.builder()
@@ -108,4 +110,13 @@ public class StatusService {
                 .statusDescription(status.getStatusDescription())
                 .build();
     }
+
+    private StatusUDTO toStatusUDTO(Status status) {
+        return StatusUDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
+    }
+
 }
