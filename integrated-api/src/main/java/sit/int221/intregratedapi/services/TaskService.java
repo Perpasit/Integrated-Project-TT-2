@@ -8,12 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import sit.int221.intregratedapi.dtos.TaskCUDDTO;
+import sit.int221.intregratedapi.dtos.TaskDTO;
 import sit.int221.intregratedapi.dtos.TaskRDTO;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.repositories.TaskRepository;
+import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,11 +29,14 @@ public class TaskService {
     private TaskRepository taskRepository;
     @Autowired
     private StatusRepository statusRepository;
+    @Autowired
+    private ListMapper listMapper;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, StatusRepository statusRepository) {
+    public TaskService(TaskRepository taskRepository, StatusRepository statusRepository, ListMapper listMapper) {
         this.taskRepository = taskRepository;
         this.statusRepository = statusRepository;
+        this.listMapper = listMapper;
     }
 
     public Task getTaskById(Integer id) {
@@ -43,11 +49,11 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskRDTO> createNewTaskAndGetRDTO(Task task) {
+    public ResponseEntity<TaskCUDDTO> createNewTask(Task task) {
         setDefaultValuesForTask(task);
-        Task savedTask = taskRepository.save(task);
-        TaskRDTO taskRDTO = toTaskRDTO(savedTask);
-        return ResponseEntity.status(HttpStatus.CREATED).body(taskRDTO);
+        taskRepository.save(task);
+        TaskCUDDTO taskCUDDTO = toTaskCUDDTO(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskCUDDTO);
     }
 
     @Transactional
@@ -81,11 +87,38 @@ public class TaskService {
                             .statusName("No Status")
                             .build()));
             task.setStatus(defaultStatus);
+        } else {
+
+            Optional<Status> optionalStatus = statusRepository.findById(task.getStatus().getId());
+            if (optionalStatus.isPresent()) {
+                task.setStatus(optionalStatus.get());
+            } else {
+
+                Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("No Status")
+                        .orElseGet(() -> statusRepository.save(Status.builder()
+                                .statusName("No Status")
+                                .build()));
+                task.setStatus(defaultStatus);
+            }
         }
-        task.setTaskTitle(StringUtils.isEmpty(task.getTaskTitle()) ? null : task.getTaskTitle().trim());
-        task.setTaskDescription(StringUtils.isEmpty(task.getTaskDescription()) ? null : task.getTaskDescription().trim());
-        task.setTaskAssignees(StringUtils.isEmpty(task.getTaskAssignees()) ? null : task.getTaskAssignees().trim());
-        task.setCreatedOn(LocalDateTime.now());
+
+        if (task.getTaskTitle() == null || task.getTaskTitle().isEmpty()) {
+            task.setTaskTitle("New Task");
+        } else {
+            task.setTaskTitle(task.getTaskTitle().trim());
+        }
+
+        if (task.getTaskDescription() != null) {
+            task.setTaskDescription(task.getTaskDescription().trim());
+        }
+
+        if (task.getTaskAssignees() != null) {
+            task.setTaskAssignees(task.getTaskAssignees().trim());
+        }
+
+        if (task.getCreatedOn() == null) {
+            task.setCreatedOn(LocalDateTime.now());
+        }
         task.setUpdatedOn(LocalDateTime.now());
     }
 
@@ -103,19 +136,47 @@ public class TaskService {
         existingTask.setUpdatedOn(LocalDateTime.now());
     }
 
+    private TaskDTO toTaskDTO(Task task) {
+        return TaskDTO.builder()
+                .title(new StringBuilder(task.getTaskTitle()))
+                .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
+                .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
+                .status(statusRepository.findById(task.getStatus().getId())
+                        .map(Status::getStatusName)
+                        .orElse("No Status"))
+                .build();
+    }
+
     private TaskRDTO toTaskRDTO(Task task) {
-        TaskRDTO taskRDTO = TaskRDTO.builder()
+        return TaskRDTO.builder()
                 .id(task.getId().toString())
-                .title(new StringBuilder(StringUtils.isEmpty(task.getTaskTitle()) ? "" : task.getTaskTitle())) // Check for null
-                .description(new StringBuilder(StringUtils.isEmpty(task.getTaskDescription()) ? "" : task.getTaskDescription())) // Check for null
-                .assignees(new StringBuilder(StringUtils.isEmpty(task.getTaskAssignees()) ? "" : task.getTaskAssignees())) // Check for null
+                .title(new StringBuilder(task.getTaskTitle()))
+                .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
+                .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
                 .status(statusRepository.findById(task.getStatus().getId())
                         .map(Status::getStatusName)
                         .orElse("No Status"))
                 .createdOn(task.getCreatedOn().toString())
                 .updatedOn(task.getUpdatedOn().toString())
                 .build();
-        return taskRDTO;
     }
 
+    private TaskCUDDTO toTaskCUDDTO(Task task) {
+        String statusName;
+        if (task.getStatus() != null) {
+            statusName = statusRepository.findById(task.getStatus().getId())
+                    .map(Status::getStatusName)
+                    .orElse("No Status");
+        } else {
+            statusName = "No Status";
+        }
+
+        return TaskCUDDTO.builder()
+                .id(task.getId().toString())
+                .title(task.getTaskTitle() != null ? task.getTaskTitle() : "")
+                .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
+                .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
+                .status(statusName)
+                .build();
+    }
 }
