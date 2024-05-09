@@ -30,7 +30,6 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "statusId", foreignKey = @ForeignKey(name = "fk_status"))
-    @JsonIgnore
     private Status status;
 
     @Column(name = "createdOn", nullable = false)

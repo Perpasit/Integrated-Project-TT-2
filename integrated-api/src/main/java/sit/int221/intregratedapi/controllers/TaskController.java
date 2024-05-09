@@ -2,6 +2,7 @@ package sit.int221.intregratedapi.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sit.int221.intregratedapi.dtos.TaskCUDDTO;
 import sit.int221.intregratedapi.dtos.TaskDTO;
 import sit.int221.intregratedapi.dtos.TaskRDTO;
 import sit.int221.intregratedapi.entities.Task;
@@ -35,8 +36,8 @@ public class TaskController {
         return ResponseEntity.ok(taskRDTO);
     }
 
-    @PostMapping
-    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
+    @PostMapping("")
+    public ResponseEntity<TaskCUDDTO> addNewTask(@RequestBody Task task) {
         return taskService.createNewTask(task);
     }
 

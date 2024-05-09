@@ -5,7 +5,6 @@ import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class StatusService {
@@ -39,9 +38,5 @@ public class StatusService {
 
     public void deleteStatus(Integer id) {
         statusRepository.deleteById(id);
-    }
-
-    public Optional<Status> findByStatusName(String statusName) {
-        return statusRepository.findByStatusNameIgnoreCase(statusName);
     }
 }
