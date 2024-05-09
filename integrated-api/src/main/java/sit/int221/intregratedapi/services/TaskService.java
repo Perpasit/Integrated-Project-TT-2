@@ -77,29 +77,16 @@ public class TaskService {
     }
 
     private void setDefaultValuesForTask(Task task) {
-        if (task.getStatus() == null) {
-            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("No Status")
+        if (task.getStatus() == null || task.getStatus().getId() == null) {
+            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("NO_STATUS")
                     .orElseGet(() -> statusRepository.save(Status.builder()
-                            .statusName("No Status")
+                            .statusName("NO_STATUS")
                             .build()));
             task.setStatus(defaultStatus);
-        } else {
-
-            Optional<Status> optionalStatus = statusRepository.findById(task.getStatus().getId());
-            if (optionalStatus.isPresent()) {
-                task.setStatus(optionalStatus.get());
-            } else {
-
-                Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("No Status")
-                        .orElseGet(() -> statusRepository.save(Status.builder()
-                                .statusName("No Status")
-                                .build()));
-                task.setStatus(defaultStatus);
-            }
         }
 
-        if (task.getTaskTitle() == null || task.getTaskTitle().isEmpty()) {
-            task.setTaskTitle("New Task");
+        if (task.getTaskTitle() == null) {
+            throw new IllegalArgumentException("Task title is required");
         } else {
             task.setTaskTitle(task.getTaskTitle().trim());
         }
@@ -123,9 +110,9 @@ public class TaskService {
         existingTask.setTaskDescription(task.getTaskDescription());
         existingTask.setTaskAssignees(task.getTaskAssignees());
         existingTask.setStatus(Optional.ofNullable(task.getStatus()).orElseGet(() -> {
-            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("No Status")
+            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("NO_STATUS")
                     .orElseGet(() -> statusRepository.save(Status.builder()
-                            .statusName("No Status")
+                            .statusName("NO_STATUS")
                             .build()));
             return defaultStatus;
         }));
@@ -139,7 +126,7 @@ public class TaskService {
                 .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
                 .status(statusRepository.findById(task.getStatus().getId())
                         .map(Status::getStatusName)
-                        .orElse("No Status"))
+                        .orElse("NO_STATUS"))
                 .build();
     }
 
@@ -151,25 +138,22 @@ public class TaskService {
                 .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
                 .status(statusRepository.findById(task.getStatus().getId())
                         .map(Status::getStatusName)
-                        .orElse("No Status"))
+                        .orElse("NO_STATUS"))
                 .createdOn(task.getCreatedOn().toString())
                 .updatedOn(task.getUpdatedOn().toString())
                 .build();
     }
 
     private TaskCDTO toTaskCUDDTO(Task task) {
-        String statusName;
-        if (task.getStatus() != null) {
-            statusName = statusRepository.findById(task.getStatus().getId())
-                    .map(Status::getStatusName)
-                    .orElse("No Status");
-        } else {
-            statusName = "No Status";
-        }
+        String statusName = (task.getStatus() != null && task.getStatus().getId() != null)
+                ? statusRepository.findById(task.getStatus().getId())
+                .map(Status::getStatusName)
+                .orElse("NO_STATUS")
+                : "NO_STATUS";
 
         return TaskCDTO.builder()
                 .id(task.getId().toString())
-                .title(task.getTaskTitle() != null ? task.getTaskTitle() : "")
+                .title(task.getTaskTitle())
                 .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
                 .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
                 .status(statusName)
@@ -185,17 +169,12 @@ public class TaskService {
     }
 
     private TaskUDTO toTaskUDTO(Task task) {
-        String statusName;
-        if (task.getStatus() != null) {
-            statusName = task.getStatus().getStatusName();
-        } else {
-            statusName = "No Status";
-        }
+        String statusName = task.getStatus() != null ? task.getStatus().getStatusName() : "NO_STATUS";
 
         return TaskUDTO.builder()
                 .title(task.getTaskTitle())
-                .description(task.getTaskDescription())
-                .assignees(task.getTaskAssignees())
+                .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
+                .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
                 .status(statusName)
                 .build();
     }
