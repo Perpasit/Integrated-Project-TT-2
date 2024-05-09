@@ -106,9 +106,9 @@ public class TaskService {
     private TaskRDTO toTaskRDTO(Task task) {
         TaskRDTO taskRDTO = TaskRDTO.builder()
                 .id(task.getId().toString())
-                .title(new StringBuilder(task.getTaskTitle()))
-                .description(new StringBuilder(task.getTaskDescription()))
-                .assignees(new StringBuilder(task.getTaskAssignees()))
+                .title(new StringBuilder(StringUtils.isEmpty(task.getTaskTitle()) ? "" : task.getTaskTitle())) // Check for null
+                .description(new StringBuilder(StringUtils.isEmpty(task.getTaskDescription()) ? "" : task.getTaskDescription())) // Check for null
+                .assignees(new StringBuilder(StringUtils.isEmpty(task.getTaskAssignees()) ? "" : task.getTaskAssignees())) // Check for null
                 .status(statusRepository.findById(task.getStatus().getId())
                         .map(Status::getStatusName)
                         .orElse("No Status"))
@@ -117,4 +117,5 @@ public class TaskService {
                 .build();
         return taskRDTO;
     }
+
 }
