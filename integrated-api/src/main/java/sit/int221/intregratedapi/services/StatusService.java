@@ -36,7 +36,6 @@ public class StatusService {
 
     public List<Status> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();
-        System.out.println("Retrieved statuses: " + statuses);
         return statuses;
     }
 
@@ -67,42 +66,24 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
-        // 1. Find the status with the given id
+        if (id.equals(newId)) {
+            throw new IllegalArgumentException("The status you are transferring to cannot be the status you are deleting!");
+        }
+
         Status statusToDelete = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
 
-        // 2. Find the status with the given newId
         Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " does not exist!"));
+                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + "that you are about to transfer does not exist!"));
 
-        // 3. Update the tasks that were using the deleted status to use the new status
         List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
         for (Task task : tasksToUpdate) {
             task.setStatus(newStatus);
         }
 
-        // 4. Delete the status with the given id
         statusRepository.delete(statusToDelete);
 
-        // 5. Return the deleted status as a StatusTFDDTO
         return ResponseEntity.ok(toStatusTFDDTO(statusToDelete));
-    }
-
-
-
-    private void updateTasksToUseNewStatus(Integer deletedStatusId, Integer newStatusId) {
-        // Find the tasks that are using the deleted status
-        List<Task> tasksToUpdate = taskRepository.findByStatusId(deletedStatusId);
-
-        // Find the new status object
-        Status newStatus = statusRepository.findById(newStatusId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newStatusId + " does not exist!"));
-
-        // Update the tasks to use the new status
-        for (Task task : tasksToUpdate) {
-            task.setStatus(newStatus);
-            taskRepository.save(task);
-        }
     }
 
     private StatusTFDDTO toStatusTFDDTO(Status status) {
