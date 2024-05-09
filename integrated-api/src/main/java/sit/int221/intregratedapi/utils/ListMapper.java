@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ListMapper {
-    private static final ModelMapper _modelMapper_;
+    private static final ModelMapper modelMapper;
 
     static {
-        _modelMapper_ = new ModelMapper();
-        _modelMapper_.getConfiguration()
+        modelMapper = new ModelMapper();
+        modelMapper.getConfiguration()
                 .setMatchingStrategy(MatchingStrategies.STRICT)
                 .setFieldMatchingEnabled(true)
                 .setSkipNullEnabled(false);
 
         // Add mappings for title and assignees
-        _modelMapper_.addMappings(new PropertyMap<Task, TaskDTO>() {
+        modelMapper.addMappings(new PropertyMap<Task, TaskDTO>() {
             @Override
             protected void configure() {
                 map().setTitle(source.getTaskTitle());
@@ -34,11 +34,11 @@ public class ListMapper {
 
     public static <S, T> List<T> mapList(List<S> source, Class<T> targetClass) {
         return source.stream()
-                .map(entity -> _modelMapper_.map(entity, targetClass))
+                .map(entity -> modelMapper.map(entity, targetClass))
                 .collect(Collectors.toList());
     }
 
     public static <S, T> T mapObject(S source, Class<T> targetClass) {
-        return _modelMapper_.map(source, targetClass);
+        return modelMapper.map(source, targetClass);
     }
 }
