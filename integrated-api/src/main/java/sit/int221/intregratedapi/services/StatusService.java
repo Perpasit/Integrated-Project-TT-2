@@ -1,11 +1,15 @@
 package sit.int221.intregratedapi.services;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import sit.int221.intregratedapi.dtos.StatusCDTO;
+import sit.int221.intregratedapi.dtos.StatusDDTO;
+import sit.int221.intregratedapi.dtos.TaskDDTO;
 import sit.int221.intregratedapi.entities.Status;
+import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.dtos.StatusRDTO;
 import sit.int221.intregratedapi.utils.ListMapper;
@@ -57,12 +61,13 @@ public class StatusService {
         throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
-    public void deleteStatus(Integer id) {
-        if (statusRepository.existsById(id)) {
-            statusRepository.deleteById(id);
-        } else {
-            throw new ItemNotFoundException("Status " + id + " does not exist!");
-        }
+    @Transactional
+    public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
+        Status status = statusRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+        statusRepository.delete(status);
+        StatusDDTO statusDDTO = toStatusDDTO(status);
+        return ResponseEntity.ok(statusDDTO);
     }
 
     private StatusRDTO toStatusRDTO(Status status) {
@@ -86,7 +91,7 @@ public class StatusService {
 
     private void setDefaultValuesForStatus(Status status) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
-            status.setColorCode("#000000"); // Default color code is black
+            status.setColorCode("#000000");
         }
         if (status.getCreatedOn() == null) {
             status.setCreatedOn(LocalDateTime.now());
@@ -94,5 +99,13 @@ public class StatusService {
         if (status.getUpdatedOn() == null) {
             status.setUpdatedOn(LocalDateTime.now());
         }
+    }
+
+    private StatusDDTO toStatusDDTO(Status status) {
+        return StatusDDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
     }
 }
