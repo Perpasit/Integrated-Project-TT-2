@@ -1,47 +1,122 @@
 package sit.int221.intregratedapi.services;
 
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
+import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.repositories.StatusRepository;
+import sit.int221.intregratedapi.utils.ListMapper;
+import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class StatusService {
     private final StatusRepository statusRepository;
+    private final ListMapper listMapper;
 
-    public StatusService(StatusRepository statusRepository) {
+    @Autowired
+    public StatusService(StatusRepository statusRepository, ListMapper listMapper) {
         this.statusRepository = statusRepository;
+        this.listMapper = listMapper;
     }
 
     public List<Status> getAllStatuses() {
-        return statusRepository.findAll();
+        List<Status> statuses = statusRepository.findAll();
+        System.out.println("Retrieved statuses: " + statuses);
+        return statuses;
     }
 
-    public Status getStatusById(Integer id) {
-        return statusRepository.findById(id).orElse(null);
+    public StatusRDTO getStatusById(Integer id) {
+        Status status = statusRepository.findById(id).orElse(null);
+        if (status != null) {
+            return toStatusRDTO(status);
+        }
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
-    public Status createStatus(Status status) {
-        return statusRepository.save(status);
+    @Transactional
+    public ResponseEntity<StatusCDTO> createStatus(Status status) {
+        setDefaultValuesForStatus(status);
+        Status savedStatus = statusRepository.save(status);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toStatusCDTO(savedStatus));
     }
 
-    public Status updateStatus(Integer id, Status status) {
+
+    @Transactional
+    public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
+        Status status = statusRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+        statusRepository.delete(status);
+        StatusDDTO statusDDTO = toStatusDDTO(status);
+        return ResponseEntity.ok(statusDDTO);
+    }
+
+    @Transactional
+    public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
         Status existingStatus = statusRepository.findById(id).orElse(null);
         if (existingStatus != null) {
-            existingStatus.setStatusName(status.getStatusName());
-            existingStatus.setStatusDescription(status.getStatusDescription());
-            return statusRepository.save(existingStatus);
+            existingStatus.setStatusName(status.getStatusName().trim());
+            existingStatus.setStatusDescription(status.getStatusDescription() != null ? status.getStatusDescription().trim() : null);
+            existingStatus.setColorCode(status.getColorCode());
+            Status savedStatus = statusRepository.save(existingStatus);
+            return ResponseEntity.ok(toStatusUDTO(savedStatus));
         }
-        return null;
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
-    public void deleteStatus(Integer id) {
-        statusRepository.deleteById(id);
+    private void setDefaultValuesForStatus(Status status) {
+        if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
+            status.setColorCode("#000000");
+        }
+        if (status.getCreatedOn() == null) {
+            status.setCreatedOn(LocalDateTime.now());
+        }
+        if (status.getUpdatedOn() == null) {
+            status.setUpdatedOn(LocalDateTime.now());
+        }
     }
 
-    public Optional<Status> findByStatusName(String statusName) {
-        return statusRepository.findByStatusNameIgnoreCase(statusName);
+    private StatusRDTO toStatusRDTO(Status status) {
+        return StatusRDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .colorCode(status.getColorCode())
+                .createdOn(status.getCreatedOn().format(DateTimeFormatter.ISO_DATE_TIME))
+                .updatedOn(status.getUpdatedOn().format(DateTimeFormatter.ISO_DATE_TIME))
+                .build();
     }
+
+    private StatusCDTO toStatusCDTO(Status status) {
+        return StatusCDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
+    }
+
+
+    private StatusDDTO toStatusDDTO(Status status) {
+        return StatusDDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
+    }
+
+    private StatusUDTO toStatusUDTO(Status status) {
+        return StatusUDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
+    }
+
 }

@@ -19,6 +19,7 @@ public class TaskDTO {
         this.title = (title == null) ? new StringBuilder() : new StringBuilder(title);
     }
 
+
     public void setAssignees(String assignees) {
         this.assignees = (assignees == null) ? new StringBuilder() : new StringBuilder(assignees);
     }
