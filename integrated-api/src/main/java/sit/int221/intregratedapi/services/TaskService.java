@@ -169,7 +169,14 @@ public class TaskService {
     }
 
     private TaskUDTO toTaskUDTO(Task task) {
-        String statusName = task.getStatus() != null ? task.getStatus().getStatusName() : "NO_STATUS";
+        String statusName;
+        if (task.getStatus() != null && task.getStatus().getId() != null) {
+            Status status = statusRepository.findById(task.getStatus().getId())
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + task.getStatus().getId() + " does not exist!"));
+            statusName = status.getStatusName();
+        } else {
+            statusName = "No Status";
+        }
 
         return TaskUDTO.builder()
                 .title(task.getTaskTitle())
