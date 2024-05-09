@@ -9,6 +9,7 @@ import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.repositories.StatusRepository;
+import sit.int221.intregratedapi.repositories.TaskRepository;
 import sit.int221.intregratedapi.utils.ListMapper;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 
@@ -18,12 +19,18 @@ import java.util.List;
 
 @Service
 public class StatusService {
-    private final StatusRepository statusRepository;
-    private final ListMapper listMapper;
+    @Autowired
+    private  StatusRepository statusRepository;
+    @Autowired
+    private TaskRepository taskRepository;
+    @Autowired
+    private  ListMapper listMapper;
+
 
     @Autowired
     public StatusService(StatusRepository statusRepository, ListMapper listMapper) {
         this.statusRepository = statusRepository;
+        this.taskRepository = taskRepository;
         this.listMapper = listMapper;
     }
 
@@ -56,6 +63,54 @@ public class StatusService {
         statusRepository.delete(status);
         StatusDDTO statusDDTO = toStatusDDTO(status);
         return ResponseEntity.ok(statusDDTO);
+    }
+
+    @Transactional
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
+        // 1. Find the status with the given id
+        Status statusToDelete = statusRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+
+        // 2. Find the status with the given newId
+        Status newStatus = statusRepository.findById(newId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " does not exist!"));
+
+        // 3. Update the tasks that were using the deleted status to use the new status
+        List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
+        for (Task task : tasksToUpdate) {
+            task.setStatus(newStatus);
+        }
+
+        // 4. Delete the status with the given id
+        statusRepository.delete(statusToDelete);
+
+        // 5. Return the deleted status as a StatusTFDDTO
+        return ResponseEntity.ok(toStatusTFDDTO(statusToDelete));
+    }
+
+
+
+    private void updateTasksToUseNewStatus(Integer deletedStatusId, Integer newStatusId) {
+        // Find the tasks that are using the deleted status
+        List<Task> tasksToUpdate = taskRepository.findByStatusId(deletedStatusId);
+
+        // Find the new status object
+        Status newStatus = statusRepository.findById(newStatusId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + newStatusId + " does not exist!"));
+
+        // Update the tasks to use the new status
+        for (Task task : tasksToUpdate) {
+            task.setStatus(newStatus);
+            taskRepository.save(task);
+        }
+    }
+
+    private StatusTFDDTO toStatusTFDDTO(Status status) {
+        return StatusTFDDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .build();
     }
 
     @Transactional
