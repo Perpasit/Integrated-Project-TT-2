@@ -2,10 +2,7 @@ package sit.int221.intregratedapi.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sit.int221.intregratedapi.dtos.TaskCDTO;
-import sit.int221.intregratedapi.dtos.TaskDDTO;
-import sit.int221.intregratedapi.dtos.TaskDTO;
-import sit.int221.intregratedapi.dtos.TaskRDTO;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
@@ -47,8 +44,8 @@ public class TaskController {
          return taskService.removeTask(id);
      }
 
-    // @PutMapping("/{id}")
-    // public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
-    //     return taskService.updateTask(id, task);
-    // }
+     @PutMapping("/{id}")
+     public ResponseEntity<TaskUDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
+         return taskService.updateTask(id, task);
+     }
 }
