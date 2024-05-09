@@ -1,13 +1,25 @@
 package sit.int221.intregratedapi.dtos;
 
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import sit.int221.intregratedapi.entities.TaskStatus;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TaskDTO {
-    private Integer id;
-    private String title;
-    private String assignees;
-    private StatusDTO status; // Make sure this matches your mappings
+    private String id;
+    private StringBuilder title;
+    private StringBuilder assignees;
+    private String status;
+
+    public void setTitle(String title) {
+        this.title = (title == null) ? new StringBuilder() : new StringBuilder(title);
+    }
+
+    public void setAssignees(String assignees) {
+        this.assignees = (assignees == null) ? new StringBuilder() : new StringBuilder(assignees);
+    }
 }
