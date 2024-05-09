@@ -2,9 +2,7 @@ package sit.int221.intregratedapi.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sit.int221.intregratedapi.dtos.StatusCDTO;
-import sit.int221.intregratedapi.dtos.StatusDTO;
-import sit.int221.intregratedapi.dtos.StatusRDTO;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.services.StatusService;
 import sit.int221.intregratedapi.utils.ListMapper;
@@ -40,5 +38,12 @@ public class StatusController {
     public ResponseEntity<StatusCDTO> addNewStatus(@RequestBody Status status) {
         return statusService.createStatus(status);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
+        return statusService.removeStatus(id);
+    }
+
+//    @PutMapping()
 
 }
