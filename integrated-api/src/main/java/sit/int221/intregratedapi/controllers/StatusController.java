@@ -1,5 +1,6 @@
 package sit.int221.intregratedapi.controllers;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.intregratedapi.dtos.*;
@@ -42,6 +43,11 @@ public class StatusController {
     @DeleteMapping("/{id}")
     public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
         return statusService.removeStatus(id);
+    }
+
+    @DeleteMapping("/{id}/{newId}")
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable Integer id, @PathVariable Integer newId) {
+        return statusService.deleteTransferStatus(id,newId);
     }
 
     @PutMapping("/{id}")
