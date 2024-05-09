@@ -77,7 +77,7 @@ export const useTaskStore = defineStore("task", {
         case "Done":
           return "bg-green-400 text-white rounded-md px-3 py-1"
         default:
-          return "bg-violet-400 text-white rounded-md px-3 py-1"
+          return "bg-red-400 text-white rounded-md px-3 py-1"
       }
     }
   },
