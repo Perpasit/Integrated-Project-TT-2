@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref,computed } from "vue"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 import { useRoute, useRouter } from 'vue-router';
 
@@ -80,6 +80,13 @@ const goBack = () => {
 //       }
 //     editedTask.value = data
 // })
+
+const formatStatus = (status) => {
+  return status.toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+};
+console.log(editedTask.value.status)
 </script>
 
 
@@ -136,7 +143,7 @@ const goBack = () => {
                   <option value="DOING">Doing</option>
                   <option value="DONE">Done</option>
                 </select> -->
-                <input readonly v-model="editedTask.status"
+                <input readonly :value="formatStatus(editedTask.status)"
                   class="shadow-sm p-1 block w-full sm:text-sm border border-gray-300 rounded-md">
                 <!-- <option value="NO_STATUS">No Status</option>
                   <option value="TO_DO">To Do</option>
