@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import sit.int221.intregratedapi.dtos.TaskCDTO;
-import sit.int221.intregratedapi.dtos.TaskDDTO;
-import sit.int221.intregratedapi.dtos.TaskDTO;
-import sit.int221.intregratedapi.dtos.TaskRDTO;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
@@ -65,13 +62,13 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskRDTO> updateTaskAndGetRDTO(Integer taskId, Task task) {
+    public ResponseEntity<TaskUDTO> updateTask(Integer taskId, Task task) {
         Task existingTask = getTaskById(taskId);
         setDefaultValuesForTask(task);
         updateTaskFromDTO(existingTask, task);
         Task updatedTask = taskRepository.save(existingTask);
-        TaskRDTO taskRDTO = toTaskRDTO(updatedTask);
-        return ResponseEntity.ok(taskRDTO);
+        TaskUDTO taskUDTO = toTaskUDTO(updatedTask);
+        return ResponseEntity.ok(taskUDTO);
     }
 
     public TaskRDTO getTaskRDTOById(Integer id) {
@@ -184,6 +181,22 @@ public class TaskService {
                 .title(task.getTaskTitle())
                 .assignees(task.getTaskAssignees())
                 .status(task.getStatus().getStatusName())
+                .build();
+    }
+
+    private TaskUDTO toTaskUDTO(Task task) {
+        String statusName;
+        if (task.getStatus() != null) {
+            statusName = task.getStatus().getStatusName();
+        } else {
+            statusName = "No Status";
+        }
+
+        return TaskUDTO.builder()
+                .title(task.getTaskTitle())
+                .description(task.getTaskDescription())
+                .assignees(task.getTaskAssignees())
+                .status(statusName)
                 .build();
     }
 }
