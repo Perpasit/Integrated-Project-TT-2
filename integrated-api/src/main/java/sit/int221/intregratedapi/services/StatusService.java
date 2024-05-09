@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.repositories.StatusRepository;
+import sit.int221.intregratedapi.dtos.StatusRDTO;
 import sit.int221.intregratedapi.utils.ListMapper;
+import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -25,8 +28,23 @@ public class StatusService {
         return statuses;
     }
 
-    public Status getStatusById(Integer id) {
-        return statusRepository.findById(id).orElse(null);
+    public StatusRDTO getStatusById(Integer id) {
+        Status status = statusRepository.findById(id).orElse(null);
+        if (status != null) {
+            return toStatusRDTO(status);
+        }
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
+    }
+
+    private StatusRDTO toStatusRDTO(Status status) {
+        return StatusRDTO.builder()
+                .id(status.getId())
+                .statusName(status.getStatusName())
+                .statusDescription(status.getStatusDescription())
+                .colorCode(status.getColorCode())
+                .createdOn(status.getCreatedOn().format(DateTimeFormatter.ISO_DATE_TIME))
+                .updatedOn(status.getUpdatedOn().format(DateTimeFormatter.ISO_DATE_TIME))
+                .build();
     }
 
     public Status createStatus(Status status) {
@@ -40,10 +58,14 @@ public class StatusService {
             existingStatus.setStatusDescription(status.getStatusDescription());
             return statusRepository.save(existingStatus);
         }
-        return null;
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
     public void deleteStatus(Integer id) {
-        statusRepository.deleteById(id);
+        if (statusRepository.existsById(id)) {
+            statusRepository.deleteById(id);
+        } else {
+            throw new ItemNotFoundException("Status " + id + " does not exist!");
+        }
     }
 }

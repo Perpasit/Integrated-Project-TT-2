@@ -1,11 +1,9 @@
 package sit.int221.intregratedapi.controllers;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sit.int221.intregratedapi.dtos.StatusDTO;
+import sit.int221.intregratedapi.dtos.StatusRDTO;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.services.StatusService;
 import sit.int221.intregratedapi.utils.ListMapper;
@@ -29,5 +27,11 @@ public class StatusController {
         List<Status> statuses = statusService.getAllStatuses();
         List<StatusDTO> statusDTOs = listMapper.mapList(statuses, StatusDTO.class);
         return ResponseEntity.ok(statusDTOs);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {
+        StatusRDTO statusRDTO = statusService.getStatusById(id);
+        return ResponseEntity.ok(statusRDTO);
     }
 }
