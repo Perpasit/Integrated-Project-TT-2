@@ -1,17 +1,22 @@
 package sit.int221.intregratedapi.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.repositories.StatusRepository;
+import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.util.List;
 
 @Service
 public class StatusService {
     private final StatusRepository statusRepository;
+    private final ListMapper listMapper;
 
-    public StatusService(StatusRepository statusRepository) {
+    @Autowired
+    public StatusService(StatusRepository statusRepository, ListMapper listMapper) {
         this.statusRepository = statusRepository;
+        this.listMapper = listMapper;
     }
 
     public List<Status> getAllStatuses() {
