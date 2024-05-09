@@ -44,20 +44,23 @@ const saveTask = async (updatedTask) => {
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = task.status.toLowerCase()
-    let formatted = ""
-    let capitalizeNext = true
-    for (let i = 0; i < status.length; i++) {
-      const char = status[i]
-      if (char === "_") {
-        formatted += " "
-        capitalizeNext = true
-      } else {
-        formatted += capitalizeNext ? char.toUpperCase() : char
-        capitalizeNext = false
-      }
-    }
-    return formatted
+    const status = task.status.toLowerCase().replace(/_/g, ' ').replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
+
+    return status
+
+    // let formatted = ""
+    // let capitalizeNext = true
+    // for (let i = 0; i < status.length; i++) {
+    //   const char = status[i]
+    //   if (char === "_") {
+    //     formatted += " "
+    //     capitalizeNext = true
+    //   } else {
+    //     formatted += capitalizeNext ? char.toUpperCase() : char
+    //     capitalizeNext = false
+    //   }
+    // }
+    // return formatted
   }
 })
 
@@ -125,6 +128,8 @@ const editTask = (task) => {
 onMounted(async () => {
   await fetchTasks()
 })
+
+console.log(tasks)
 </script>
 
 <template>
