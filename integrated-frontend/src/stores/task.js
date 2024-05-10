@@ -1,61 +1,73 @@
-import { defineStore } from "pinia";
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
+import { defineStore } from "pinia"
+import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
-    tasks: [],
+    tasks: []
   }),
   getters: {
     getTasks: (state) => state.tasks,
-    getTaskById: (state) => (taskId) => state.tasks.find((task) => task.id === taskId),
+    getTaskById: (state) => (taskId) =>
+      state.tasks.find((task) => task.id === taskId)
   },
   actions: {
     async fetchAllTasks() {
       try {
-        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks`);
-        this.tasks = data || [];
+        const data = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks`
+        )
+        this.tasks = data || []
       } catch (error) {
-        console.error("Error fetching tasks:", error);
-        throw error;
+        console.error("Error fetching tasks:", error)
+        throw error
       }
     },
     async addTask(newTask) {
       try {
-        newTask.title = newTask.title.trim();
-        newTask.description = newTask.description.trim();
-        newTask.assignees = newTask.assignees.trim();
-        newTask.status = { id: newTask.status }; // Use the status id
-        const createdTask = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, newTask);
-        this.tasks.push(createdTask);
+        const formattedTask = {
+          taskTitle: newTask.title.trim(),
+          description: newTask.description.trim(),
+          assignees: newTask.assignees.trim(),
+          status: { id: newTask.status }
+        }
+
+        const createdTask = await postItem(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
+          formattedTask
+        )
+        this.tasks.push(createdTask)
       } catch (error) {
-        console.error("Error adding task:", error);
-        throw error;
+        console.error("Error adding task:", error)
+        throw error
       }
     },
     async updateTask(id, updatedTask) {
       try {
-        updatedTask.title = updatedTask.title.trim();
-        updatedTask.description = updatedTask.description.trim();
-        updatedTask.assignees = updatedTask.assignees.trim();
-        updatedTask.status = { id: updatedTask.status }; // Use the status id
-        const updatedData = await putItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`, updatedTask);
-        const index = this.tasks.findIndex((task) => task.id === id);
+        updatedTask.title = updatedTask.title.trim()
+        updatedTask.description = updatedTask.description.trim()
+        updatedTask.assignees = updatedTask.assignees.trim()
+        updatedTask.status = { id: updatedTask.status }
+        const updatedData = await putItem(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
+          updatedTask
+        )
+        const index = this.tasks.findIndex((task) => task.id === id)
         if (index !== -1) {
-          this.tasks.splice(index, 1, updatedData);
+          this.tasks.splice(index, 1, updatedData)
         }
       } catch (error) {
-        console.error("Error updating task:", error);
-        throw error;
+        console.error("Error updating task:", error)
+        throw error
       }
     },
     async deleteTask(id) {
       try {
-        await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
-        this.tasks = this.tasks.filter((task) => task.id !== id);
+        await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
+        this.tasks = this.tasks.filter((task) => task.id !== id)
       } catch (error) {
-        console.error("Error deleting task:", error);
-        throw error;
+        console.error("Error deleting task:", error)
+        throw error
       }
-    },
-  },
-});
+    }
+  }
+})
