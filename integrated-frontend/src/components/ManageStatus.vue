@@ -25,29 +25,28 @@ const goHome = () => {
 const selectedStatusDetail = ref(null)
 
 const showStatusDetail = (status) => {
-
-  router.push({
-    name: "statusDetail",
-    params: { statusId: status.id },
-    state: { status }
-  })
+    router.push({
+        name: "statusDetail",
+        params: { statusId: status.id },
+        state: { status }
+    })
 }
 
 const editStatus = (status) => {
-  if (status && status.id) {
-    router.push({ name: "EditStatus", params: { id: status.id } })
-  }
+    if (status && status.id) {
+        router.push({ name: "EditStatus", params: { id: status.id } })
+    }
 }
 
 const saveStatus = (status) => {
-  if (status.id) {
-    const index = statuses.value.findIndex((s) => s.id === status.id)
-    statuses.value.splice(index, 1, { ...status })
-  } else {
-    status.id = Date.now()
-    statuses.value.push(status)
-  }
-  selectedStatus.value = null
+    if (status.id) {
+        const index = statuses.value.findIndex((s) => s.id === status.id)
+        statuses.value.splice(index, 1, { ...status })
+    } else {
+        status.id = Date.now()
+        statuses.value.push(status)
+    }
+    selectedStatus.value = null
 }
 
 const confirmDelete = (status) => {
@@ -56,47 +55,30 @@ const confirmDelete = (status) => {
 }
 
 const deleteStatus = async () => {
+    showDeleteConfirmation.value = false
+    const selectedStatus = await statusStore.deleteStatus(
+        selectedStatusToDelete.id
+    )
+    if (selectedStatus.status === 404) {
+        showNotFoundModal.value = true
+    } else {
+        showSuccessModal.value = true
+    }
+    selectedStatusToDelete = null
 
-
-// const deleteTask = async () => {
-//     showDeleteConfirmation.value = false
-//     const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
-//     if (selectedTask.status === 404) {
-//         showNotFoundModal.value = true
-//     } else {
-//         showSuccessModal.value = true
-//     }
-//     selectedTaskToDelete = null
-//     await fetchTasks()
-
-//     setTimeout(() => {
-//         closeDeleteModal()
-//     }, 3000)
-
-  showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(
-    selectedStatusToDelete.id
-  )
-  if (selectedStatus.status === 404) {
-    showNotFoundModal.value = true
-  } else {
-    showSuccessModal.value = true
-  }
-  selectedStatusToDelete = null
-
-  await fetchStatuses()
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
+    await fetchStatuses()
+    setTimeout(() => {
+        closeDeleteModal()
+    }, 3000)
 }
 
 function closeDeleteModal() {
-  showSuccessModal.value = false
-  showNotFoundModal.value = false
+    showSuccessModal.value = false
+    showNotFoundModal.value = false
 }
 
 const fetchStatuses = async () => {
-  await statusStore.fetchAllStatuses()
+    await statusStore.fetchAllStatuses()
 }
 
 const cancelDelete = () => {
@@ -105,10 +87,9 @@ const cancelDelete = () => {
 }
 
 const formatStatus = (status) => {
-
-  return status.toUpperCase()
-    .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    return status.toUpperCase()
+        .replace(/_/g, " ")
+        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
 
@@ -135,30 +116,23 @@ onMounted(async () => {
                     </thead>
 
 
-          <tbody>
-            <tr
-              v-for="(status, index) in statuses"
-              :key="status.id"
-              class="bg-white shadow-lg hover:bg-gray-100"
-            >
-              <td class="px-4 py-5 rounded-l-lg text-center">
-                {{ index + 1 }}
-              </td>
+                    <tbody>
+                        <tr v-for="(status, index) in statuses" :key="status.id"
+                            class="bg-white shadow-lg hover:bg-gray-100">
+                            <td class="px-4 py-5 rounded-l-lg text-center">
+                                {{ index + 1 }}
+                            </td>
 
-              <td
-                class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
-                @click="showStatusDetail(status)"
-              >
-                {{ formatStatus(status.name) }}
-              </td>
-              <td
-                class="itbkk-status-description px-4 py-2 truncate text-center"
-              >
-                {{ status.description }}
-              </td>
-              <td class="px-4 py-4 text-center">
+                            <td class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
+                                @click="showStatusDetail(status)">
+                                {{ formatStatus(status.name) }}
+                            </td>
+                            <td class="itbkk-status-description px-4 py-2 truncate text-center">
+                                {{ status.description }}
+                            </td>
+                            <td class="px-4 py-4 text-center">
                                 <div class="w-6 h-6 rounded-full mx-auto "
-                                    :style=" statusStore.getStatusClass(status.name) "></div>
+                                    :style="statusStore.getStatusClass(status.name)"></div>
                             </td>
 
 
@@ -194,14 +168,48 @@ onMounted(async () => {
         No status
       </div> -->
 
-            <AddEditStatus v-if="selectedStatus" :show="!!selectedStatus" :status="selectedStatus"
-                @close="selectedStatus = null" @save="saveStatus" />
+      <AddEditStatus
+        v-if="selectedStatus"
+        :show="!!selectedStatus"
+        :status="selectedStatus"
+        @close="selectedStatus = null"
+        @save="saveStatus"
+      />
+    </div>
+
+
+    </div>
+
+
+    <div
+      v-if="showDeleteConfirmation"
+      class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
+    >
+      <div class="bg-white p-8 rounded-lg">
+        <p class="text-lg mb-4 itbkk-message">
+          Do you want to delete the
+          <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
+          status?
+        </p>
+
+        <div class="flex justify-end">
+          <button
+            class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+            @click="cancelDelete"
+          >
+            Cancel
+          </button>
+          <button
+            class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            @click="deleteStatus(selectedStatus)"
+          >
+            Delete
+          </button>
         </div>
+      </div>
+    </div>
 
-
-  </div>
-
-  <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
       <div
         class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
@@ -302,6 +310,9 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-  <router-view />
-</template>
 
+
+    <router-view />
+
+
+</template>
