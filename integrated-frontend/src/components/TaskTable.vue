@@ -112,7 +112,9 @@ const editTask = (task) => {
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   await statusStore.fetchAllStatuses()
+  await fetchTasks()
 })
+
 </script>
 
 <template>
