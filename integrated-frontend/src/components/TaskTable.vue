@@ -46,7 +46,7 @@ const formattedStatus = computed(() => {
   return (task) => {
     const status = statusStore.getStatusById(task.status)
     if (status) {
-      return status.name.toLowerCase()
+      return status.name
         .replace(/_/g, " ")
         .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {

@@ -50,7 +50,7 @@ const goBack = () => {
 
 
 const formatStatus = (status) => {
-  return status.toLowerCase()
+  return status
     .replace(/_/g, ' ')
     .replace(/\b\w/g, char => char.toUpperCase());
 };

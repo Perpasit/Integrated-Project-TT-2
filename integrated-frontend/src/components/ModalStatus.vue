@@ -29,6 +29,11 @@ const parseAndFormatDate = (dateString) => {
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
 
+const formatStatus = (status) => {
+  return status
+    .replace(/_/g, " ")
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+}
 </script>
 
 <template>
@@ -42,7 +47,7 @@ const parseAndFormatDate = (dateString) => {
                 <div class="px-4 py-5">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Name</label>
-                        <textarea rows="2" readonly v-model="status.name"
+                        <textarea rows="2" readonly :value="formatStatus(status.name)"
                             class="itbkk-status-name w-full border border-gray-300 rounded-md p-1 shadow-sm mt-1"></textarea>
                     </div>
                     <div class="mb-4">
