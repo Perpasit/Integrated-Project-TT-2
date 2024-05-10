@@ -4,7 +4,6 @@ import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
-import ModalStatus from "./ModalStatus.vue"
 import { useStatusStore } from "../stores/status"
 
 const statusStore = useStatusStore()
@@ -26,7 +25,11 @@ const goHome = () => {
 const selectedStatusDetail = ref(null)
 
 const showStatusDetail = (status) => {
-  selectedStatusDetail.value = status
+  router.push({
+    name: "statusDetail",
+    params: { statusId: status.id },
+    state: { status }
+  })
 }
 
 const editStatus = (status) => {
@@ -51,16 +54,18 @@ const confirmDelete = (status) => {
   showDeleteConfirmation.value = true
 }
 
-const deleteStatus = async() => {
+const deleteStatus = async () => {
   showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(selectedStatusToDelete.id)
+  const selectedStatus = await statusStore.deleteStatus(
+    selectedStatusToDelete.id
+  )
   if (selectedStatus.status === 404) {
     showNotFoundModal.value = true
   } else {
     showSuccessModal.value = true
   }
   selectedStatusToDelete = null
-  
+
   await fetchStatuses()
   setTimeout(() => {
     closeDeleteModal()
@@ -74,7 +79,6 @@ function closeDeleteModal() {
 
 const fetchStatuses = async () => {
   await statusStore.fetchAllStatuses()
-
 }
 
 const cancelDelete = () => {
@@ -83,13 +87,13 @@ const cancelDelete = () => {
 }
 
 const formatStatus = (status) => {
-  return status
+  return status.toUpperCase()
     .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 const getGradientStyle = (statusName) => {
-  const color = statusStore.getStatusColor(statusName);
-  return `background: linear-gradient(to right, ${color}, #fff);`; // Gradient from color to white
+  const color = statusStore.getStatusColor(statusName)
+  return `background: linear-gradient(to right, ${color}, #fff);` // Gradient from color to white
 }
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
@@ -127,8 +131,6 @@ onMounted(async () => {
               v-for="(status, index) in statuses"
               :key="status.id"
               class="bg-white shadow-lg hover:bg-gray-100"
-              
-
             >
               <td class="px-4 py-5 rounded-l-lg text-center">
                 {{ index + 1 }}
@@ -137,7 +139,6 @@ onMounted(async () => {
               <td
                 class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
                 @click="showStatusDetail(status)"
-                
               >
                 {{ formatStatus(status.name) }}
               </td>
@@ -172,7 +173,6 @@ onMounted(async () => {
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 border border-black rounded-md px-2 py-1"
                   @click="confirmDelete(status)"
-                  
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -236,12 +236,6 @@ onMounted(async () => {
       </div>
     </div>
 
-    <ModalStatus
-      v-if="selectedStatusDetail"
-      :show="!!selectedStatusDetail"
-      :status="selectedStatusDetail"
-      @close="selectedStatusDetail = null"
-    />
   </div>
 
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
@@ -345,4 +339,5 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+  <router-view />
 </template>

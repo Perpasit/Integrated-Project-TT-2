@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref,computed } from "vue"
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
+import { getItems} from "../utils/fetch"
 import { useRoute, useRouter } from 'vue-router';
 
 
