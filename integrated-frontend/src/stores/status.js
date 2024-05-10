@@ -13,12 +13,13 @@ export const useStatusStore = defineStore("status", {
       getStatusClass: (state) => (statusName) => {
         const status = state.statuses.find((s) => s.name === statusName);
         if (status) {
-          return `background-color: ${status.colorCode}; color: white; border-radius: 0.375rem; padding: 0.5rem 0.75rem;`;
+          return `background-color: ${status.colorCode}; color: white; border-radius: 0.375rem; padding: 0.33rem 0.6rem; `;
         } else {
           return "background-color: #f87171; color: white; border-radius: 0.375rem; padding: 0.5rem 0.75rem;";
         }
       },
   },
+  
   actions: {
     async fetchAllStatuses() {
       try {

@@ -47,16 +47,37 @@ const confirmDelete = (status) => {
   showDeleteConfirmation.value = true
 }
 
-const deleteStatus = () => {
-  const index = statuses.value.findIndex(
-    (s) => s.id === selectedStatusToDelete.id
-  )
-  if (index !== -1) {
-    statuses.value.splice(index, 1)
-  }
+const deleteStatus = async() => {
+  showDeleteConfirmation.value = false
+  const selectedStatus = await statusStore.deleteStatus(selectedStatusToDelete.id)
+//   if (selectedStatus.status === 404) {
+//     showNotFoundModal.value = true
+//   } else {
+//     showSuccessModal.value = true
+//   }
+
   selectedStatusToDelete = null
   showDeleteConfirmation.value = false
+  await fetchAllStatuses
 }
+
+const deleteTask = async () => {
+  showDeleteConfirmation.value = false
+  const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
+  if (selectedTask.status === 404) {
+    showNotFoundModal.value = true
+  } else {
+    showSuccessModal.value = true
+  }
+  selectedTaskToDelete = null
+  await fetchTasks()
+
+  setTimeout(() => {
+    closeDeleteModal()
+  }, 3000)
+}
+
+
 
 const cancelDelete = () => {
   selectedStatusToDelete = null
@@ -68,7 +89,10 @@ const formatStatus = (status) => {
     .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
-
+const getGradientStyle = (statusName) => {
+  const color = statusStore.getStatusColor(statusName);
+  return `background: linear-gradient(to right, ${color}, #fff);`; // Gradient from color to white
+}
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
 })
@@ -105,6 +129,8 @@ onMounted(async () => {
               v-for="(status, index) in statuses"
               :key="status.id"
               class="bg-white shadow-lg hover:bg-gray-100"
+              
+
             >
               <td class="px-4 py-5 rounded-l-lg text-center">
                 {{ index + 1 }}
@@ -113,6 +139,7 @@ onMounted(async () => {
               <td
                 class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
                 @click="showStatusDetail(status)"
+                
               >
                 {{ formatStatus(status.name) }}
               </td>
@@ -124,8 +151,9 @@ onMounted(async () => {
 
               <td class="px-4 py-2 rounded-r-lg text-center">
                 <button
-                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
+                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
                   @click="editStatus(status)"
+                  :style="statusStore.getStatusClass(status.name)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -144,8 +172,9 @@ onMounted(async () => {
                 </button>
 
                 <button
-                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 border border-black rounded-md px-2 py-1"
                   @click="confirmDelete(status)"
+                  
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -201,7 +230,7 @@ onMounted(async () => {
           </button>
           <button
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            @click="deleteStatus"
+            @click="deleteStatus(selectedStatus)"
           >
             Delete
           </button>
