@@ -46,7 +46,7 @@ const formattedStatus = computed(() => {
   return (task) => {
     const status = statusStore.getStatusById(task.status);
     if (status) {
-      return status.name
+      return status.name.toLowerCase()
         .replace(/_/g, " ")
         .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
     } else {
@@ -54,6 +54,9 @@ const formattedStatus = computed(() => {
     }
   };
 });
+
+
+
 
 const sortedTasks = computed(() => {
   return [...tasks.value].sort((a, b) => {

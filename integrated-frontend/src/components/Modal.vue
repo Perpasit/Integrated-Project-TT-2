@@ -34,20 +34,6 @@ onMounted(async () => {
 const focusedOnDescription = ref(false)
 
 
-
-// const showModal = async (task) => {
-//   try {
-//     const response = await taskStore.getTask(task.id)
-//     if (response.status === 404) {
-//       throw new Error("The requested task does not exist")
-//     }
-//     selectedTask.value = task
-//   } catch (error) {
-//     alert(error.message)
-//     window.history.back()
-//   }
-// }
-
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString)
@@ -57,36 +43,18 @@ const parseAndFormatDate = (dateString) => {
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
 
-// const closeModal = () => {
-//   editedTask.value = {}
-//   focusedOnDescription.value = false
-//   // Add your modal close logic here
-// }
 
 const goBack = () => {
   router.push('/')
 }
 
-// onMounted(async () => {
-//     const id = route.params.taskId ? route.params.taskId : props.task.id ? props.task.id : null
-//     const data = await getItems(
-//       `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-//     )
-//     // console.log(data.status)
-//     if(data.status == 404) {
-//       setTimeout(() => {
-//     router.push('/task')
-//   }, 3000);
-//       }
-//     editedTask.value = data
-// })
 
 const formatStatus = (status) => {
   return status.toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, char => char.toUpperCase());
 };
-console.log(editedTask.value.status)
+
 </script>
 
 
