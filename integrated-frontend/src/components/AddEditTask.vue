@@ -2,31 +2,33 @@
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
+import { useModalStore } from "../stores/useModalStore" 
 import { useRouter } from "vue-router"
 
 const router = useRouter()
 const taskStore = useTaskStore()
 const statusStore = useStatusStore()
+const modalStore = useModalStore()
 
 const props = defineProps({
   show: {
-      type: Boolean,
-      required: true,
-    },
-    task: {
-      type: Object,
-      default: () => ({
-        id: '',
-        title: '',
-        description: '',
-        assignees: '',
-        status: 1,
-      }),
-    },
-    mode: {
-      type: String,
-      default: 'add',
-    }
+    type: Boolean,
+    required: true
+  },
+  task: {
+    type: Object,
+    default: () => ({
+      id: '',
+      title: '',
+      description: '',
+      assignees: '',
+      status: 1
+    })
+  },
+  mode: {
+    type: String,
+    default: 'add'
+  }
 })
 
 const emit = defineEmits(["close", "taskSaved"])
@@ -122,12 +124,14 @@ async function saveTask() {
         await taskStore.updateTask(taskId, updatedTask)
         await taskStore.fetchAllTasks()
         emit("taskSaved")
+        modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
       } else {
         console.error("The task does not exist.")
       }
     } else {
       await taskStore.addTask(updatedTask)
       await taskStore.fetchAllTasks()
+      modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
     }
     router.push("/")
   } catch (error) {
