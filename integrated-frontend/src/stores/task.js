@@ -1,7 +1,6 @@
 import { defineStore } from "pinia"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
-
 export const useTaskStore = defineStore("task", {
   state: () => ({
     tasks: []
@@ -9,7 +8,7 @@ export const useTaskStore = defineStore("task", {
   getters: {
     getTasks: (state) => state.tasks,
     getTaskById: (state) => (taskId) =>
-      state.tasks.find((task) => task.id === taskId),
+      state.tasks.find((task) => task.id === taskId)
   },
   actions: {
     async fetchAllTasks() {
@@ -20,42 +19,47 @@ export const useTaskStore = defineStore("task", {
         this.tasks = data || []
       } catch (error) {
         console.error("Error fetching tasks:", error)
+        throw error
       }
     },
-    
     async addTask(newTask) {
       try {
-        newTask.title = newTask.title.trim(); // trim the title
-        newTask.description = newTask.description.trim(); // trim the description
-        newTask.assignees = newTask.assignees.trim(); // trim the assignees
+        const formattedTask = {
+          taskTitle: newTask.title.trim(),
+          description: newTask.description.trim(),
+          assignees: newTask.assignees.trim(),
+          status: { id: newTask.status }
+        }
+
         const createdTask = await postItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
-          newTask
-        );
-        this.tasks.push(createdTask);
+          formattedTask
+        )
+        this.tasks.push(createdTask)
       } catch (error) {
-        console.error("Error adding task:", error);
+        console.error("Error adding task:", error)
+        throw error
       }
     },
-    
     async updateTask(id, updatedTask) {
       try {
-        updatedTask.title = updatedTask.title.trim(); // trim the title
-        updatedTask.description = updatedTask.description.trim(); // trim the description
-        updatedTask.assignees = updatedTask.assignees.trim(); // trim the assignees
+        updatedTask.title = updatedTask.title.trim()
+        updatedTask.description = updatedTask.description.trim()
+        updatedTask.assignees = updatedTask.assignees.trim()
+        updatedTask.status = { id: updatedTask.status }
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
           updatedTask
-        );
-        const index = this.tasks.findIndex((task) => task.id === id);
+        )
+        const index = this.tasks.findIndex((task) => task.id === id)
         if (index !== -1) {
-          this.tasks.splice(index, 1, updatedData);
+          this.tasks.splice(index, 1, updatedData)
         }
       } catch (error) {
-        console.error("Error updating task:", error);
+        console.error("Error updating task:", error)
+        throw error
       }
     },
-
     async deleteTask(id) {
       try {
         const deleteTask = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
@@ -64,30 +68,6 @@ export const useTaskStore = defineStore("task", {
       } catch (error) {
         console.error("Error deleting task:", error)
       }
-    },
-
-    getStatusClass(status) {
-      switch (status) {
-        case "No Status":
-          return "bg-gray-300 text-white rounded-md px-3 py-1"
-        case "To Do":
-          return "bg-indigo-500 text-white rounded-md px-3 py-1"
-        case "Doing":
-          return "bg-amber-400 text-white rounded-md px-3 py-1"
-        case "Done":
-          return "bg-green-400 text-white rounded-md px-3 py-1"
-        default:
-          return "bg-red-400 text-white rounded-md px-3 py-1"
-      }
-    }
-  },
-
-  getters: {
-    getTasks(state) {
-      return state.tasks
-    },
-    getTaskById: (state) => (id) => {
-      return state.tasks.find((task) => task.id === id)
     }
   }
 })

@@ -1,13 +1,14 @@
-<!-- TaskTable.vue -->
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
+import { useStatusStore } from "../stores/status"
 import AddEditTask from "./AddEditTask.vue"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
 const taskStore = useTaskStore()
-const tasks = ref([])
+const statusStore = useStatusStore()
+const tasks = computed(() => taskStore.getTasks)
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
 
@@ -20,7 +21,7 @@ const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
     params: { taskId: task.id },
-    state: { task },
+    state: { task }
   })
 }
 
@@ -39,28 +40,18 @@ const saveTask = async (updatedTask) => {
     await taskStore.addTask(updatedTask)
   }
   closeModal()
-  await fetchTasks()
 }
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = task.status.toLowerCase().replace(/_/g, ' ').replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
-
-    return status
-
-    // let formatted = ""
-    // let capitalizeNext = true
-    // for (let i = 0; i < status.length; i++) {
-    //   const char = status[i]
-    //   if (char === "_") {
-    //     formatted += " "
-    //     capitalizeNext = true
-    //   } else {
-    //     formatted += capitalizeNext ? char.toUpperCase() : char
-    //     capitalizeNext = false
-    //   }
-    // }
-    // return formatted
+    const status = statusStore.getStatusById(task.status)
+    if (status) {
+      return status.name
+        .replace(/_/g, " ")
+        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    } else {
+      return "Unknown"
+    }
   }
 })
 
@@ -98,6 +89,10 @@ const deleteTask = async () => {
     closeDeleteModal()
   }, 3000)
 }
+const fetchTasks = async () => {
+  await taskStore.fetchAllTasks()
+
+}
 
 function closeDeleteModal() {
   showSuccessModal.value = false
@@ -107,29 +102,18 @@ function closeDeleteModal() {
 const cancelDelete = () => {
   selectedTaskToDelete = null
   showDeleteConfirmation.value = false
-  
 }
 
-const fetchTasks = async () => {
-  await taskStore.fetchAllTasks()
-  tasks.value = taskStore.getTasks
-}
 const editTask = (task) => {
-  try {
-    if (task && task.id) {
-      router.push({ name: "EditTask", params: { id: task.id } })
-    } else {
-      console.error("Task ID is missing")
-    }
-  } catch (error) {
-    console.error("Error occurred in editTask:", error)
+  if (task && task.id) {
+    router.push({ name: "EditTask", params: { id: task.id } })
   }
 }
-onMounted(async () => {
-  await fetchTasks()
-})
 
-console.log(tasks)
+onMounted(async () => {
+  await taskStore.fetchAllTasks()
+  await statusStore.fetchAllStatuses()
+})
 </script>
 
 <template>
@@ -187,7 +171,7 @@ console.log(tasks)
             <td class="px-5 py-2 text-center">
               <span
                 class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
-                :class="taskStore.getStatusClass(formattedStatus(task))"
+                :style="statusStore.getStatusClass(task.status)"
               >
                 {{ formattedStatus(task) }}
               </span>
@@ -250,7 +234,6 @@ console.log(tasks)
       mode="edit"
       @close="closeModal"
       @save="saveTask"
-      @taskSaved="fetchTasks"
     />
   </div>
 
@@ -293,7 +276,7 @@ console.log(tasks)
             <button
               type="button"
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeSuccessModal"
+              @click="closeDeleteModal"
             >
               <svg
                 class="h-6 w-6"
