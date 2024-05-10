@@ -18,4 +18,7 @@ public class StatusDTO {
 
     @JsonProperty("description")
     private String statusDescription;
+
+    private String colorCode;
+  
 }
