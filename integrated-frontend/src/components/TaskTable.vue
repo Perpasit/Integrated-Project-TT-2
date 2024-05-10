@@ -91,7 +91,6 @@ const deleteTask = async () => {
 }
 const fetchTasks = async () => {
   await taskStore.fetchAllTasks()
-
 }
 
 function closeDeleteModal() {
@@ -113,7 +112,9 @@ const editTask = (task) => {
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   await statusStore.fetchAllStatuses()
+  await fetchTasks()
 })
+
 </script>
 
 <template>
@@ -228,13 +229,16 @@ onMounted(async () => {
     </div>
 
     <AddEditTask
-      v-if="selectedTask"
-      :show="!!selectedTask"
-      :task="selectedTask"
-      mode="edit"
-      @close="closeModal"
-      @save="saveTask"
-    />
+  v-if="selectedTask"
+  :show="!!selectedTask"
+  :task="{
+    ...selectedTask,
+    status: selectedTask.status // ส่ง status id แทน name
+  }"
+  mode="edit"
+  @close="closeModal"
+  @save="saveTask"
+/>
   </div>
 
   <div
