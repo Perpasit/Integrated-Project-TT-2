@@ -13,7 +13,7 @@ const props = defineProps({
   },
   task: {
     type: Object,
-    default: null
+    required: true
   },
   mode: {
     type: String,
@@ -28,10 +28,11 @@ const originalTask = ref(null)
 
 const taskStore = useTaskStore()
 const editedTask = ref({
+  id: "",
   title: "",
   description: "",
   assignees: "",
-  status: "1"
+  status: 1
 })
 
 const titleError = ref("")
@@ -47,17 +48,20 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  );
-});
-
+  )
+})
 
 watch(
-  () => editedTask.value.title,
-  (newTitle) => {
-    if (newTitle.trim() === "") {
-      titleError.value = "Title is required."
-    } else {
-      titleError.value = ""
+  () => props.task,
+  (newTask) => {
+    if (newTask) {
+      editedTask.value = {
+        id: newTask.id || "",
+        title: newTask.title || "",
+        description: newTask.description || "",
+        assignees: newTask.assignees || "",
+        status: newTask.status // ใช้ค่า status id โดยตรง
+      }
     }
   }
 )
@@ -78,7 +82,11 @@ onMounted(async () => {
         }, 3000)
       } else {
         const data = await response.json()
-        editedTask.value = { ...data, status: data.status.id.toString() }
+        editedTask.value = {
+          ...data,
+          status: data.status
+        }
+
         originalTask.value = { ...data }
         titleError.value = ""
       }
@@ -97,38 +105,39 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: "1"
+    status: 1
   }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required.";
-    return;
+    titleError.value = "Title is required."
+    return
   }
 
   try {
     const updatedTask = {
       ...editedTask.value,
-      title: editedTask.value.title ? editedTask.value.title.trim() : "",
-      description: editedTask.value.description ? editedTask.value.description.trim() : "",
-      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+      title: editedTask.value.title.trim(),
+      description: editedTask.value.description.trim(),
+      assignees: editedTask.value.assignees.trim(),
       updatedOn: new Date().toISOString(),
-      status: parseInt(editedTask.value.status),
-    };
+
+      status: editedTask.value.status
+    }
 
     if (props.mode === "edit") {
-      await taskStore.updateTask(updatedTask.id, updatedTask);
-      emit("taskSaved");
+      await taskStore.updateTask(updatedTask.id, updatedTask)
+      emit("taskSaved")
     } else {
-      await taskStore.addTask(updatedTask);
+      await taskStore.addTask(updatedTask)
     }
-    modalStore.openSuccessModal(updatedTask.title, props.mode);
-    closeModal();
+    modalStore.openSuccessModal(updatedTask.title, props.mode)
+    closeModal()
   } catch (error) {
-    console.error("Error saving task:", error);
+    console.error("Error saving task:", error)
   }
-  router.push("/");
+  router.push("/")
 }
 
 function goBack() {
@@ -139,6 +148,27 @@ function closeModal() {
   router.push("/")
   resetForm()
 }
+
+const formattedStatus = computed(() => {
+  return (task) => {
+    const status = statusStore.getStatusById(task.status)
+    if (status) {
+      return status.name
+        .replace(/_/g, " ")
+        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    } else {
+      return "Unknown"
+    }
+  }
+})
+const statusNameById = computed(() => {
+  return (statusId) => {
+    const status = statusStore.getStatusById(statusId)
+    return status ? status.name : "Unknown"
+  }
+})
+
+console.log(editedTask)
 </script>
 
 <template>
@@ -196,6 +226,7 @@ function closeModal() {
 
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
+
                 <select
                   v-model="editedTask.status"
                   class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
@@ -203,13 +234,9 @@ function closeModal() {
                   <option
                     v-for="status in statusStore.statuses"
                     :key="status.id"
-                    :value="status.id.toString()"
+                    :value="status.id"
                   >
-                    {{
-                      status.name
-                        .replace(/_/g, " ")
-                        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-                    }}
+                    {{ status.name }}
                   </option>
                 </select>
               </div>
