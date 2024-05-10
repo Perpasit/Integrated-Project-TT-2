@@ -53,6 +53,14 @@ const close = () => {
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
               {{ props.status.id ? 'Edit Status' : 'Add Status' }}
             </h3>
+
+            <div class="mb-4 flex items-center">
+                    <label for="hs-color-input" class="block text-sm font-medium mr-2 dark:text-white">Color
+                        picker : </label>
+                    <input type="color" class="p-1 h-8 w-12 border border-gray-300 rounded-md shadow-sm"
+                        id="hs-color-input" value="#2563eb">
+                </div>
+
             <div class="mb-4">
               <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
               <input type="text" name="name" id="name"
