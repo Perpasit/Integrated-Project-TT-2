@@ -33,16 +33,16 @@ const showStatusDetail = (status) => {
 }
 
 const editStatus = (status) => {
-  selectedStatus.value = { ...status }
+  if (status && status.id) {
+    router.push({ name: "EditStatus", params: { id: status.id } })
+  }
 }
 
 const saveStatus = (status) => {
   if (status.id) {
-    // update status
     const index = statuses.value.findIndex((s) => s.id === status.id)
     statuses.value.splice(index, 1, { ...status })
   } else {
-    // add new status
     status.id = Date.now()
     statuses.value.push(status)
   }
@@ -91,10 +91,8 @@ const formatStatus = (status) => {
     .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
-const getGradientStyle = (statusName) => {
-  const color = statusStore.getStatusColor(statusName)
-  return `background: linear-gradient(to right, ${color}, #fff);` // Gradient from color to white
-}
+
+
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
 })

@@ -1,22 +1,22 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue"
-import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore"
-import { useRouter } from "vue-router"
+import { ref, computed, watch, onMounted } from "vue";
+import { useStatusStore } from "../stores/status";
+import { useModalStore } from "../stores/useModalStore";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 const props = defineProps({
   show: { type: Boolean, default: false },
   status: { type: Object, default: null },
-  mode: { type: String, default: "add" }
-})
+  mode: { type: String, default: "add" },
+});
 
-const emit = defineEmits(['close', 'statusSaved'])
-const modalStore = useModalStore()
-const statusStore = useStatusStore()
-const editedStatus = ref({ name: "", description: "", colorCode: "#000000" })
-const originalStatus = ref(null)
-const nameError = ref("")
+const emit = defineEmits(["close", "statusSaved"]);
+const modalStore = useModalStore();
+const statusStore = useStatusStore();
+const editedStatus = ref({ id: null, name: "", description: "", colorCode: "#000000" });
+const originalStatus = ref(null);
+const nameError = ref("");
 
 const isNameValid = computed(() => {
   return (
@@ -35,39 +35,41 @@ watch(
   () => editedStatus.value.name,
   (newName) => {
     if (newName.trim() === "") {
-      nameError.value = "Name is required."
+      nameError.value = "Name is required.";
     } else {
-      nameError.value = ""
+      nameError.value = "";
     }
   }
-)
+);
 
 onMounted(async () => {
+  await statusStore.fetchAllStatuses()
   if (props.mode === "edit") {
-    const id = router.currentRoute.value.params.id
+    const id = router.currentRoute.value.params.id;
     try {
-      const data = await statusStore.getStatusById(id)
-      editedStatus.value = { ...data }
-      originalStatus.value = { ...data }
-      nameError.value = ""
+      const data = await statusStore.getStatusById(id);
+      editedStatus.value = { ...data };
+      originalStatus.value = { ...data };
+      nameError.value = "";
     } catch (error) {
-      console.error("Error fetching status:", error)
-      editedStatus.value = null
+      console.error("Error fetching status:", error);
+      editedStatus.value = null;
     }
   } else {
-    resetForm()
-    nameError.value = "Name is required."
+    resetForm();
+    nameError.value = "Name is required.";
   }
-})
+});
 
 function resetForm() {
-  editedStatus.value = { name: "", description: "", colorCode: "#000000" }
+  editedStatus.value = { name: "", description: "", colorCode: "#000000" };
 }
 
 async function saveStatus() {
+ 
   if (!isNameValid.value) {
-    nameError.value = "Name is required."
-    return
+    nameError.value = "Name is required.";
+    return;
   }
 
   try {
@@ -76,27 +78,29 @@ async function saveStatus() {
       name: editedStatus.value.name.trim(),
       description: editedStatus.value.description ? editedStatus.value.description.trim() : "",
       updatedOn: new Date().toISOString(),
-    }
+    };
 
     if (props.mode === "edit") {
-      await statusStore.updateStatus(updatedStatus.id, updatedStatus)
-      emit("statusSaved")
+      await statusStore.updateStatus(updatedStatus.id, updatedStatus);
+      emit("statusSaved");
     } else {
-      await statusStore.createStatus(updatedStatus)
+      await statusStore.createStatus(updatedStatus);
     }
-    modalStore.openSuccessModal(updatedStatus.name, props.mode)
-    closeModal()
+    modalStore.openSuccessModal(updatedStatus.name, props.mode);
+    closeModal();
   } catch (error) {
-    console.error("Error saving status:", error)
+    console.error("Error saving status:", error);
   }
-  router.push("/status/manage")
+  await statusStore.fetchAllStatuses()
+  router.push("/status/manage");
 }
 
 function closeModal() {
-  router.push("/status/manage")
-  resetForm()
+  router.push("/status/manage");
+  resetForm();
 }
 </script>
+
 
 <template>
   <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
