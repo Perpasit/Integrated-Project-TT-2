@@ -1,93 +1,61 @@
-import { defineStore } from "pinia"
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
-
+import { defineStore } from "pinia";
+import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
-    tasks: []
+    tasks: [],
   }),
   getters: {
     getTasks: (state) => state.tasks,
-    getTaskById: (state) => (taskId) =>
-      state.tasks.find((task) => task.id === taskId),
+    getTaskById: (state) => (taskId) => state.tasks.find((task) => task.id === taskId),
   },
   actions: {
     async fetchAllTasks() {
       try {
-        const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks`
-        )
-        this.tasks = data || []
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks`);
+        this.tasks = data || [];
       } catch (error) {
-        console.error("Error fetching tasks:", error)
+        console.error("Error fetching tasks:", error);
+        throw error;
       }
     },
-    
     async addTask(newTask) {
       try {
-        newTask.title = newTask.title.trim(); // trim the title
-        newTask.description = newTask.description.trim(); // trim the description
-        newTask.assignees = newTask.assignees.trim(); // trim the assignees
-        const createdTask = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
-          newTask
-        );
+        newTask.title = newTask.title.trim();
+        newTask.description = newTask.description.trim();
+        newTask.assignees = newTask.assignees.trim();
+        newTask.status = { id: newTask.status }; // Use the status id
+        const createdTask = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks`, newTask);
         this.tasks.push(createdTask);
       } catch (error) {
         console.error("Error adding task:", error);
+        throw error;
       }
     },
-    
     async updateTask(id, updatedTask) {
       try {
-        updatedTask.title = updatedTask.title.trim(); // trim the title
-        updatedTask.description = updatedTask.description.trim(); // trim the description
-        updatedTask.assignees = updatedTask.assignees.trim(); // trim the assignees
-        const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
-          updatedTask
-        );
+        updatedTask.title = updatedTask.title.trim();
+        updatedTask.description = updatedTask.description.trim();
+        updatedTask.assignees = updatedTask.assignees.trim();
+        updatedTask.status = { id: updatedTask.status }; // Use the status id
+        const updatedData = await putItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`, updatedTask);
         const index = this.tasks.findIndex((task) => task.id === id);
         if (index !== -1) {
           this.tasks.splice(index, 1, updatedData);
         }
       } catch (error) {
         console.error("Error updating task:", error);
+        throw error;
       }
     },
-
     async deleteTask(id) {
       try {
-        const deleteTask = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
-        this.tasks = this.tasks.filter((task) => task.id !== id)
-        return deleteTask
+        await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+        this.tasks = this.tasks.filter((task) => task.id !== id);
       } catch (error) {
-        console.error("Error deleting task:", error)
+        console.error("Error deleting task:", error);
+        throw error;
       }
     },
-
-    getStatusClass(status) {
-      switch (status) {
-        case "No Status":
-          return "bg-gray-300 text-white rounded-md px-3 py-1"
-        case "To Do":
-          return "bg-indigo-500 text-white rounded-md px-3 py-1"
-        case "Doing":
-          return "bg-amber-400 text-white rounded-md px-3 py-1"
-        case "Done":
-          return "bg-green-400 text-white rounded-md px-3 py-1"
-        default:
-          return "bg-red-400 text-white rounded-md px-3 py-1"
-      }
-    }
   },
-
-  getters: {
-    getTasks(state) {
-      return state.tasks
-    },
-    getTaskById: (state) => (id) => {
-      return state.tasks.find((task) => task.id === id)
-    }
-  }
-})
+});

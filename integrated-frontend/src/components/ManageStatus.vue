@@ -4,13 +4,36 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from './Header.vue'
 import AddEditStatus from './AddEditStatus.vue'
+import ModalStatus from './ModalStatus.vue'
+
 
 const router = useRouter()
 const statuses = ref([
-    { id: 1, name: 'No Status', description: 'The default status' },
-    { id: 2, name: 'To Do', description: '' },
-    { id: 3, name: 'Doing', description: '' },
-    { id: 4, name: 'Done', description: '' },
+{
+    id: 2,
+    name: 'Pending',
+    description: 'Status for pending tasks',
+    timezone: 'Asia/Bangkok',
+    createdOn: "2024-04-22T16:00",
+    updatedOn: "2024-05-10T00:43:24",
+
+  },
+  {
+    id: 3,
+    name: 'InProgress',
+    description: 'Status for tasks in progress',
+    timezone: 'Asia/Bangkok',
+    createdOn: "2024-04-22T16:00",
+    updatedOn: "2024-05-10T00:43:24",
+  },
+  {
+    id: 4,
+    name: 'Completed',
+    description: 'Status for completed tasks',
+    timezone: 'Asia/Bangkok',
+    createdOn: "2024-04-22T16:00",
+    updatedOn: "2024-05-10T00:43:24",
+  },
 ])
 const selectedStatus = ref(null)
 const showDeleteConfirmation = ref(false)
@@ -19,6 +42,13 @@ let selectedStatusToDelete = null
 const goHome = () => {
     router.push({ name: 'TaskTable' })
 }
+
+const selectedStatusDetail = ref(null)
+
+const showStatusDetail = (status) => {
+  selectedStatusDetail.value = status
+}
+
 
 const editStatus = (status) => {
     selectedStatus.value = { ...status }
@@ -78,8 +108,9 @@ const cancelDelete = () => {
                             class="bg-white shadow-lg hover:bg-gray-100">
                             <td class="px-4 py-5 rounded-l-lg text-center">{{ index + 1 }}</td>
 
-                            <td class="itbkk-status-name px-4 py-5 truncate text-center">{{ status.name }}</td>
-
+                            <td class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer" @click="showStatusDetail(status)">
+  {{ status.name }}
+</td>
                             <td class="itbkk-status-description px-4 py-2 truncate text-center">{{ status.description }}
                             </td>
 
@@ -136,5 +167,13 @@ const cancelDelete = () => {
 
             </div>
         </div>
+
+
+        <ModalStatus
+  v-if="selectedStatusDetail"
+  :show="!!selectedStatusDetail"
+  :status="selectedStatusDetail"
+  @close="selectedStatusDetail = null"
+/>
     </div>
 </template>

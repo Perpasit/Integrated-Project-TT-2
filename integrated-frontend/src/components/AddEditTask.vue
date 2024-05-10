@@ -127,6 +127,8 @@ function closeModal() {
   router.push("/")
   resetForm()
 }
+
+
 </script>
 
 <template>
@@ -151,6 +153,7 @@ function closeModal() {
               <div>
                 <label class="block text-sm font-bold mb-1">Title:</label>
                 <textarea
+         
                   rows="2"
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"

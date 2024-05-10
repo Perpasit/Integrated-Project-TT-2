@@ -39,7 +39,7 @@ public class Status {
     @Column(name = "updatedOn", nullable = false)
     private LocalDateTime updatedOn;
 
-    @OneToMany(mappedBy = "status", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)
     private List<Task> tasks = new ArrayList<>();
 
     @Override
