@@ -76,19 +76,22 @@ const confirmDelete = (task) => {
 
 const deleteTask = async () => {
   showDeleteConfirmation.value = false
-  try {
-    await taskStore.deleteTask(selectedTaskToDelete.id)
+  const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
+  if (selectedTask.status === 404) {
+    showNotFoundModal.value = true
+  } else {
     showSuccessModal.value = true
-  } catch (error) {
-    if (error.status === 404) {
-      showNotFoundModal.value = true
-    }
   }
   selectedTaskToDelete = null
+  await fetchTasks()
 
   setTimeout(() => {
     closeDeleteModal()
   }, 3000)
+}
+const fetchTasks = async () => {
+  await taskStore.fetchAllTasks()
+
 }
 
 function closeDeleteModal() {
