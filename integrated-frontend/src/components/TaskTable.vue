@@ -55,6 +55,9 @@ const formattedStatus = computed(() => {
   }
 })
 
+
+
+
 const sortedTasks = computed(() => {
   return [...tasks.value].sort((a, b) => {
     if (sortOrder.value === "asc") {
