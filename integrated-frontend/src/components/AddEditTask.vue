@@ -1,7 +1,7 @@
-<!-- AddEditTask -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
 import { useTaskStore } from "../stores/task"
+import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter } from "vue-router"
 
@@ -23,6 +23,7 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "taskSaved"])
 const modalStore = useModalStore()
+const statusStore = useStatusStore()
 const originalTask = ref(null)
 
 const taskStore = useTaskStore()
@@ -30,7 +31,7 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: "NO_STATUS"
+  status: "1"
 })
 
 const titleError = ref("")
@@ -40,12 +41,15 @@ const isTitleValid = computed(() => {
     editedTask.value.title.trim() !== "" &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
+        editedTask.value &&
+        originalTask.value &&
         (editedTask.value.title !== originalTask.value.title ||
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  )
-})
+  );
+});
+
 
 watch(
   () => editedTask.value.title,
@@ -59,76 +63,82 @@ watch(
 )
 
 onMounted(async () => {
+  await statusStore.fetchAllStatuses()
+
   if (props.mode === "edit") {
-    const id = router.currentRoute.value.params.id;
+    const id = router.currentRoute.value.params.id
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+      )
       if (response.status === 404) {
-        editedTask.value = null;
+        editedTask.value = null
         setTimeout(() => {
-          router.push('/task');
-        }, 3000);
+          router.push("/task")
+        }, 3000)
       } else {
-        const data = await response.json();
-        editedTask.value = data;
-        originalTask.value = { ...data };
-        titleError.value = "";
+        const data = await response.json()
+        editedTask.value = { ...data, status: data.status.id.toString() }
+        originalTask.value = { ...data }
+        titleError.value = ""
       }
     } catch (error) {
-      console.error("Error fetching task:", error);
-      editedTask.value = null;
+      console.error("Error fetching task:", error)
+      editedTask.value = null
     }
   } else {
-    resetForm();
-    titleError.value = "Title is required.";
+    resetForm()
+    titleError.value = "Title is required."
   }
-});
+})
 
 function resetForm() {
   editedTask.value = {
     title: "",
     description: "",
     assignees: "",
-    status: "NO_STATUS"
+    status: "1"
   }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required."
-    return
+    titleError.value = "Title is required.";
+    return;
   }
 
   try {
-    editedTask.value.title = editedTask.value.title ? editedTask.value.title.trim() : ""
-    editedTask.value.description = editedTask.value.description ? editedTask.value.description.trim() : ""
-    editedTask.value.assignees = editedTask.value.assignees ? editedTask.value.assignees.trim() : ""
-    editedTask.value.updatedOn = new Date().toISOString()
+    const updatedTask = {
+      ...editedTask.value,
+      title: editedTask.value.title ? editedTask.value.title.trim() : "",
+      description: editedTask.value.description ? editedTask.value.description.trim() : "",
+      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+      updatedOn: new Date().toISOString(),
+      status: parseInt(editedTask.value.status),
+    };
 
     if (props.mode === "edit") {
-      await taskStore.updateTask(editedTask.value.id, editedTask.value)
-      emit("taskSaved") // Emit the event after updating the task
+      await taskStore.updateTask(updatedTask.id, updatedTask);
+      emit("taskSaved");
     } else {
-      await taskStore.addTask(editedTask.value)
+      await taskStore.addTask(updatedTask);
     }
-    modalStore.openSuccessModal(editedTask.value.title, props.mode)
-    closeModal()
+    modalStore.openSuccessModal(updatedTask.title, props.mode);
+    closeModal();
   } catch (error) {
-    console.error("Error saving task:", error)
+    console.error("Error saving task:", error);
   }
-  router.push("/")
+  router.push("/");
 }
 
 function goBack() {
-  router.push('/task');
+  router.push("/task")
 }
 
 function closeModal() {
   router.push("/")
   resetForm()
 }
-
-
 </script>
 
 <template>
@@ -153,7 +163,6 @@ function closeModal() {
               <div>
                 <label class="block text-sm font-bold mb-1">Title:</label>
                 <textarea
-         
                   rows="2"
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
@@ -185,16 +194,23 @@ function closeModal() {
                 ></textarea>
               </div>
 
-              <div>
+              <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
                 <select
                   v-model="editedTask.status"
                   class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 >
-                  <option value="NO_STATUS">No Status</option>
-                  <option value="TO_DO">To Do</option>
-                  <option value="DOING">Doing</option>
-                  <option value="DONE">Done</option>
+                  <option
+                    v-for="status in statusStore.statuses"
+                    :key="status.id"
+                    :value="status.id.toString()"
+                  >
+                    {{
+                      status.name
+                        .replace(/_/g, " ")
+                        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+                    }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -222,20 +238,18 @@ function closeModal() {
           >
             Cancel
           </button>
-          
         </div>
-        
       </div>
-      
     </div>
-    
   </div>
   <div v-else class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -246,7 +260,11 @@ function closeModal() {
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm" @click="goBack">
+          <button
+            type="button"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            @click="goBack"
+          >
             OK
           </button>
         </div>

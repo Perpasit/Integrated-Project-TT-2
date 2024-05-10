@@ -44,16 +44,16 @@ const saveTask = async (updatedTask) => {
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = statusStore.getStatusById(task.status);
+    const status = statusStore.getStatusById(task.status)
     if (status) {
       return status.name.toLowerCase()
         .replace(/_/g, " ")
-        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
+        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {
-      return "Unknown";
+      return "Unknown"
     }
-  };
-});
+  }
+})
 
 
 
@@ -169,13 +169,13 @@ onMounted(async () => {
             </td>
 
             <td class="px-5 py-2 text-center">
-  <span
-    class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
-    :style="statusStore.getStatusClass(task.status)"
-  >
-    {{ formattedStatus(task) }}
-  </span>
-</td>
+              <span
+                class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
+                :style="statusStore.getStatusClass(task.status)"
+              >
+                {{ formattedStatus(task) }}
+              </span>
+            </td>
 
             <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
               <button
