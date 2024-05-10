@@ -49,7 +49,7 @@ const confirmDelete = (status) => {
 
 const deleteStatus = async() => {
   showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(selectedTaskToDelete.id)
+  const selectedStatus = await statusStore.deleteStatus(selectedStatusToDelete.id)
 //   if (selectedStatus.status === 404) {
 //     showNotFoundModal.value = true
 //   } else {
