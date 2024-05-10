@@ -55,8 +55,9 @@ export const useStatusStore = defineStore("status", {
     },
     async deleteStatus(id) {
       try {
-        await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
+        const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
         this.statuses = this.statuses.filter((status) => status.id !== id);
+        return deleteStatus
       } catch (error) {
         console.error("Error deleting status:", error);
         throw error;
