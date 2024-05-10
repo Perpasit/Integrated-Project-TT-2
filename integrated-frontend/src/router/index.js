@@ -1,18 +1,19 @@
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../components/Home.vue"
-import { useTaskStore } from "../stores/task";
+import { useTaskStore } from "../stores/task"
 import Error from "../components/Error.vue"
 import Modal from "../components/Modal.vue"
 import AddEditTask from "../components/AddEditTask.vue"
-import TaskTable from "../components/TaskTable.vue"
 import ManageStatus from "../components/ManageStatus.vue"
+import AddEditStatus from "../components/AddEditStatus.vue"
+import ModalStatus from "../components/ModalStatus.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
-      redirect: "/task"
+      redirect: "/task",
     },
     {
       path: "/task",
@@ -22,15 +23,15 @@ const router = createRouter({
         {
           path: "/task/:taskId",
           name: "taskDetail",
-          component: Modal
+          component: Modal,
         },
         {
-          path: "/task/:id/add",
+          path: "/task/add",
           name: "AddTask",
           component: AddEditTask,
-          props: (route) => ({
+          props: () => ({
             task: {
-              id: route.params.id,
+              id: "",
               title: "",
               description: "",
               assignees: "",
@@ -45,43 +46,65 @@ const router = createRouter({
           name: "EditTask",
           component: AddEditTask,
           props: (route) => {
-            const taskStore = useTaskStore();
+            const taskStore = useTaskStore()
             return {
               task: taskStore.getTaskById(route.params.id),
               mode: "edit",
               show: true,
-            };
+            }
           },
         },
-      ]
+        
+
+
+        
+      ],
     },
     {
       path: "/status/manage",
       name: "ManageStatus",
       component: ManageStatus,
+      children:[
+        {
+          path: "/status/manage/:statusId",
+          name: "statusDetail",
+          component: ModalStatus
+        },
+        {
+          path: "/status/manage/add",
+          name: "AddStatus",
+          component: AddEditStatus,
+          props: () => ({
+            task: {
+              name: "",
+              description: "",
+              colorCode: "#000000",
+            },
+            mode: "add",
+            show: true,
+          }),
+        },
+        {
+          path: "/status/manage/:id/edit",
+          name: "EditStatus",
+          component: AddEditStatus,
+          props: (route) => {
+            const taskStore = useTaskStore()
+            return {
+              task: taskStore.getTaskById(route.params.id),
+              mode: "edit",
+              show: true,
+            }
+          },
+        },
+      ]
     },
-    
-  ]
+    {
+      path: "/:pathMatch(.*)*",
+      name: "NotFound",
+      component: Error,
+    },
+  ],
 })
 
 export default router
-
-
-// ,
-    // {
-    //   path: "/task/:taskId",
-    //   name: "taskDetail",
-    //   component: Modal,
-    //   props: true
-    // }
-
-    // {
-    //   path: "/task/:pathMatch(.*)*",
-    //   name: "error",
-    //   component:Error ,
-    // },
-    // {
-    //   path: "/:pathMatch(.*)*",
-    //   name: "NotFound",
-    //   component: Error
-    // }
