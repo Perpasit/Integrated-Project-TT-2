@@ -3,21 +3,24 @@ import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
 export const useStatusStore = defineStore("status", {
   state: () => ({
-    statuses: [],
+    statuses: []
   }),
   getters: {
     getStatuses: (state) => state.statuses,
+    getStatusByName: (state) => (name) => {
+      return state.statuses.find((status) => status.name === name)
+    },
     getStatusById: (state) => (name) => {
       return state.statuses.find((status) => status.name === name)
     },
     getStatusClass: (state) => (statusName) => {
       const status = state.statuses.find((s) => s.name === statusName)
       if (status) {
-        return `background-color: ${status.colorCode}; color: white; border-radius: 0.375rem; padding: 0.33rem 0.6rem; `
+        return `background-color: ${status.colorCode}; color: white; border-radius: 0.375rem; padding: 0.5rem 0.75rem;`
       } else {
         return "background-color: #f87171; color: white; border-radius: 0.375rem; padding: 0.5rem 0.75rem;"
       }
-    },
+    }
   },
 
   actions: {
@@ -32,6 +35,16 @@ export const useStatusStore = defineStore("status", {
         console.error("Error fetching statuses:", error)
       }
     },
+    async deleteStatusTransfer(id, newId) {
+      try {
+        const deletedStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/${newId}`);
+        this.statuses = this.statuses.filter((status) => status.id !== id);
+        return deletedStatus;
+      } catch (error) {
+        console.error("Error deleting and transferring status:", error);
+        throw error;
+      }
+    },
     async createStatus(newStatus) {
       try {
         const createdStatus = await postItem(
@@ -42,7 +55,9 @@ export const useStatusStore = defineStore("status", {
         return createdStatus
       } catch (error) {
         console.error("Error creating status:", error)
-        throw error // Consider how and where you handle these thrown errors.
+
+        throw error
+
       }
     },
     async updateStatus(id, updatedStatus) {
@@ -68,10 +83,14 @@ export const useStatusStore = defineStore("status", {
         )
         this.statuses = this.statuses.filter((status) => status.id !== id)
         return deleteStatus
+
       } catch (error) {
         console.error("Error deleting status:", error)
         throw error
       }
-    },
+    }
   },
+
+  
+
 })

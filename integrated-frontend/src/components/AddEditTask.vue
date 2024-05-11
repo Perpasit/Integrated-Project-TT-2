@@ -1,37 +1,43 @@
 <script setup>
-import { ref, computed, watch, onMounted, defineProps, defineEmits } from "vue"
+import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore"
+import { useModalStore } from "../stores/useModalStore" 
 import { useRouter } from "vue-router"
 
 const router = useRouter()
+const taskStore = useTaskStore()
+const statusStore = useStatusStore()
+const modalStore = useModalStore()
+
 const props = defineProps({
   show: {
     type: Boolean,
-    default: false
+    required: true
   },
   task: {
     type: Object,
-    default: null
+    default: () => ({
+      id: '',
+      title: '',
+      description: '',
+      assignees: '',
+      status: 1
+    })
   },
   mode: {
     type: String,
-    default: "add"
+    default: 'add'
   }
 })
 
 const emit = defineEmits(["close", "taskSaved"])
-const modalStore = useModalStore()
-const statusStore = useStatusStore()
-const originalTask = ref(null)
-
-const taskStore = useTaskStore()
 const editedTask = ref({
+  id: "",
   title: "",
   description: "",
   assignees: "",
-  status: "1"
+  status: 1
 })
 
 const titleError = ref("")
@@ -42,54 +48,51 @@ const isTitleValid = computed(() => {
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedTask.value &&
-        originalTask.value &&
         (editedTask.value.title !== originalTask.value.title ||
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  );
-});
+  )
+})
 
+const originalTask = ref(null)
 
 watch(
-  () => editedTask.value.title,
-  (newTitle) => {
-    if (newTitle.trim() === "") {
-      titleError.value = "Title is required."
+  () => router.currentRoute.value.params.id,
+  async (id) => {
+    if (props.mode === "edit") {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+        )
+        if (response.status === 404) {
+          editedTask.value = null
+          setTimeout(() => {
+            router.push("/task")
+          }, 3000)
+        } else {
+          const data = await response.json()
+          editedTask.value = {
+            ...data,
+            status: data.status
+          }
+          originalTask.value = { ...data }
+          titleError.value = ""
+        }
+      } catch (error) {
+        console.error("Error fetching task:", error)
+        editedTask.value = null
+      }
     } else {
-      titleError.value = ""
+      resetForm()
+      titleError.value = "Title is required."
     }
-  }
+  },
+  { immediate: true }
 )
 
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
-
-  if (props.mode === "edit") {
-    const id = router.currentRoute.value.params.id
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-      )
-      if (response.status === 404) {
-        editedTask.value = null
-        setTimeout(() => {
-          router.push("/task")
-        }, 3000)
-      } else {
-        const data = await response.json()
-        editedTask.value = { ...data, status: data.status.id.toString() }
-        originalTask.value = { ...data }
-        titleError.value = ""
-      }
-    } catch (error) {
-      console.error("Error fetching task:", error)
-      editedTask.value = null
-    }
-  } else {
-    resetForm()
-    titleError.value = "Title is required."
-  }
 })
 
 function resetForm() {
@@ -97,42 +100,43 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: "1"
+    status: 1
   }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required.";
-    return;
+    titleError.value = "Title is required."
+    return
   }
 
   try {
     const updatedTask = {
-      ...editedTask.value,
-      title: editedTask.value.title ? editedTask.value.title.trim() : "",
-      description: editedTask.value.description ? editedTask.value.description.trim() : "",
-      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
-      updatedOn: new Date().toISOString(),
-      status: parseInt(editedTask.value.status),
-    };
+      title: editedTask.value.title.trim(),
+      description: editedTask.value.description.trim(),
+      assignees: editedTask.value.assignees.trim(),
+      status: editedTask.value.status
+    }
 
     if (props.mode === "edit") {
-      await taskStore.updateTask(updatedTask.id, updatedTask);
-      emit("taskSaved");
+      const taskId = router.currentRoute.value.params.id
+      if (taskId) {
+        await taskStore.updateTask(taskId, updatedTask)
+        await taskStore.fetchAllTasks()
+        emit("taskSaved")
+        modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
+      } else {
+        console.error("The task does not exist.")
+      }
     } else {
-      await taskStore.addTask(updatedTask);
+      await taskStore.addTask(updatedTask)
+      await taskStore.fetchAllTasks()
+      modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
     }
-    modalStore.openSuccessModal(updatedTask.title, props.mode);
-    closeModal();
+    router.push("/")
   } catch (error) {
-    console.error("Error saving task:", error);
+    console.error("Error saving task:", error)
   }
-  router.push("/");
-}
-
-function goBack() {
-  router.push("/task")
 }
 
 function closeModal() {
@@ -196,6 +200,7 @@ function closeModal() {
 
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
+
                 <select
                   v-model="editedTask.status"
                   class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
@@ -203,13 +208,9 @@ function closeModal() {
                   <option
                     v-for="status in statusStore.statuses"
                     :key="status.id"
-                    :value="status.id.toString()"
+                    :value="status.id"
                   >
-                    {{
-                      status.name
-                        .replace(/_/g, " ")
-                        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-                    }}
+                    {{ status.name }}
                   </option>
                 </select>
               </div>

@@ -18,100 +18,103 @@ const showNotFoundModal = ref(false)
 
 let selectedStatusToDelete = null
 
+const showDeleteTransferModal = ref(false)
+
+
 const goHome = () => {
-    router.push({ name: "TaskTable" })
+  router.push({ name: "TaskTable" })
 }
 
 const selectedStatusDetail = ref(null)
 
 const showStatusDetail = (status) => {
-    router.push({
-        name: "statusDetail",
-        params: { statusId: status.id },
-        state: { status }
-    })
+  router.push({
+    name: "statusDetail",
+    params: { statusId: status.id },
+    state: { status }
+  })
 }
 
 const editStatus = (status) => {
-    if (status && status.id) {
-        router.push({ name: "EditStatus", params: { id: status.id } })
-    }
+  if (status && status.id) {
+    router.push({ name: "EditStatus", params: { id: status.id } })
+  }
 }
 
 const saveStatus = (status) => {
-    if (status.id) {
-        const index = statuses.value.findIndex((s) => s.id === status.id)
-        statuses.value.splice(index, 1, { ...status })
-    } else {
-        status.id = Date.now()
-        statuses.value.push(status)
-    }
-    selectedStatus.value = null
+  if (status.id) {
+    const index = statuses.value.findIndex((s) => s.id === status.id)
+    statuses.value.splice(index, 1, { ...status })
+  } else {
+    status.id = Date.now()
+    statuses.value.push(status)
+  }
+  selectedStatus.value = null
 }
 
-const confirmDelete = (status) => {
-    selectedStatusToDelete = status
-    showDeleteConfirmation.value = true
+const confirmDeleteTransfer = (status) => {
+  selectedStatusToDelete = status
+  showDeleteTransferModal.value = true
 }
 
-const deleteStatus = async () => {
-    showDeleteConfirmation.value = false
-    const selectedStatus = await statusStore.deleteStatus(
-        selectedStatusToDelete.id
+const newStatusId = ref(1)
+const deleteAndTransfer = async (newStatusId) => {
+  try {
+    await statusStore.deleteStatusTransfer(
+      selectedStatusToDelete.id,
+      newStatusId
     )
-    if (selectedStatus.status === 404) {
-        showNotFoundModal.value = true
-    } else {
-        showSuccessModal.value = true
-    }
     selectedStatusToDelete = null
-
-    await fetchStatuses()
-    setTimeout(() => {
-        closeDeleteModal()
-    }, 3000)
+    showDeleteTransferModal.value = false
+    statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
+  } catch (error) {
+    console.error("Error deleting and transferring status:", error)
+  }
 }
-
 function closeDeleteModal() {
-    showSuccessModal.value = false
-    showNotFoundModal.value = false
+  showSuccessModal.value = false
+  showNotFoundModal.value = false
 }
 
 const fetchStatuses = async () => {
-    await statusStore.fetchAllStatuses()
+  await statusStore.fetchAllStatuses()
 }
 
-const cancelDelete = () => {
-    selectedStatusToDelete = null
-    showDeleteConfirmation.value = false
+const cancelDeleteTransfer = () => {
+  selectedStatusToDelete = null
+  showDeleteTransferModal.value = false
 }
 
 const formatStatus = (status) => {
-    return status.toUpperCase()
-        .replace(/_/g, " ")
-        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  return status.toUpperCase()
+    .replace(/_/g, " ")
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
 
 onMounted(async () => {
-    await statusStore.fetchAllStatuses()
+  await statusStore.fetchAllStatuses()
 })
 </script>
 
 <template>
-    <div class="manage-status-page bg-gradient-to-t from-[#ffc3ee] to-[#A9C9FF] min-h-screen">
-        <Header @addStatus="selectedStatus = { id: null, name: '', description: '' }" />
+  <div
+    class="manage-status-page bg-gradient-to-t from-[#ffc3ee] to-[#A9C9FF] min-h-screen"
+  >
+    <Header
+      @addStatus="selectedStatus = { id: null, name: '', description: '' }"
+    />
 
-        <div class="container mx-auto px-4 pt-12">
-            <div class="overflow-x-auto">
-                <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
+    <div class="container mx-auto px-4 pt-12">
+      <div class="overflow-x-auto">
+        <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
                     <thead>
                         <tr class="text-white w-full">
-                            <th class="w-1/12 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
-                            <th class="w-1/4 px-4 py-2 text-xl font-medium">Name</th>
-                            <th class="w-5/12 px-4 py-2 text-xl font-medium">Description</th>
+                            <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
+                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Name</th>
+                            <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
                             <th class="w-1/6 px-4 py-2 text-xl font-medium">Color</th>
-                            <th class="w-1/4 px-4 py-2 rounded-r-lg text-xl font-medium">Action</th>
+                            <th class="w-1/6 px-4 py-2 rounded-r-lg text-xl font-medium">Action</th>
                         </tr>
                     </thead>
 
@@ -161,10 +164,10 @@ onMounted(async () => {
                         </tr>
                     </tbody>
                 </table>
-            </div>
 
+      </div>
 
-            <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
+      <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
         No status
       </div> -->
 
@@ -177,39 +180,55 @@ onMounted(async () => {
       />
     </div>
 
-
-    </div>
-
-
     <div
-      v-if="showDeleteConfirmation"
+      v-if="showDeleteTransferModal"
       class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
     >
       <div class="bg-white p-8 rounded-lg">
         <p class="text-lg mb-4 itbkk-message">
-          Do you want to delete the
+          Transfer tasks from
           <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
-          status?
+          status to:
         </p>
+
+        <div class="mb-4">
+          <select
+            v-model="newStatusId"
+            class="border border-gray-300 rounded py-2 px-3 w-full"
+          >
+            <option
+              v-for="status in statuses.filter(
+                (s) => s.id !== selectedStatusToDelete.id
+              )"
+              :key="status.id"
+              :value="status.id"
+            >
+              {{ status.name }}
+            </option>
+          </select>
+        </div>
 
         <div class="flex justify-end">
           <button
             class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
-            @click="cancelDelete"
+            @click="cancelDeleteTransfer"
           >
             Cancel
           </button>
           <button
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            @click="deleteStatus(selectedStatus)"
+            @click="deleteAndTransfer(newStatusId)"
           >
-            Delete
+            Transfer and Delete
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
+
+  </div>
+
+  <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
       <div
         class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
@@ -310,9 +329,5 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
-
-    <router-view />
-
-
+  <router-view />
 </template>

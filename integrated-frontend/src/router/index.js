@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../components/Home.vue"
 import { useTaskStore } from "../stores/task"
+import { useStatusStore } from "../stores/status"
 import Error from "../components/Error.vue"
 import Modal from "../components/Modal.vue"
 import AddEditTask from "../components/AddEditTask.vue"
@@ -89,9 +90,9 @@ const router = createRouter({
           name: "EditStatus",
           component: AddEditStatus,
           props: (route) => {
-            const taskStore = useTaskStore()
+            const statusStore = useStatusStore()
             return {
-              task: taskStore.getTaskById(route.params.id),
+              status: statusStore.getTaskById(route.params.id),
               mode: "edit",
               show: true,
             }

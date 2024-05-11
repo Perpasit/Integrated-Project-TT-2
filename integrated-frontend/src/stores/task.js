@@ -43,26 +43,32 @@ export const useTaskStore = defineStore("task", {
     },
     async updateTask(id, updatedTask) {
       try {
-        updatedTask.title = updatedTask.title.trim()
-        updatedTask.description = updatedTask.description.trim()
-        updatedTask.assignees = updatedTask.assignees.trim()
-        updatedTask.status = { id: updatedTask.status }
+        const formattedTask = {
+          taskTitle: updatedTask.title.trim(),
+          taskDescription: updatedTask.description.trim(),
+          taskAssignees: updatedTask.assignees.trim(),
+          status: { id: updatedTask.status }
+        };
+    
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
-          updatedTask
-        )
-        const index = this.tasks.findIndex((task) => task.id === id)
+          formattedTask
+        );
+    
+        const index = this.tasks.findIndex(task => task.id === id);
         if (index !== -1) {
-          this.tasks.splice(index, 1, updatedData)
+          this.tasks.splice(index, 1, updatedData);
         }
       } catch (error) {
-        console.error("Error updating task:", error)
-        throw error
+        console.error("Error updating task:", error);
+        throw error;
       }
-    },
+    },    
     async deleteTask(id) {
       try {
-        const deleteTask = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
+        const deleteTask = await deleteItem(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+        )
         this.tasks = this.tasks.filter((task) => task.id !== id)
         return deleteTask
       } catch (error) {
