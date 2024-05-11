@@ -1,7 +1,6 @@
 package sit.int221.intregratedapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.*;
 
