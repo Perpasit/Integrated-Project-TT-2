@@ -179,9 +179,13 @@ function closeModal() {
                   rows="2"
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  :maxlength="100"
                 ></textarea>
                 <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
-                  {{ titleError }}
+                  {{ titleError }} 
+                </p>
+                <p class="text-gray-500 text-sm mt-1">
+                  {{ editedTask.title.length }}/100 characters
                 </p>
               </div>
 
@@ -192,7 +196,11 @@ function closeModal() {
                   v-model="editedTask.description"
                   class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
+                  :maxlength="500"
                 ></textarea>
+                <p class="text-gray-500 text-sm mt-1">
+                  {{ editedTask.description.length }}/500 characters
+                </p>
               </div>
             </div>
 
@@ -204,7 +212,11 @@ function closeModal() {
                   v-model="editedTask.assignees"
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="Unassigned"
+                  :maxlength="30"
                 ></textarea>
+                <p class="text-gray-500 text-sm mt-1">
+                  {{ editedTask.assignees.length }}/30 characters
+                </p>
               </div>
 
               <div class="mt-2.5 mb-4">

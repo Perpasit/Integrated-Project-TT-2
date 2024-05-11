@@ -11,7 +11,9 @@ const props = defineProps({
 
 const route = useRoute()
 const editedTask = ref({})
-const statusName = computed(() => statusStore.getStatusNameById(editedTask.value.status))
+const statusName = computed(() =>
+  statusStore.getStatusNameById(editedTask.value.status)
+)
 const loading = ref(true)
 
 onMounted(async () => {
@@ -156,10 +158,14 @@ No Description Provided</textarea
               </div>
 
               <div class="mt-2.5 mb-4">
-  <label class="block text-sm font-bold mb-1">Status:</label>
-  <input type="text" v-model="statusName" readonly class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">
-</div>
-
+                <label class="block text-sm font-bold mb-1">Status:</label>
+                <input
+                  type="text"
+                  v-model="statusName"
+                  readonly
+                  class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                />
+              </div>
 
               <div class="mt-4">
                 <label class="itbkk-timezone block text-sm font-bold mb-1"

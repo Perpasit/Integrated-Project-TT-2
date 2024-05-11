@@ -1,19 +1,19 @@
 <!-- AddEditStatus.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useStatusStore } from "../stores/status";
-import { useModalStore } from "../stores/useModalStore";
-import { useRouter } from "vue-router";
+import { ref, computed, watch, onMounted } from "vue"
+import { useStatusStore } from "../stores/status"
+import { useModalStore } from "../stores/useModalStore"
+import { useRouter } from "vue-router"
 
-const router = useRouter();
-const statusStore = useStatusStore();
-const modalStore = useModalStore();
-const successModalTimeout = ref(null);
+const router = useRouter()
+const statusStore = useStatusStore()
+const modalStore = useModalStore()
+const successModalTimeout = ref(null)
 
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true,
+    required: true
   },
   status: {
     type: Object,
@@ -21,24 +21,24 @@ const props = defineProps({
       id: "",
       name: "",
       description: "",
-      colorCode: "#000000",
-    }),
+      colorCode: "#000000"
+    })
   },
   mode: {
     type: String,
-    default: "add",
-  },
-});
+    default: "add"
+  }
+})
 
-const emit = defineEmits(["close", "statusSaved"]);
+const emit = defineEmits(["close", "statusSaved"])
 const editedStatus = ref({
   id: "",
   name: "",
   description: "",
-  colorCode: "#000000",
-});
+  colorCode: "#000000"
+})
 
-const nameError = ref("");
+const nameError = ref("")
 
 const isNameValid = computed(() => {
   return (
@@ -51,126 +51,123 @@ const isNameValid = computed(() => {
         (editedStatus.value.name !== originalStatus.value.name ||
           editedStatus.value.description !== originalStatus.value.description ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
-  );
-});
+  )
+})
 
-const originalStatus = ref(null);
+const originalStatus = ref(null)
 
 watch(
   () => router.currentRoute.value.params.id,
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const data = await statusStore.getStatusById(id);
-       
-        editedStatus.value = { ...data };
-        originalStatus.value = { ...data };
-        nameError.value = "";
-        
+        const data = await statusStore.getStatusById(id)
+
+        editedStatus.value = { ...data }
+        originalStatus.value = { ...data }
+        nameError.value = ""
       } catch (error) {
-        console.error("Error fetching status:", error);
-        editedStatus.value = null;
+        console.error("Error fetching status:", error)
+        editedStatus.value = null
       }
     } else {
-      resetForm();
-      nameError.value = "Name is required.";
+      resetForm()
+      nameError.value = "Name is required."
     }
   },
   { immediate: true }
-);
+)
 
 function resetForm() {
   editedStatus.value = {
     name: "",
     description: "",
-    colorCode: "#000000",
-  };
+    colorCode: "#000000"
+  }
 }
 
 const closeSuccessModal = () => {
-  modalStore.closeSuccessModal();
-  clearTimeout(successModalTimeout.value);
-};
+  modalStore.closeSuccessModal()
+  clearTimeout(successModalTimeout.value)
+}
 
 async function saveStatus() {
   if (!isNameValid.value) {
-    nameError.value = "Name is required.";
-    return;
+    nameError.value = "Name is required."
+    return
   }
 
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
       description: editedStatus.value.description.trim(),
-      colorCode: editedStatus.value.colorCode,
-    };
+      colorCode: editedStatus.value.colorCode
+    }
 
     if (props.mode === "edit") {
-      const statusId = router.currentRoute.value.params.id;
+      const statusId = router.currentRoute.value.params.id
       if (statusId) {
-        await statusStore.updateStatus(statusId, updatedStatus);
-        await statusStore.fetchAllStatuses();
-        emit("statusSaved");
-        modalStore.openSuccessModal(updatedStatus.name, props.mode, 'status');
+        await statusStore.updateStatus(statusId, updatedStatus)
+        await statusStore.fetchAllStatuses()
+        emit("statusSaved")
+        modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
 
         // Set a timeout to close the success modal after 3 seconds
         successModalTimeout.value = setTimeout(() => {
-          modalStore.closeSuccessModal();
-        }, 3000);
+          modalStore.closeSuccessModal()
+        }, 3000)
       } else {
-        console.error("The status does not exist.");
+        console.error("The status does not exist.")
       }
     } else {
-      await statusStore.createStatus(updatedStatus);
-      await statusStore.fetchAllStatuses();
-      modalStore.openSuccessModal(updatedStatus.name, props.mode, 'status');
+      await statusStore.createStatus(updatedStatus)
+      await statusStore.fetchAllStatuses()
+      modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
       successModalTimeout.value = setTimeout(() => {
-        modalStore.closeSuccessModal();
-      }, 3000);
+        modalStore.closeSuccessModal()
+      }, 3000)
     }
-    router.push("/status/manage");
+    router.push("/status/manage")
   } catch (error) {
-    console.error("Error saving status:", error);
+    console.error("Error saving status:", error)
   }
 }
 
 function closeModal() {
-  router.push("/status/manage");
-  resetForm();
+  router.push("/status/manage")
+  resetForm()
 }
-
-
 
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
   if (props.mode === "edit") {
-    const statusId = router.currentRoute.value.params.id;
-    console.log("Status ID:", statusId); // Add this line
+    const statusId = router.currentRoute.value.params.id
+    console.log("Status ID:", statusId) // Add this line
     try {
-      const data = await statusStore.getStatusById(statusId);
-      console.log("Fetched Status:", data); // Add this line
+      const data = await statusStore.getStatusById(statusId)
+      console.log("Fetched Status:", data) // Add this line
       if (data) {
         editedStatus.value = {
           ...data,
-          colorCode: data.colorCode,
-        };
-        originalStatus.value = { ...data };
-        nameError.value = "";
+          colorCode: data.colorCode
+        }
+        originalStatus.value = { ...data }
+        nameError.value = ""
       } else {
-        console.error("Status not found");
-        editedStatus.value = null;
+        console.error("Status not found")
+        editedStatus.value = null
       }
     } catch (error) {
-      console.error("Error fetching status:", error);
-      editedStatus.value = null;
+      console.error("Error fetching status:", error)
+      editedStatus.value = null
     }
   } else {
-    resetForm();
-    nameError.value = "Name is required.";
+    resetForm()
+    nameError.value = "Name is required."
   }
-});
+})
 </script>
 
 <template>
@@ -184,9 +181,7 @@ onMounted(async () => {
         class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto"
       >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          <div
-            class="text-lg leading-6 font-medium text-gray-900 mb-4"
-          >
+          <div class="text-lg leading-6 font-medium text-gray-900 mb-4">
             {{ mode === "add" ? "New Status" : "Edit Status" }}
           </div>
 
@@ -198,9 +193,13 @@ onMounted(async () => {
                   rows="2"
                   v-model="editedStatus.name"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  :maxlength="50"
                 ></textarea>
-                <p v-if="nameError" class="text-red-500 text-sm mt-1">
+                <p v-if="!isNameValid" class="text-red-500 text-sm mt-1">
                   {{ nameError }}
+                </p>
+                <p class="text-gray-500 text-sm mt-1">
+                  {{ editedStatus.name.length }}/100 characters
                 </p>
               </div>
 
@@ -211,20 +210,21 @@ onMounted(async () => {
                   v-model="editedStatus.description"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
+                  :maxlength="200"
                 ></textarea>
+                <p class="text-gray-500 text-sm mt-1">
+                  {{ editedStatus.description.length }}/200 characters
+                </p>
               </div>
 
-              <div class="mt-4">
-                <label class="block text-sm font-bold mb-1">Color Code:</label>
+              <div class="mt-4 flex">
+                <label class="block text-sm font-bold mt-1">Color Code:</label>
                 <input
                   type="color"
                   v-model="editedStatus.colorCode"
-                  class="shadow-sm p-1 mt-1 block border border-gray-300 rounded-md"
+                  class="shadow-sm px-1 ml-4 p- block border border-gray-300 rounded-md h-8 w-20"
                 />
               </div>
-              
-
-              
             </div>
           </div>
         </div>

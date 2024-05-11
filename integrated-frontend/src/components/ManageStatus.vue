@@ -22,33 +22,32 @@ let selectedStatusToDelete = null
 
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
-const cannotDeleteEditTimeout = ref(null);
-
+const cannotDeleteEditTimeout = ref(null)
 
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
     params: { statusId: status.id },
-    state: { status },
+    state: { status }
   })
 }
 
 const closeCannotDeleteModal = () => {
-  showCannotEditDeleteModal.value = false;
-  selectedStatusToDelete = null;
-  clearTimeout(cannotDeleteEditTimeout.value);
-};
+  showCannotEditDeleteModal.value = false
+  selectedStatusToDelete = null
+  clearTimeout(cannotDeleteEditTimeout.value)
+}
 
 const editStatus = (status) => {
   if (status && status.id && status.id !== 1) {
-    router.push({ name: "EditStatus", params: { id: status.id } });
+    router.push({ name: "EditStatus", params: { id: status.id } })
   } else if (status.id === 1) {
-    showCannotEditDeleteModal.value = true;
+    showCannotEditDeleteModal.value = true
     cannotDeleteEditTimeout.value = setTimeout(() => {
-      closeCannotDeleteModal();
-    }, 3000);
+      closeCannotDeleteModal()
+    }, 3000)
   }
-};
+}
 
 const saveStatus = (status) => {
   if (status.id) {
@@ -61,26 +60,25 @@ const saveStatus = (status) => {
   selectedStatus.value = null
 }
 
-
 const canDeleteStatus = computed(() => {
   return selectedStatusToDelete && selectedStatusToDelete.id !== 1
 })
 
 const confirmDeleteTransfer = (status) => {
-  selectedStatusToDelete = status;
+  selectedStatusToDelete = status
   if (status.id !== 1) {
-    showDeleteTransferModal.value = true;
+    showDeleteTransferModal.value = true
   } else {
-    showCannotEditDeleteModal.value = true;
+    showCannotEditDeleteModal.value = true
     cannotDeleteEditTimeout.value = setTimeout(() => {
-      closeCannotDeleteModal();
-    }, 3000);
+      closeCannotDeleteModal()
+    }, 3000)
   }
-};
+}
 const closeCannotEditDeleteModal = () => {
-  showCannotEditDeleteModal.value = false;
-  selectedStatusToDelete = null;
-};
+  showCannotEditDeleteModal.value = false
+  selectedStatusToDelete = null
+}
 const newStatusId = ref(1)
 
 const deleteAndTransfer = async (newStatusId) => {
@@ -171,7 +169,7 @@ onMounted(async () => {
             <tr
               v-for="(status, index) in statuses"
               :key="status.id"
-              class="bg-white shadow-lg hover:bg-gray-100"
+              class="bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out"
             >
               <td class="px-4 py-5 rounded-l-lg text-center">
                 {{ index + 1 }}
@@ -186,8 +184,17 @@ onMounted(async () => {
               <td
                 class="itbkk-status-description px-4 py-2 truncate text-center"
               >
-                {{ status.description }}
+                <span v-if="status.description">
+                  {{ status.description }}
+                </span>
+                <span
+                  v-else
+                  class="text-gray-400 italic itbkk-status-description"
+                >
+                  No Description Provided
+                </span>
               </td>
+
               <td class="px-4 py-4 text-center">
                 <div
                   class="w-6 h-6 rounded-full mx-auto"
