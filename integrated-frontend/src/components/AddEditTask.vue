@@ -140,6 +140,12 @@ async function saveTask() {
   }
 }
 
+const formatStatus = (status) => {
+  return status
+    .toUpperCase()
+    .replace(/_/g, " ")
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+}
 function closeModal() {
   router.push("/")
   resetForm()
@@ -211,7 +217,7 @@ function closeModal() {
                     :key="status.id"
                     :value="status.id"
                   >
-                    {{ status.name }}
+                    {{ formatStatus(status.name) }}
                   </option>
                 </select>
               </div>
