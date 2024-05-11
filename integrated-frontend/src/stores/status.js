@@ -7,6 +7,10 @@ export const useStatusStore = defineStore("status", {
     statuses: []
   }),
   getters: {
+    getStatusNameById: (state) => (id) => {
+      const status = state.statuses.find((status) => status.id === parseInt(id));
+      return status ? status.name : null;
+    },    
     getStatuses: (state) => state.statuses,
     getStatusByName: (state) => (name) => {
       return state.statuses.find((status) => status.name === name)
