@@ -1,21 +1,23 @@
-<!-- ManageStatus.vue -->
+
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
+import { useStatusStore } from "../stores/status"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
-import { useStatusStore } from "../stores/status"
+import ModalStatus from "./ModalStatus.vue"
+
+const router = useRouter()
 
 const statusStore = useStatusStore()
-const router = useRouter()
-const statuses = computed(() => statusStore.getStatuses)
+const statuses = statusStore.statuses
+
+onMounted(async () => {
+  await statusStore.fetchAllStatuses()
+})
 
 const selectedStatus = ref(null)
-const showDeleteConfirmation = ref(false)
-
-const showSuccessModal = ref(false)
-const showNotFoundModal = ref(false)
-
+const showDeleteTransferModal = ref(false)
 let selectedStatusToDelete = null
 
 const goHome = () => {
@@ -25,77 +27,46 @@ const goHome = () => {
 const selectedStatusDetail = ref(null)
 
 const showStatusDetail = (status) => {
-  router.push({
-    name: "statusDetail",
-    params: { statusId: status.id },
-    state: { status }
-  })
+  selectedStatusDetail.value = status
 }
 
 const editStatus = (status) => {
-  if (status && status.id) {
-    router.push({ name: "EditStatus", params: { id: status.id } })
-  }
+  selectedStatus.value = { ...status }
 }
 
 const saveStatus = (status) => {
   if (status.id) {
-    const index = statuses.value.findIndex((s) => s.id === status.id)
-    statuses.value.splice(index, 1, { ...status })
+    statusStore.updateStatus(status.id, status)
   } else {
-    status.id = Date.now()
-    statuses.value.push(status)
+    statusStore.createStatus(status)
   }
   selectedStatus.value = null
+  statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
 }
 
-const confirmDelete = (status) => {
+const confirmDeleteTransfer = (status) => {
   selectedStatusToDelete = status
-  showDeleteConfirmation.value = true
+  showDeleteTransferModal.value = true
 }
 
-const deleteStatus = async () => {
-  showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(
-    selectedStatusToDelete.id
-  )
-  if (selectedStatus.status === 404) {
-    showNotFoundModal.value = true
-  } else {
-    showSuccessModal.value = true
+const deleteAndTransfer = async (newStatusId) => {
+  try {
+    await statusStore.deleteStatusTransfer(
+      selectedStatusToDelete.id,
+      newStatusId
+    )
+    selectedStatusToDelete = null
+    showDeleteTransferModal.value = false
+    statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
+  } catch (error) {
+    console.error("Error deleting and transferring status:", error)
   }
+}
+
+const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null
-
-  await fetchStatuses()
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
+  showDeleteTransferModal.value = false
 }
-
-function closeDeleteModal() {
-  showSuccessModal.value = false
-  showNotFoundModal.value = false
-}
-
-const fetchStatuses = async () => {
-  await statusStore.fetchAllStatuses()
-}
-
-const cancelDelete = () => {
-  selectedStatusToDelete = null
-  showDeleteConfirmation.value = false
-}
-
-const formatStatus = (status) => {
-  return status.toUpperCase()
-    .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-}
-
-
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-})
 </script>
 
 <template>
@@ -138,7 +109,7 @@ onMounted(async () => {
                 class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
                 @click="showStatusDetail(status)"
               >
-                {{ formatStatus(status.name) }}
+                {{ status.name }}
               </td>
               <td
                 class="itbkk-status-description px-4 py-2 truncate text-center"
@@ -148,9 +119,8 @@ onMounted(async () => {
 
               <td class="px-4 py-2 rounded-r-lg text-center">
                 <button
-                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                   @click="editStatus(status)"
-                  :style="statusStore.getStatusClass(status.name)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -169,8 +139,8 @@ onMounted(async () => {
                 </button>
 
                 <button
-                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 border border-black rounded-md px-2 py-1"
-                  @click="confirmDelete(status)"
+                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  @click="confirmDeleteTransfer(status)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -193,9 +163,9 @@ onMounted(async () => {
         </table>
       </div>
 
-      <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
+      <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
         No status
-      </div> -->
+      </div>
 
       <AddEditStatus
         v-if="selectedStatus"
@@ -207,135 +177,55 @@ onMounted(async () => {
     </div>
 
     <div
-      v-if="showDeleteConfirmation"
+      v-if="showDeleteTransferModal"
       class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
     >
       <div class="bg-white p-8 rounded-lg">
         <p class="text-lg mb-4 itbkk-message">
-          Do you want to delete the
+          Transfer tasks from
           <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
-          status?
+          status to:
         </p>
+
+        <div class="mb-4">
+          <select
+            v-model="newStatusId"
+            class="border border-gray-300 rounded py-2 px-3 w-full"
+          >
+            <option
+              v-for="status in statuses.filter(
+                (s) => s.id !== selectedStatusToDelete.id
+              )"
+              :key="status.id"
+              :value="status.id"
+            >
+              {{ status.name }}
+            </option>
+          </select>
+        </div>
 
         <div class="flex justify-end">
           <button
             class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
-            @click="cancelDelete"
+            @click="cancelDeleteTransfer"
           >
             Cancel
           </button>
           <button
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            @click="deleteStatus(selectedStatus)"
+            @click="deleteAndTransfer(newStatusId)"
           >
-            Delete
+            Transfer and Delete
           </button>
         </div>
       </div>
     </div>
 
+    <ModalStatus
+      v-if="selectedStatusDetail"
+      :show="!!selectedStatusDetail"
+      :status="selectedStatusDetail"
+      @close="selectedStatusDetail = null"
+    />
   </div>
-
-  <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
-    <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
-        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-          <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
-              Success
-            </div>
-            <button
-              type="button"
-              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeDeleteModal"
-            >
-              <svg
-                class="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
-              The Status is deleted successfully.
-            </p>
-          </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-            <button
-              type="button"
-              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeDeleteModal"
-            >
-              OK
-            </button>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-    <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
-        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-          <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
-              Status Not Found
-            </div>
-            <button
-              type="button"
-              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeDeleteModal"
-            >
-              <svg
-                class="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
-              The Status is not found.
-            </p>
-          </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-            <button
-              type="button"
-              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeDeleteModal"
-            >
-              OK
-            </button>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <router-view />
 </template>
