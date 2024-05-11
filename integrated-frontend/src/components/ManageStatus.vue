@@ -153,7 +153,7 @@ onMounted(async () => {
 
                                 <button
                                     class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 "
-                                    @click="confirmDelete(status)">
+                                    @click="confirmDeleteTransfer(status)">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
                                         viewBox="0 0 24 24" stroke="red">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
