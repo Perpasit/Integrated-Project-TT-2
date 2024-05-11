@@ -61,11 +61,11 @@ watch(
     if (props.mode === "edit") {
       try {
         const data = await statusStore.getStatusById(id);
-        console.log(data)
+       
         editedStatus.value = { ...data };
         originalStatus.value = { ...data };
         nameError.value = "";
-        console.log(data)
+        
       } catch (error) {
         console.error("Error fetching status:", error);
         editedStatus.value = null;
@@ -125,14 +125,27 @@ function closeModal() {
   resetForm();
 }
 
+
+
 onMounted(async () => {
+  await statusStore.fetchAllStatuses()
   if (props.mode === "edit") {
     const statusId = router.currentRoute.value.params.id;
+    console.log("Status ID:", statusId); // Add this line
     try {
       const data = await statusStore.getStatusById(statusId);
-      editedStatus.value = { ...data };
-      originalStatus.value = { ...data };
-      nameError.value = "";
+      console.log("Fetched Status:", data); // Add this line
+      if (data) {
+        editedStatus.value = {
+          ...data,
+          colorCode: data.colorCode,
+        };
+        originalStatus.value = { ...data };
+        nameError.value = "";
+      } else {
+        console.error("Status not found");
+        editedStatus.value = null;
+      }
     } catch (error) {
       console.error("Error fetching status:", error);
       editedStatus.value = null;
