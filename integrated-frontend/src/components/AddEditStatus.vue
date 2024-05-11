@@ -8,6 +8,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const statusStore = useStatusStore();
 const modalStore = useModalStore();
+const successModalTimeout = ref(null);
 
 const props = defineProps({
   show: {
@@ -86,6 +87,11 @@ function resetForm() {
   };
 }
 
+const closeSuccessModal = () => {
+  modalStore.closeSuccessModal();
+  clearTimeout(successModalTimeout.value);
+};
+
 async function saveStatus() {
   if (!isNameValid.value) {
     nameError.value = "Name is required.";
@@ -105,14 +111,24 @@ async function saveStatus() {
         await statusStore.updateStatus(statusId, updatedStatus);
         await statusStore.fetchAllStatuses();
         emit("statusSaved");
-        modalStore.openSuccessModal(updatedStatus.name, props.mode);
+        modalStore.openSuccessModal(updatedStatus.name, props.mode, 'status');
+
+        // Set a timeout to close the success modal after 3 seconds
+        successModalTimeout.value = setTimeout(() => {
+          modalStore.closeSuccessModal();
+        }, 3000);
       } else {
         console.error("The status does not exist.");
       }
     } else {
       await statusStore.createStatus(updatedStatus);
       await statusStore.fetchAllStatuses();
-      modalStore.openSuccessModal(updatedStatus.name, props.mode);
+      modalStore.openSuccessModal(updatedStatus.name, props.mode, 'status');
+
+      // Set a timeout to close the success modal after 3 seconds
+      successModalTimeout.value = setTimeout(() => {
+        modalStore.closeSuccessModal();
+      }, 3000);
     }
     router.push("/status/manage");
   } catch (error) {

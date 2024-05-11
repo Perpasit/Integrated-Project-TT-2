@@ -1,27 +1,24 @@
-import { defineStore } from "pinia"
+import { defineStore } from "pinia";
 
-export const useModalStore = defineStore({
-  id: "modal",
+export const useModalStore = defineStore('modalStore', {
   state: () => ({
     showSuccessModal: false,
-    taskTitle: "",
-    mode: ""
+    taskTitle: '',
+    mode: '',
+    entityType: '',
   }),
   actions: {
-    openSuccessModal(title, mode) {
-      this.showSuccessModal = true
-      this.taskTitle = title
-      this.mode = mode
-
-      setTimeout(() => {
-        this.closeSuccessModal()
-      }, 3000)
+    openSuccessModal(title, mode, entityType = 'task') {
+      this.showSuccessModal = true;
+      this.taskTitle = title;
+      this.mode = mode;
+      this.entityType = entityType;
     },
     closeSuccessModal() {
-      this.showSuccessModal = false
-      this.taskTitle = ""
-      this.mode = ""
-
-    }
-  }
-})
+      this.showSuccessModal = false;
+      this.taskTitle = '';
+      this.mode = '';
+      this.entityType = '';
+    },
+  },
+});
