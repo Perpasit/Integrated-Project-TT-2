@@ -31,7 +31,12 @@ const closeSuccessModal = () => {
     <Header @openModal="showModal" />
     <TaskTable />
 
-    <AddEditTask v-if="showTask" :show="showTask" @close="clearTask" />
+    <AddEditTask
+  v-if="showTask"
+  :show="showTask"
+  @close="clearTask"
+  @taskSaved="clearTask"
+/>
 
     <div
       v-if="modalStore.showSuccessModal"
