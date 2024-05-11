@@ -129,7 +129,7 @@ onMounted(async () => {
           <tr class="text-white w-full">
             <th class="w-19 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
             <th
-              class="w-1/3 px-4 py-2 cursor-pointer text-xl font-medium"
+              class="w-1/3 px-4 py-2 text-xl font-medium"
               @click="toggleSortOrder('title')"
             >
               Title
@@ -143,7 +143,7 @@ onMounted(async () => {
           <tr
             v-for="(task, index) in sortedTasks"
             :key="index"
-            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item"
+            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
           >
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
