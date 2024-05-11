@@ -37,9 +37,9 @@ const showStatusDetail = (status) => {
 
 const editStatus = (status) => {
   if (status && status.id) {
-    router.push({ name: "EditStatus", params: { id: status.id } })
+    router.push({ name: "EditStatus", params: { id: status.id } });
   }
-}
+};
 
 const saveStatus = (status) => {
   if (status.id) {

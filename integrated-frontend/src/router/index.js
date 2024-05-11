@@ -90,12 +90,12 @@ const router = createRouter({
           name: "EditStatus",
           component: AddEditStatus,
           props: (route) => {
-            const statusStore = useStatusStore()
+            const statusStore = useStatusStore();
             return {
-              status: statusStore.getTaskById(route.params.id),
+              status: statusStore.getStatusById(route.params.id),
               mode: "edit",
               show: true,
-            }
+            };
           },
         },
       ]

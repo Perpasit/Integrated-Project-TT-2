@@ -41,10 +41,12 @@ const nameError = ref("");
 
 const isNameValid = computed(() => {
   return (
+    editedStatus.value &&
+    editedStatus.value.name &&
     editedStatus.value.name.trim() !== "" &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
-        editedStatus.value &&
+        originalStatus.value &&
         (editedStatus.value.name !== originalStatus.value.name ||
           editedStatus.value.description !== originalStatus.value.description ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
@@ -59,9 +61,11 @@ watch(
     if (props.mode === "edit") {
       try {
         const data = await statusStore.getStatusById(id);
+        console.log(data)
         editedStatus.value = { ...data };
         originalStatus.value = { ...data };
         nameError.value = "";
+        console.log(data)
       } catch (error) {
         console.error("Error fetching status:", error);
         editedStatus.value = null;
@@ -120,6 +124,24 @@ function closeModal() {
   router.push("/status/manage");
   resetForm();
 }
+
+onMounted(async () => {
+  if (props.mode === "edit") {
+    const statusId = router.currentRoute.value.params.id;
+    try {
+      const data = await statusStore.getStatusById(statusId);
+      editedStatus.value = { ...data };
+      originalStatus.value = { ...data };
+      nameError.value = "";
+    } catch (error) {
+      console.error("Error fetching status:", error);
+      editedStatus.value = null;
+    }
+  } else {
+    resetForm();
+    nameError.value = "Name is required.";
+  }
+});
 </script>
 
 <template>

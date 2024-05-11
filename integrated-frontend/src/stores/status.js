@@ -1,3 +1,4 @@
+
 import { defineStore } from "pinia"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
@@ -10,8 +11,8 @@ export const useStatusStore = defineStore("status", {
     getStatusByName: (state) => (name) => {
       return state.statuses.find((status) => status.name === name)
     },
-    getStatusById: (state) => (name) => {
-      return state.statuses.find((status) => status.name === name)
+    getStatusById: (state) => (id) => {
+      return state.statuses.find((status) => status.id === parseInt(id));
     },
     getStatusClass: (state) => (statusName) => {
       const status = state.statuses.find((s) => s.name === statusName)
@@ -30,7 +31,7 @@ export const useStatusStore = defineStore("status", {
           `${import.meta.env.VITE_API_ENDPOINT}/statuses`
         )
         this.statuses = data || []
-        console.log(this.statuses)
+       
       } catch (error) {
         console.error("Error fetching statuses:", error)
       }

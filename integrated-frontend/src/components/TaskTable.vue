@@ -169,9 +169,9 @@ onMounted(async () => {
               >
             </td>
 
-            <td class="px-5 py-2 text-center">
+            <td class="truncate px-5 py-2 text-center ">
               <span
-                class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
+                class="inline-block px-2 py-1 rounded-full text-center itbkk-status "
                 :style="statusStore.getStatusClass(task.status)"
               >
                 {{ formattedStatus(task) }}
