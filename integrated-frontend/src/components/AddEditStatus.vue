@@ -1,3 +1,4 @@
+<!-- AddEditStatus.vue -->
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { useStatusStore } from "../stores/status";
@@ -5,17 +6,37 @@ import { useModalStore } from "../stores/useModalStore";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const statusStore = useStatusStore();
+const modalStore = useModalStore();
+
 const props = defineProps({
-  show: { type: Boolean, default: false },
-  status: { type: Object, default: null },
-  mode: { type: String, default: "add" },
+  show: {
+    type: Boolean,
+    required: true,
+  },
+  status: {
+    type: Object,
+    default: () => ({
+      id: "",
+      name: "",
+      description: "",
+      colorCode: "#000000",
+    }),
+  },
+  mode: {
+    type: String,
+    default: "add",
+  },
 });
 
 const emit = defineEmits(["close", "statusSaved"]);
-const modalStore = useModalStore();
-const statusStore = useStatusStore();
-const editedStatus = ref({ id: null, name: "", description: "", colorCode: "#000000" });
-const originalStatus = ref(null);
+const editedStatus = ref({
+  id: "",
+  name: "",
+  description: "",
+  colorCode: "#000000",
+});
+
 const nameError = ref("");
 
 const isNameValid = computed(() => {
@@ -24,49 +45,44 @@ const isNameValid = computed(() => {
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedStatus.value &&
-        originalStatus.value &&
         (editedStatus.value.name !== originalStatus.value.name ||
           editedStatus.value.description !== originalStatus.value.description ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
   );
 });
 
+const originalStatus = ref(null);
+
 watch(
-  () => editedStatus.value.name,
-  (newName) => {
-    if (newName.trim() === "") {
-      nameError.value = "Name is required.";
+  () => router.currentRoute.value.params.id,
+  async (id) => {
+    if (props.mode === "edit") {
+      try {
+        const data = await statusStore.getStatusById(id);
+        editedStatus.value = { ...data };
+        originalStatus.value = { ...data };
+        nameError.value = "";
+      } catch (error) {
+        console.error("Error fetching status:", error);
+        editedStatus.value = null;
+      }
     } else {
-      nameError.value = "";
+      resetForm();
+      nameError.value = "Name is required.";
     }
-  }
+  },
+  { immediate: true }
 );
 
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-  if (props.mode === "edit") {
-    const id = router.currentRoute.value.params.id;
-    try {
-      const data = await statusStore.getStatusById(id);
-      editedStatus.value = { ...data };
-      originalStatus.value = { ...data };
-      nameError.value = "";
-    } catch (error) {
-      console.error("Error fetching status:", error);
-      editedStatus.value = null;
-    }
-  } else {
-    resetForm();
-    nameError.value = "Name is required.";
-  }
-});
-
 function resetForm() {
-  editedStatus.value = { name: "", description: "", colorCode: "#000000" };
+  editedStatus.value = {
+    name: "",
+    description: "",
+    colorCode: "#000000",
+  };
 }
 
 async function saveStatus() {
- 
   if (!isNameValid.value) {
     nameError.value = "Name is required.";
     return;
@@ -74,25 +90,30 @@ async function saveStatus() {
 
   try {
     const updatedStatus = {
-      ...editedStatus.value,
       name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description ? editedStatus.value.description.trim() : "",
-      updatedOn: new Date().toISOString(),
+      description: editedStatus.value.description.trim(),
+      colorCode: editedStatus.value.colorCode,
     };
 
     if (props.mode === "edit") {
-      await statusStore.updateStatus(updatedStatus.id, updatedStatus);
-      emit("statusSaved");
+      const statusId = router.currentRoute.value.params.id;
+      if (statusId) {
+        await statusStore.updateStatus(statusId, updatedStatus);
+        await statusStore.fetchAllStatuses();
+        emit("statusSaved");
+        modalStore.openSuccessModal(updatedStatus.name, props.mode);
+      } else {
+        console.error("The status does not exist.");
+      }
     } else {
       await statusStore.createStatus(updatedStatus);
+      await statusStore.fetchAllStatuses();
+      modalStore.openSuccessModal(updatedStatus.name, props.mode);
     }
-    modalStore.openSuccessModal(updatedStatus.name, props.mode);
-    closeModal();
+    router.push("/status/manage");
   } catch (error) {
     console.error("Error saving status:", error);
   }
-  await statusStore.fetchAllStatuses()
-  router.push("/status/manage");
 }
 
 function closeModal() {
@@ -101,9 +122,8 @@ function closeModal() {
 }
 </script>
 
-
 <template>
-  <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
+  <div v-if="editedStatus !== null" class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
@@ -175,6 +195,35 @@ function closeModal() {
             @click="closeModal"
           >
             Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-else class="fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+      </div>
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-red-500">
+                The status does not exist.
+              </h3>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            @click="closeModal"
+          >
+            OK
           </button>
         </div>
       </div>
