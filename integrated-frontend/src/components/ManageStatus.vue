@@ -18,6 +18,9 @@ const showNotFoundModal = ref(false)
 
 let selectedStatusToDelete = null
 
+const showDeleteTransferModal = ref(false)
+
+
 const goHome = () => {
   router.push({ name: "TaskTable" })
 }
@@ -49,29 +52,25 @@ const saveStatus = (status) => {
   selectedStatus.value = null
 }
 
-const confirmDelete = (status) => {
+const confirmDeleteTransfer = (status) => {
   selectedStatusToDelete = status
-  showDeleteConfirmation.value = true
+  showDeleteTransferModal.value = true
 }
 
-const deleteStatus = async () => {
-  showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(
-    selectedStatusToDelete.id
-  )
-  if (selectedStatus.status === 404) {
-    showNotFoundModal.value = true
-  } else {
-    showSuccessModal.value = true
+const newStatusId = ref(1)
+const deleteAndTransfer = async (newStatusId) => {
+  try {
+    await statusStore.deleteStatusTransfer(
+      selectedStatusToDelete.id,
+      newStatusId
+    )
+    selectedStatusToDelete = null
+    showDeleteTransferModal.value = false
+    statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
+  } catch (error) {
+    console.error("Error deleting and transferring status:", error)
   }
-  selectedStatusToDelete = null
-
-  await fetchStatuses()
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
 }
-
 function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
@@ -81,9 +80,9 @@ const fetchStatuses = async () => {
   await statusStore.fetchAllStatuses()
 }
 
-const cancelDelete = () => {
+const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null
-  showDeleteConfirmation.value = false
+  showDeleteTransferModal.value = false
 }
 
 const formatStatus = (status) => {
@@ -169,8 +168,8 @@ onMounted(async () => {
                 </button>
 
                 <button
-                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 border border-black rounded-md px-2 py-1"
-                  @click="confirmDelete(status)"
+                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  @click="confirmDeleteTransfer(status)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -207,32 +206,50 @@ onMounted(async () => {
     </div>
 
     <div
-      v-if="showDeleteConfirmation"
+      v-if="showDeleteTransferModal"
       class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
     >
       <div class="bg-white p-8 rounded-lg">
         <p class="text-lg mb-4 itbkk-message">
-          Do you want to delete the
+          Transfer tasks from
           <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
-          status?
+          status to:
         </p>
+
+        <div class="mb-4">
+          <select
+            v-model="newStatusId"
+            class="border border-gray-300 rounded py-2 px-3 w-full"
+          >
+            <option
+              v-for="status in statuses.filter(
+                (s) => s.id !== selectedStatusToDelete.id
+              )"
+              :key="status.id"
+              :value="status.id"
+            >
+              {{ status.name }}
+            </option>
+          </select>
+        </div>
 
         <div class="flex justify-end">
           <button
             class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
-            @click="cancelDelete"
+            @click="cancelDeleteTransfer"
           >
             Cancel
           </button>
           <button
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            @click="deleteStatus(selectedStatus)"
+            @click="deleteAndTransfer(newStatusId)"
           >
-            Delete
+            Transfer and Delete
           </button>
         </div>
       </div>
     </div>
+
 
   </div>
 

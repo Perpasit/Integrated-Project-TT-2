@@ -35,6 +35,16 @@ export const useStatusStore = defineStore("status", {
         console.error("Error fetching statuses:", error)
       }
     },
+    async deleteStatusTransfer(id, newId) {
+      try {
+        const deletedStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/${newId}`);
+        this.statuses = this.statuses.filter((status) => status.id !== id);
+        return deletedStatus;
+      } catch (error) {
+        console.error("Error deleting and transferring status:", error);
+        throw error;
+      }
+    },
     async createStatus(newStatus) {
       try {
         const createdStatus = await postItem(

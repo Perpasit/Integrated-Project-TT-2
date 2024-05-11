@@ -44,7 +44,7 @@ const saveTask = async (updatedTask) => {
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = statusStore.getStatusById(task.status)
+    const status = statusStore.getStatusByName(task.status)
     if (status) {
       return status.name
         .replace(/_/g, " ")
