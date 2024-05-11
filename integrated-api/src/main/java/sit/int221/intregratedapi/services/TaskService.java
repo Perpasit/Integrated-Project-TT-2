@@ -136,7 +136,9 @@ public class TaskService {
                 .title(new StringBuilder(task.getTaskTitle()))
                 .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
                 .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
-                .status(task.getStatus().getId().toString())
+                .status(statusRepository.findById(task.getStatus().getId())
+                        .map(Status::getStatusName)
+                        .orElse("NO_STATUS"))
                 .createdOn(task.getCreatedOn().toString())
                 .updatedOn(task.getUpdatedOn().toString())
                 .build();
