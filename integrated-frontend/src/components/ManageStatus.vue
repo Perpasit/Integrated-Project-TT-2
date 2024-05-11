@@ -18,6 +18,9 @@ const showNotFoundModal = ref(false)
 
 let selectedStatusToDelete = null
 
+const showDeleteTransferModal = ref(false)
+
+
 const goHome = () => {
   router.push({ name: "TaskTable" })
 }
@@ -49,29 +52,25 @@ const saveStatus = (status) => {
   selectedStatus.value = null
 }
 
-const confirmDelete = (status) => {
+const confirmDeleteTransfer = (status) => {
   selectedStatusToDelete = status
-  showDeleteConfirmation.value = true
+  showDeleteTransferModal.value = true
 }
 
-const deleteStatus = async () => {
-  showDeleteConfirmation.value = false
-  const selectedStatus = await statusStore.deleteStatus(
-    selectedStatusToDelete.id
-  )
-  if (selectedStatus.status === 404) {
-    showNotFoundModal.value = true
-  } else {
-    showSuccessModal.value = true
+const newStatusId = ref(1)
+const deleteAndTransfer = async (newStatusId) => {
+  try {
+    await statusStore.deleteStatusTransfer(
+      selectedStatusToDelete.id,
+      newStatusId
+    )
+    selectedStatusToDelete = null
+    showDeleteTransferModal.value = false
+    statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
+  } catch (error) {
+    console.error("Error deleting and transferring status:", error)
   }
-  selectedStatusToDelete = null
-
-  await fetchStatuses()
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
 }
-
 function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
@@ -81,9 +80,9 @@ const fetchStatuses = async () => {
   await statusStore.fetchAllStatuses()
 }
 
-const cancelDelete = () => {
+const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null
-  showDeleteConfirmation.value = false
+  showDeleteTransferModal.value = false
 }
 
 const formatStatus = (status) => {
@@ -108,89 +107,64 @@ onMounted(async () => {
 
     <div class="container mx-auto px-4 pt-12">
       <div class="overflow-x-auto">
-        <table
-          class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
-        >
-          <thead>
-            <tr class="text-white w-full">
-              <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">
-                No.
-              </th>
-              <th class="w-1/4 px-4 py-2 text-xl font-medium">Name</th>
-              <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
-              <th class="w-1/4 px-4 py-2 rounded-r-lg text-xl font-medium">
-                Action
-              </th>
-            </tr>
-          </thead>
+        <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
+                    <thead>
+                        <tr class="text-white w-full">
+                            <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
+                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Name</th>
+                            <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
+                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Color</th>
+                            <th class="w-1/6 px-4 py-2 rounded-r-lg text-xl font-medium">Action</th>
+                        </tr>
+                    </thead>
 
-          <tbody>
-            <tr
-              v-for="(status, index) in statuses"
-              :key="status.id"
-              class="bg-white shadow-lg hover:bg-gray-100"
-            >
-              <td class="px-4 py-5 rounded-l-lg text-center">
-                {{ index + 1 }}
-              </td>
 
-              <td
-                class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
-                @click="showStatusDetail(status)"
-              >
-                {{ formatStatus(status.name) }}
-              </td>
-              <td
-                class="itbkk-status-description px-4 py-2 truncate text-center"
-              >
-                {{ status.description }}
-              </td>
+                    <tbody>
+                        <tr v-for="(status, index) in statuses" :key="status.id"
+                            class="bg-white shadow-lg hover:bg-gray-100">
+                            <td class="px-4 py-5 rounded-l-lg text-center">
+                                {{ index + 1 }}
+                            </td>
 
-              <td class="px-4 py-2 rounded-r-lg text-center">
-                <button
-                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
-                  @click="editStatus(status)"
-                  :style="statusStore.getStatusClass(status.name)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
+                            <td class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
+                                @click="showStatusDetail(status)">
+                                {{ formatStatus(status.name) }}
+                            </td>
+                            <td class="itbkk-status-description px-4 py-2 truncate text-center">
+                                {{ status.description }}
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <div class="w-6 h-6 rounded-full mx-auto "
+                                    :style="statusStore.getStatusClass(status.name)"></div>
+                            </td>
 
-                <button
-                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 border border-black rounded-md px-2 py-1"
-                  @click="confirmDelete(status)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="red"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+                            <td class="px-4 py-2 rounded-r-lg text-center itbkk-button-action">
+                                <button
+                                    class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                                    @click="editStatus(status)">
+                                    <!-- :style="statusStore.getStatusClass(status.name)" -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 "
+                                    @click="confirmDelete(status)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="red">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
       </div>
 
       <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
@@ -207,32 +181,50 @@ onMounted(async () => {
     </div>
 
     <div
-      v-if="showDeleteConfirmation"
+      v-if="showDeleteTransferModal"
       class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
     >
       <div class="bg-white p-8 rounded-lg">
         <p class="text-lg mb-4 itbkk-message">
-          Do you want to delete the
+          Transfer tasks from
           <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
-          status?
+          status to:
         </p>
+
+        <div class="mb-4">
+          <select
+            v-model="newStatusId"
+            class="border border-gray-300 rounded py-2 px-3 w-full"
+          >
+            <option
+              v-for="status in statuses.filter(
+                (s) => s.id !== selectedStatusToDelete.id
+              )"
+              :key="status.id"
+              :value="status.id"
+            >
+              {{ status.name }}
+            </option>
+          </select>
+        </div>
 
         <div class="flex justify-end">
           <button
             class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
-            @click="cancelDelete"
+            @click="cancelDeleteTransfer"
           >
             Cancel
           </button>
           <button
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            @click="deleteStatus(selectedStatus)"
+            @click="deleteAndTransfer(newStatusId)"
           >
-            Delete
+            Transfer and Delete
           </button>
         </div>
       </div>
     </div>
+
 
   </div>
 

@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref ,computed } from "vue"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 import { useRoute, useRouter } from 'vue-router';
-
-
+import { useStatusStore } from "../stores/status"
+const statusStore = useStatusStore()
 const router = useRouter();
 const props = defineProps({
   task: { type: Object }
@@ -80,6 +80,7 @@ const goBack = () => {
 //       }
 //     editedTask.value = data
 // })
+
 </script>
 
 
@@ -128,13 +129,22 @@ const goBack = () => {
               </div>
 
 
-              <div>
-                <label class="block text-sm font-bold mb-1">Status :</label>
+              <div class="mt-2.5 mb-4">
+                <label class="block text-sm font-bold mb-1">Status:</label>
 
-                <input readonly v-model="editedTask.status"
-                  class="shadow-sm p-1 block w-full sm:text-sm border border-gray-300 rounded-md">
-
-                </input>
+                <select
+                  v-model="editedTask.status"
+                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  disabled
+                >
+                  <option
+                    v-for="status in statusStore.statuses"
+                    :key="status.id"
+                    :value="status.id"
+                  >
+                    {{ status.name }}
+                  </option>
+                </select>
               </div>
               <div class="mt-4">
                 <label class="itbkk-timezone block text-sm font-bold mb-1">TimeZone : {{ localTimeZone }}
