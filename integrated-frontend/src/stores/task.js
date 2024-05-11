@@ -1,3 +1,4 @@
+
 import { defineStore } from "pinia"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
@@ -13,9 +14,7 @@ export const useTaskStore = defineStore("task", {
   actions: {
     async fetchAllTasks() {
       try {
-        const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks`
-        )
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/tasks`)
         this.tasks = data || []
       } catch (error) {
         console.error("Error fetching tasks:", error)

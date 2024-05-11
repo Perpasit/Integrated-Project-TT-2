@@ -1,3 +1,4 @@
+
 import { defineStore } from "pinia"
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
@@ -8,21 +9,16 @@ export const useStatusStore = defineStore("status", {
   actions: {
     async fetchAllStatuses() {
       try {
-        const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses`
-        )
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINT}/statuses`)
+        console.log("Fetched statuses:", data) // เพิ่มบรรทัดนี้
         this.statuses = data || []
-        console.log(this.statuses)
       } catch (error) {
         console.error("Error fetching statuses:", error)
       }
     },
     async createStatus(newStatus) {
       try {
-        const createdStatus = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses`,
-          newStatus
-        )
+        const createdStatus = await postItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses`, newStatus)
         this.statuses.push(createdStatus)
         return createdStatus
       } catch (error) {
@@ -30,13 +26,11 @@ export const useStatusStore = defineStore("status", {
         throw error
       }
     },
+    
     async updateStatus(id, updatedStatus) {
       try {
-        const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`,
-          updatedStatus
-        )
-        const index = this.statuses.findIndex((status) => status.id === id)
+        const updatedData = await putItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`, updatedStatus)
+        const index = this.statuses.findIndex(status => status.id === id)
         if (index !== -1) {
           this.statuses.splice(index, 1, updatedData)
         }
@@ -46,12 +40,25 @@ export const useStatusStore = defineStore("status", {
         throw error
       }
     },
+    
     async deleteStatus(id) {
       try {
         await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
-        this.statuses = this.statuses.filter((status) => status.id !== id)
+        this.statuses = this.statuses.filter(status => status.id !== id)
       } catch (error) {
         console.error("Error deleting status:", error)
+        throw error
+      }
+    },
+    async deleteStatusTransfer(id, newId) {
+      try {
+        const deletedStatus = await deleteItem(
+          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/${newId}`
+        )
+        this.statuses = this.statuses.filter((status) => status.id !== id)
+        return deletedStatus
+      } catch (error) {
+        console.error("Error deleting and transferring status:", error)
         throw error
       }
     }
