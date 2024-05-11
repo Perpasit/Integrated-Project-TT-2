@@ -20,7 +20,6 @@ let selectedStatusToDelete = null
 
 const showDeleteTransferModal = ref(false)
 
-
 const goHome = () => {
   router.push({ name: "TaskTable" })
 }
@@ -58,19 +57,32 @@ const confirmDeleteTransfer = (status) => {
 }
 
 const newStatusId = ref(1)
+
 const deleteAndTransfer = async (newStatusId) => {
   try {
-    await statusStore.deleteStatusTransfer(
+    const result = await statusStore.deleteStatusTransfer(
       selectedStatusToDelete.id,
       newStatusId
     )
     selectedStatusToDelete = null
     showDeleteTransferModal.value = false
-    statusStore.fetchAllStatuses() // เพิ่มบรรทัดนี้
+    statusStore.fetchAllStatuses()
+
+    if (result.status === 404) {
+      showNotFoundModal.value = true
+    } else {
+      showSuccessModal.value = true
+    }
   } catch (error) {
     console.error("Error deleting and transferring status:", error)
+    showSuccessModal.value = false
+    showNotFoundModal.value = true
   }
+  setTimeout(() => {
+    closeDeleteModal()
+  }, 3000)
 }
+
 function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
@@ -86,11 +98,11 @@ const cancelDeleteTransfer = () => {
 }
 
 const formatStatus = (status) => {
-  return status.toUpperCase()
+  return status
+    .toUpperCase()
     .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
-
 
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
@@ -107,69 +119,98 @@ onMounted(async () => {
 
     <div class="container mx-auto px-4 pt-12">
       <div class="overflow-x-auto">
-        <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
-                    <thead>
-                        <tr class="text-white w-full">
-                            <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
-                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Name</th>
-                            <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
-                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Color</th>
-                            <th class="w-1/6 px-4 py-2 rounded-r-lg text-xl font-medium">Action</th>
-                        </tr>
-                    </thead>
+        <table
+          class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
+        >
+          <thead>
+            <tr class="text-white w-full">
+              <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">
+                No.
+              </th>
+              <th class="w-1/6 px-4 py-2 text-xl font-medium">Name</th>
+              <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
+              <th class="w-1/6 px-4 py-2 text-xl font-medium">Color</th>
+              <th class="w-1/6 px-4 py-2 rounded-r-lg text-xl font-medium">
+                Action
+              </th>
+            </tr>
+          </thead>
 
+          <tbody>
+            <tr
+              v-for="(status, index) in statuses"
+              :key="status.id"
+              class="bg-white shadow-lg hover:bg-gray-100"
+            >
+              <td class="px-4 py-5 rounded-l-lg text-center">
+                {{ index + 1 }}
+              </td>
 
-                    <tbody>
-                        <tr v-for="(status, index) in statuses" :key="status.id"
-                            class="bg-white shadow-lg hover:bg-gray-100">
-                            <td class="px-4 py-5 rounded-l-lg text-center">
-                                {{ index + 1 }}
-                            </td>
+              <td
+                class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
+                @click="showStatusDetail(status)"
+              >
+                {{ formatStatus(status.name) }}
+              </td>
+              <td
+                class="itbkk-status-description px-4 py-2 truncate text-center"
+              >
+                {{ status.description }}
+              </td>
+              <td class="px-4 py-4 text-center">
+                <div
+                  class="w-6 h-6 rounded-full mx-auto"
+                  :style="statusStore.getStatusClass(status.name)"
+                ></div>
+              </td>
 
-                            <td class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
-                                @click="showStatusDetail(status)">
-                                {{ formatStatus(status.name) }}
-                            </td>
-                            <td class="itbkk-status-description px-4 py-2 truncate text-center">
-                                {{ status.description }}
-                            </td>
-                            <td class="px-4 py-4 text-center">
-                                <div class="w-6 h-6 rounded-full mx-auto "
-                                    :style="statusStore.getStatusClass(status.name)"></div>
-                            </td>
+              <td
+                class="px-4 py-2 rounded-r-lg text-center itbkk-button-action"
+              >
+                <button
+                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                  @click="editStatus(status)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
 
-
-                            <td class="px-4 py-2 rounded-r-lg text-center itbkk-button-action">
-                                <button
-                                    class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
-                                    @click="editStatus(status)">
-                                    <!-- :style="statusStore.getStatusClass(status.name)" -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </button>
-
-                                <button
-                                    class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 "
-                                    @click="confirmDeleteTransfer(status)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                                        viewBox="0 0 24 24" stroke="red">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
+                <button
+                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  @click="confirmDeleteTransfer(status)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="red"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
-        No status
-      </div> -->
 
       <AddEditStatus
         v-if="selectedStatus"
@@ -224,8 +265,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
-
   </div>
 
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
@@ -260,7 +299,7 @@ onMounted(async () => {
           </div>
           <div>
             <p class="text-sm leading-5 text-gray-500 itbkk-message">
-              The Status is deleted successfully.
+              The task(s) have been transferred and the status has been deleted.
             </p>
           </div>
         </div>
@@ -286,7 +325,7 @@ onMounted(async () => {
       >
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
+            <div class="text-lg leading-6 font-medium text-red-600">
               Status Not Found
             </div>
             <button
@@ -310,8 +349,8 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
-              The Status is not found.
+            <p class="text-sm leading-5 text-red-600 itbkk-message">
+              An error has occurred, the status does not exist.
             </p>
           </div>
         </div>
@@ -329,5 +368,6 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+
   <router-view />
 </template>
