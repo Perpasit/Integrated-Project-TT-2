@@ -5,9 +5,9 @@ import { useRouter } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore";
+import { useModalStore } from "../stores/useModalStore"
 
-const modalStore = useModalStore();
+const modalStore = useModalStore()
 const statusStore = useStatusStore()
 const router = useRouter()
 const statuses = computed(() => statusStore.getStatuses)
@@ -21,24 +21,32 @@ const showNotFoundModal = ref(false)
 let selectedStatusToDelete = null
 
 const showDeleteTransferModal = ref(false)
+const showCannotEditDeleteModal = ref(false)
+const cannotDeleteEditTimeout = ref(null);
 
-const goHome = () => {
-  router.push({ name: "TaskTable" })
-}
-
-const selectedStatusDetail = ref(null)
 
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
     params: { statusId: status.id },
-    state: { status }
+    state: { status },
   })
 }
 
+const closeCannotDeleteModal = () => {
+  showCannotEditDeleteModal.value = false;
+  selectedStatusToDelete = null;
+  clearTimeout(cannotDeleteEditTimeout.value);
+};
+
 const editStatus = (status) => {
-  if (status && status.id) {
+  if (status && status.id && status.id !== 1) {
     router.push({ name: "EditStatus", params: { id: status.id } });
+  } else if (status.id === 1) {
+    showCannotEditDeleteModal.value = true;
+    cannotDeleteEditTimeout.value = setTimeout(() => {
+      closeCannotDeleteModal();
+    }, 3000);
   }
 };
 
@@ -53,36 +61,53 @@ const saveStatus = (status) => {
   selectedStatus.value = null
 }
 
-const confirmDeleteTransfer = (status) => {
-  selectedStatusToDelete = status
-  showDeleteTransferModal.value = true
-}
 
+const canDeleteStatus = computed(() => {
+  return selectedStatusToDelete && selectedStatusToDelete.id !== 1
+})
+
+const confirmDeleteTransfer = (status) => {
+  selectedStatusToDelete = status;
+  if (status.id !== 1) {
+    showDeleteTransferModal.value = true;
+  } else {
+    showCannotEditDeleteModal.value = true;
+    cannotDeleteEditTimeout.value = setTimeout(() => {
+      closeCannotDeleteModal();
+    }, 3000);
+  }
+};
+const closeCannotEditDeleteModal = () => {
+  showCannotEditDeleteModal.value = false;
+  selectedStatusToDelete = null;
+};
 const newStatusId = ref(1)
 
 const deleteAndTransfer = async (newStatusId) => {
-  try {
-    const result = await statusStore.deleteStatusTransfer(
-      selectedStatusToDelete.id,
-      newStatusId
-    )
-    selectedStatusToDelete = null
-    showDeleteTransferModal.value = false
-    statusStore.fetchAllStatuses()
+  if (canDeleteStatus.value) {
+    try {
+      const result = await statusStore.deleteStatusTransfer(
+        selectedStatusToDelete.id,
+        newStatusId
+      )
+      selectedStatusToDelete = null
+      showDeleteTransferModal.value = false
+      statusStore.fetchAllStatuses()
 
-    if (result.status === 404) {
+      if (result.status === 404) {
+        showNotFoundModal.value = true
+      } else {
+        showSuccessModal.value = true
+      }
+    } catch (error) {
+      console.error("Error deleting and transferring status:", error)
+      showSuccessModal.value = false
       showNotFoundModal.value = true
-    } else {
-      showSuccessModal.value = true
     }
-  } catch (error) {
-    console.error("Error deleting and transferring status:", error)
-    showSuccessModal.value = false
-    showNotFoundModal.value = true
+    setTimeout(() => {
+      closeDeleteModal()
+    }, 3000)
   }
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
 }
 
 function closeDeleteModal() {
@@ -106,10 +131,9 @@ const formatStatus = (status) => {
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
-
 const closeSuccessModal = () => {
-  modalStore.closeSuccessModal();
-};
+  modalStore.closeSuccessModal()
+}
 
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
@@ -226,6 +250,68 @@ onMounted(async () => {
         @close="selectedStatus = null"
         @save="saveStatus"
       />
+    </div>
+
+    <div
+      v-if="showCannotEditDeleteModal"
+      class="fixed z-50 inset-0 overflow-y-auto"
+    >
+      <div class="flex items-start justify-center min-h-screen">
+        <div
+          class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+        >
+          <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+            <div class="flex justify-between items-center">
+              <div class="text-lg leading-6 font-medium text-red-600">
+                {{
+                  selectedStatusToDelete
+                    ? 'Cannot Delete "NO_STATUS"'
+                    : 'Cannot Edit "NO_STATUS"'
+                }}
+              </div>
+              <button
+                type="button"
+                class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+                @click="closeCannotEditDeleteModal"
+              >
+                <svg
+                  class="h-6 w-6"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div>
+              <p class="text-sm leading-5 text-red-600 itbkk-message">
+                {{
+                  selectedStatusToDelete
+                    ? "You cannot delete the Default status."
+                    : "You cannot edit the Default status."
+                }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+            <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+              <button
+                type="button"
+                class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+                @click="closeCannotEditDeleteModal"
+              >
+                OK
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div
@@ -376,43 +462,67 @@ onMounted(async () => {
     </div>
   </div>
 
-
-  <div v-if="modalStore.showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="text-lg leading-6 font-medium text-gray-900">Success</div>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-            @click="closeSuccessModal"
-          >
-            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+  <div
+    v-if="modalStore.showSuccessModal"
+    class="fixed z-50 inset-0 overflow-y-auto"
+  >
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-gray-900">
+              Success
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeSuccessModal"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+              The {{ modalStore.entityType }} "{{ modalStore.taskTitle }}" is
+              {{
+                modalStore.mode === "add"
+                  ? "added"
+                  : modalStore.mode === "edit"
+                  ? "edited"
+                  : "deleted"
+              }}
+              successfully.
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="text-sm leading-5 text-gray-500 itbkk-message">
-            The {{ modalStore.entityType }} "{{ modalStore.taskTitle }}" is {{ modalStore.mode === "add" ? "added" : modalStore.mode === "edit" ? "edited" : "deleted" }} successfully.
-          </p>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeSuccessModal"
+            >
+              OK
+            </button>
+          </span>
         </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button
-            type="button"
-            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-            @click="closeSuccessModal"
-          >
-            OK
-          </button>
-        </span>
       </div>
     </div>
   </div>
-</div>
 
   <router-view />
 </template>

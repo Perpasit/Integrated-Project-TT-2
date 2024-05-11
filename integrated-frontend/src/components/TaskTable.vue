@@ -255,7 +255,7 @@ onMounted(async () => {
       <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
+            <div class="text-lg leading-6 font-medium text-red-600">
               Task Not Found
             </div>
             <button type="button"
@@ -267,7 +267,7 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+            <p class="text-sm leading-5 text-red-600 itbkk-message">
               The Task is not found.
             </p>
           </div>
