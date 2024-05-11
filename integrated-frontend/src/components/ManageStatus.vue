@@ -107,89 +107,64 @@ onMounted(async () => {
 
     <div class="container mx-auto px-4 pt-12">
       <div class="overflow-x-auto">
-        <table
-          class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
-        >
-          <thead>
-            <tr class="text-white w-full">
-              <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">
-                No.
-              </th>
-              <th class="w-1/4 px-4 py-2 text-xl font-medium">Name</th>
-              <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
-              <th class="w-1/4 px-4 py-2 rounded-r-lg text-xl font-medium">
-                Action
-              </th>
-            </tr>
-          </thead>
+        <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
+                    <thead>
+                        <tr class="text-white w-full">
+                            <th class="w-1/6 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
+                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Name</th>
+                            <th class="w-1/2 px-4 py-2 text-xl font-medium">Description</th>
+                            <th class="w-1/6 px-4 py-2 text-xl font-medium">Color</th>
+                            <th class="w-1/6 px-4 py-2 rounded-r-lg text-xl font-medium">Action</th>
+                        </tr>
+                    </thead>
 
-          <tbody>
-            <tr
-              v-for="(status, index) in statuses"
-              :key="status.id"
-              class="bg-white shadow-lg hover:bg-gray-100"
-            >
-              <td class="px-4 py-5 rounded-l-lg text-center">
-                {{ index + 1 }}
-              </td>
 
-              <td
-                class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
-                @click="showStatusDetail(status)"
-              >
-                {{ formatStatus(status.name) }}
-              </td>
-              <td
-                class="itbkk-status-description px-4 py-2 truncate text-center"
-              >
-                {{ status.description }}
-              </td>
+                    <tbody>
+                        <tr v-for="(status, index) in statuses" :key="status.id"
+                            class="bg-white shadow-lg hover:bg-gray-100">
+                            <td class="px-4 py-5 rounded-l-lg text-center">
+                                {{ index + 1 }}
+                            </td>
 
-              <td class="px-4 py-2 rounded-r-lg text-center">
-                <button
-                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
-                  @click="editStatus(status)"
-                  :style="statusStore.getStatusClass(status.name)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
+                            <td class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
+                                @click="showStatusDetail(status)">
+                                {{ formatStatus(status.name) }}
+                            </td>
+                            <td class="itbkk-status-description px-4 py-2 truncate text-center">
+                                {{ status.description }}
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <div class="w-6 h-6 rounded-full mx-auto "
+                                    :style="statusStore.getStatusClass(status.name)"></div>
+                            </td>
 
-                <button
-                  class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                  @click="confirmDeleteTransfer(status)"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="red"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+                            <td class="px-4 py-2 rounded-r-lg text-center itbkk-button-action">
+                                <button
+                                    class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                                    @click="editStatus(status)">
+                                    <!-- :style="statusStore.getStatusClass(status.name)" -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2 "
+                                    @click="confirmDelete(status)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="red">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
       </div>
 
       <!-- <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
