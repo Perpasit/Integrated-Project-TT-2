@@ -58,6 +58,8 @@ const isTitleValid = computed(() => {
 
 const originalTask = ref(null)
 
+
+
 watch(
   () => router.currentRoute.value.params.id,
   async (id) => {
@@ -125,14 +127,14 @@ async function saveTask() {
         await taskStore.updateTask(taskId, updatedTask)
         await taskStore.fetchAllTasks()
         emit("taskSaved")
-        modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
+        modalStore.openSuccessModal(updatedTask.title, props.mode) 
       } else {
         console.error("The task does not exist.")
       }
     } else {
       await taskStore.addTask(updatedTask)
       await taskStore.fetchAllTasks()
-      modalStore.openSuccessModal(updatedTask.title, props.mode) // Use the modalStore
+      modalStore.openSuccessModal(updatedTask.title, props.mode) 
     }
     router.push("/")
   } catch (error) {
@@ -178,7 +180,7 @@ function closeModal() {
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 ></textarea>
-                <p v-if="titleError" class="text-red-500 text-sm mt-1">
+                <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
                   {{ titleError }}
                 </p>
               </div>
@@ -207,7 +209,6 @@ function closeModal() {
 
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
-
                 <select
                   v-model="editedTask.status"
                   class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
@@ -218,6 +219,7 @@ function closeModal() {
                     :value="status.id"
                   >
                     {{ formatStatus(status.name) }}
+                
                   </option>
                 </select>
               </div>
