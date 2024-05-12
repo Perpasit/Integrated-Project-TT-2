@@ -12,7 +12,7 @@ const props = defineProps({
 const route = useRoute()
 const editedTask = ref({})
 const statusName = computed(() =>
-  statusStore.getStatusNameById(editedTask.value.status)
+  statusStore.getStatusNameById(editedTask.value.status) || ''
 )
 const loading = ref(true)
 
@@ -82,7 +82,9 @@ const goBack = () => {
 //     editedTask.value = data
 // })
 
+
 const formatStatus = (status) => {
+  if (!status) return ''
   return status
     .toUpperCase()
     .replace(/_/g, " ")
