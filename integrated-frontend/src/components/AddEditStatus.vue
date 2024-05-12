@@ -199,7 +199,7 @@ onMounted(async () => {
                   {{ nameError }}
                 </p>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedStatus.name.length }}/100 characters
+                  {{ editedStatus.name.length }}/50 characters
                 </p>
               </div>
 

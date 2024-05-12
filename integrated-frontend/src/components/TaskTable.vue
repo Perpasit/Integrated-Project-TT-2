@@ -48,7 +48,7 @@ const formattedStatus = computed(() => {
     if (status) {
       return status.name
         .toUpperCase()
-        .replace(/_/g, " ")
+        // .replace(/_/g, " ")
         .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {
       return "Unknown"
