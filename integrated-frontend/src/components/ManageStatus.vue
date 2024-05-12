@@ -136,6 +136,29 @@ const closeSuccessModal = () => {
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
 })
+
+
+// Copy to clipboard
+const showTooltip = ref(null)
+const getStatusColor = (status) => {
+  return statusStore.getStatusColorByName(status.name)
+}
+const copiedColor = ref(null)
+
+const copyColorToClipboard = (color) => {
+  navigator.clipboard.writeText(color).then(
+    () => {
+      console.log(`Copied color code: ${color}`)
+      copiedColor.value = color
+      setTimeout(() => {
+        copiedColor.value = null
+      }, 2000)
+    },
+    (error) => {
+      console.error("Failed to copy color code:", error)
+    }
+  )
+}
 </script>
 
 <template>
@@ -195,11 +218,30 @@ onMounted(async () => {
                 </span>
               </td>
 
-              <td class="px-4 py-4 text-center">
+              <td class="px-4 py-4 text-center relative">
                 <div
-                  class="w-6 h-6 rounded-full mx-auto"
-                  :style="statusStore.getStatusClass(status.name)"
-                ></div>
+                  class="w-6 h-6 rounded-full mx-auto cursor-pointer"
+                  :style="{ 'background-color': getStatusColor(status) }"
+                  @click="copyColorToClipboard(getStatusColor(status))"
+                  @mouseenter="showTooltip = status.id ,copiedColor = null
+                  "
+                  @mouseleave="showTooltip = null ,copiedColor = null"
+                    
+                  
+                >
+                  <div
+                    v-if="showTooltip === status.id"
+                    class="absolute bg-gray-800 text-white px-2 py-1 text-xs rounded-md whitespace-nowrap -translate-x-1/2 -translate-y-full left-1/2 z-10"
+                  >
+                    Copy to clipboard
+                  </div>
+                  <div
+                    v-if="copiedColor === getStatusColor(status)"
+                    class="absolute bg-emerald-500 text-white px-3 py-1 text-xs rounded-md whitespace-nowrap -translate-x-1/2 -translate-y-full left-1/2 z-10"
+                  >
+                    Copied : {{ getStatusColor(status) }}
+                  </div>
+                </div>
               </td>
 
               <td
