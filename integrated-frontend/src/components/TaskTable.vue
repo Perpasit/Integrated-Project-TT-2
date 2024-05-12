@@ -21,7 +21,7 @@ const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
     params: { taskId: task.id },
-    state: { task },
+    state: { task }
   })
 }
 
@@ -233,7 +233,7 @@ onMounted(async () => {
       :show="!!selectedTask"
       :task="{
         ...selectedTask,
-        status: selectedTask.status,
+        status: selectedTask.status
       }"
       mode="edit"
       @close="closeModal"
