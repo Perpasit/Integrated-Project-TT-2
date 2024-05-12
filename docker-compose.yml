@@ -1,0 +1,54 @@
+version: '3.7'
+services:
+
+  api:
+    container_name: integrated-api
+    restart: always
+    build:
+      context: ./integrated-api
+      dockerfile: Dockerfile
+    environment:
+      - SQLDBHOST=db
+    # ports:
+    #   - "8080:8080"
+    networks:
+      integrated-network:
+
+  db:
+    image: mysql/mysql-server
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: K9Gefgksu2.sql
+      MYSQL_DATABASE: integrateddatabase
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: x_eRT2vv4
+    # ports:
+    #   - "33061:3306"
+    networks:
+      integrated-network:
+
+  frontend:
+    container_name: integrated-frontend
+    build:
+      context: ./integrated-frontend
+      dockerfile: Dockerfile
+    # ports:
+    #   - "80:80"
+    networks:
+      integrated-network:
+
+  proxy:
+    container_name: integrated-proxy
+    build:
+      context: ./integrated-proxy
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      integrated-network:
+
+
+networks:
+  integrated-network:
