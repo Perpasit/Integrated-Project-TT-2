@@ -161,7 +161,7 @@ No Description Provided</textarea
                 <label class="block text-sm font-bold mb-1">Status:</label>
                 <input
                   type="text"
-                  v-model="statusName"
+                  :value="formatStatus(statusName)"
                   readonly
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 />
