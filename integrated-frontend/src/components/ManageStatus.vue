@@ -159,6 +159,7 @@ const copyColorToClipboard = (color) => {
     }
   )
 }
+
 </script>
 
 <template>
@@ -386,7 +387,7 @@ const copyColorToClipboard = (color) => {
               :key="status.id"
               :value="status.id"
             >
-              {{ status.name }}
+              {{ formatStatus(status.name) }}
             </option>
           </select>
         </div>
