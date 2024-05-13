@@ -302,8 +302,13 @@ const copyColorToClipboard = (color) => {
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                   @click="
-                    ;(showDeleteConfirmationModal = true),
-                      (selectedStatusToDelete = status)
+                    if (status.id === 1) {
+                      showCannotEditDeleteModal = true;
+                      selectedStatusToDelete = status;
+                    } else {
+                      showDeleteConfirmationModal = true;
+                      selectedStatusToDelete = status;
+                    }
                   "
                 >
                   <svg
