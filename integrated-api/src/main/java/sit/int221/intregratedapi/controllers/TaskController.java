@@ -10,8 +10,8 @@ import sit.int221.intregratedapi.utils.ListMapper;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tasks")
-@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/"})
+@RequestMapping("/v2/tasks")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th","http://intproj23.sit.kmutt.ac.th" })
 public class TaskController {
     private final TaskService taskService;
     private final ListMapper listMapper;
