@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/statuses")
-@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/"})
+@CrossOrigin(origins = {"http://localhost:4173", "http://localhost:5173"})
 public class StatusController {
     private final StatusService statusService;
     private final ListMapper listMapper;
@@ -53,6 +53,12 @@ public class StatusController {
     @PutMapping("/{id}")
     public ResponseEntity<StatusUDTO> updateStatus(@RequestBody Status status,@PathVariable Integer id) {
         return statusService.updateStatus(id, status);
+    }
+
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
+        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
+        return ResponseEntity.ok(taskDTOs);
     }
 
 }
