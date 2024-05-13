@@ -1,5 +1,5 @@
-FROM nginx:stable-alpine
-COPY default.conf /etc/nginx/conf.d/intproj.conf
+FROM nginx:alpine as production-stage
+COPY default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

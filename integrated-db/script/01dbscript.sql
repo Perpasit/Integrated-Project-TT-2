@@ -7,12 +7,13 @@ CREATE TABLE statuses (
     statusName VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
     statusDescription VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     colorCode VARCHAR(7) NOT NULL,
-     createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
+    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT CHK_statusName_not_empty CHECK (statusName <> ''),
     CONSTRAINT CHK_statusName_trim CHECK (statusName = TRIM(statusName)),
     CONSTRAINT CHK_statusDescription_trim CHECK (statusDescription = TRIM(statusDescription) OR statusDescription IS NULL),
-        CONSTRAINT CHK_colorCode_valid CHECK (colorCode RLIKE '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')  -- Regex to ensure valid hex >);
+    CONSTRAINT CHK_colorCode_valid CHECK (colorCode RLIKE '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$')
+);
 CREATE TABLE tasks (
     taskId INT AUTO_INCREMENT PRIMARY KEY,
     taskTitle VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,

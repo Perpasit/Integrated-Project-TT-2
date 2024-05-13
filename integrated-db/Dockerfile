@@ -4,3 +4,8 @@ ENV MYSQL_ROOT_PASSWORD=K9Gefgksu2.sql
 ENV MYSQL_USER=dev
 ENV MYSQL_PASSWORD=x_eRT2vv4
 ENV MYSQL_DATABASE=integrateddatabase
+
+COPY script/ /docker-entrypoint-initdb.d/
+COPY my.cnf /etc/my.cnf
+
+EXPOSE 3306
