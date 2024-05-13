@@ -63,6 +63,9 @@ watch(
       try {
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
         if (response.status === 404) {
+          setTimeout(() => {
+            router.push("/status/manage")
+          }, 3000)
           throw new Error("Status not found");
         } else {
           const data = await response.json();
