@@ -26,8 +26,8 @@ export const useTaskStore = defineStore("task", {
       try {
         const formattedTask = {
           taskTitle: newTask.title.trim(),
-          description: newTask.description.trim(),
-          assignees: newTask.assignees.trim(),
+          taskDescription: newTask.description.trim(),
+          taskAssignees: newTask.assignees.trim(),
           status: { id: newTask.status }
         }
 
@@ -48,22 +48,22 @@ export const useTaskStore = defineStore("task", {
           taskDescription: updatedTask.description.trim(),
           taskAssignees: updatedTask.assignees.trim(),
           status: { id: updatedTask.status }
-        };
-    
+        }
+
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
           formattedTask
-        );
-    
-        const index = this.tasks.findIndex(task => task.id === id);
+        )
+
+        const index = this.tasks.findIndex((task) => task.id === id)
         if (index !== -1) {
-          this.tasks.splice(index, 1, updatedData);
+          this.tasks.splice(index, 1, updatedData)
         }
       } catch (error) {
-        console.error("Error updating task:", error);
-        throw error;
+        console.error("Error updating task:", error)
+        throw error
       }
-    },    
+    },
     async deleteTask(id) {
       try {
         const deleteTask = await deleteItem(
