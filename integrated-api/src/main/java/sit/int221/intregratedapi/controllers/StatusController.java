@@ -11,8 +11,8 @@ import sit.int221.intregratedapi.utils.ListMapper;
 import java.util.List;
 
 @RestController
-@RequestMapping("/v2/statuses")
-@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/" , "http://ip23tt2.sit.kmutt.ac.th/","http://intproj23.sit.kmutt.ac.th"})
+@RequestMapping("/statuses")
+@CrossOrigin(origins = {"http://localhost:4173", "http://localhost:5173"})
 public class StatusController {
     private final StatusService statusService;
     private final ListMapper listMapper;
@@ -53,6 +53,12 @@ public class StatusController {
     @PutMapping("/{id}")
     public ResponseEntity<StatusUDTO> updateStatus(@RequestBody Status status,@PathVariable Integer id) {
         return statusService.updateStatus(id, status);
+    }
+
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
+        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
+        return ResponseEntity.ok(taskDTOs);
     }
 
 }

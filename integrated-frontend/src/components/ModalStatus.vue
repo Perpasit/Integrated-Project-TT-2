@@ -42,7 +42,7 @@ const parseAndFormatDate = (dateString) => {
 const formatStatusName = (statusName) => {
   return statusName
     .toUpperCase()
-    .replace(/_/g, " ")
+    // .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 </script>

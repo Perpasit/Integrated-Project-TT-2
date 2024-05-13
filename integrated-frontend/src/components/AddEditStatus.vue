@@ -13,43 +13,43 @@ const successModalTimeout = ref(null)
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true
+    required: true,
   },
   status: {
     type: Object,
     default: () => ({
       id: "",
-      name: "",
-      description: "",
-      colorCode: "#000000"
-    })
+      statusName: "",
+      statusDescription: "",
+      colorCode: "#000000",
+    }),
   },
   mode: {
     type: String,
-    default: "add"
-  }
+    default: "add",
+  },
 })
 
 const emit = defineEmits(["close", "statusSaved"])
 const editedStatus = ref({
   id: "",
-  name: "",
-  description: "",
-  colorCode: "#000000"
-})
+  statusName: "",
+  statusDescription: "",
+  colorCode: "#000000",
+});
 
 const nameError = ref("")
 
 const isNameValid = computed(() => {
   return (
     editedStatus.value &&
-    editedStatus.value.name &&
-    editedStatus.value.name.trim() !== "" &&
+    editedStatus.value.statusName &&
+    editedStatus.value.statusName.trim() !== "" &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
         originalStatus.value &&
-        (editedStatus.value.name !== originalStatus.value.name ||
-          editedStatus.value.description !== originalStatus.value.description ||
+        (editedStatus.value.statusName !== originalStatus.value.statusName ||
+          editedStatus.value.statusDescription !== originalStatus.value.statusDescription ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
   )
 })
@@ -61,28 +61,39 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const data = await statusStore.getStatusById(id)
-
-        editedStatus.value = { ...data }
-        originalStatus.value = { ...data }
-        nameError.value = ""
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
+        if (response.status === 404) {
+          setTimeout(() => {
+            router.push("/status/manage")
+          }, 3000)
+          throw new Error("Status not found");
+        } else {
+          const data = await response.json();
+          editedStatus.value = {
+            ...data,
+            statusName: data.statusName || "",
+            statusDescription: data.statusDescription || "",
+            colorCode: data.colorCode,
+          };
+          // console.log("Fetched status data:", editedStatus.value); 
+          originalStatus.value = { ...data };
+          nameError.value = "";
+        }
       } catch (error) {
-        console.error("Error fetching status:", error)
-        editedStatus.value = null
+        editedStatus.value = null;
       }
     } else {
-      resetForm()
-      nameError.value = "Name is required."
+      resetForm();
+      nameError.value = "Name is required.";
     }
   },
   { immediate: true }
-)
-
+);
 function resetForm() {
   editedStatus.value = {
-    name: "",
-    description: "",
-    colorCode: "#000000"
+    statusName: "",
+    statusDescription: "",
+    colorCode: "#000000",
   }
 }
 
@@ -99,9 +110,9 @@ async function saveStatus() {
 
   try {
     const updatedStatus = {
-      name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description.trim(),
-      colorCode: editedStatus.value.colorCode
+      statusName: editedStatus.value.statusName.trim(),
+      statusDescription: editedStatus.value.statusDescription.trim(),
+      colorCode: editedStatus.value.colorCode,
     }
 
     if (props.mode === "edit") {
@@ -110,7 +121,7 @@ async function saveStatus() {
         await statusStore.updateStatus(statusId, updatedStatus)
         await statusStore.fetchAllStatuses()
         emit("statusSaved")
-        modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
+        modalStore.openSuccessModal(updatedStatus.statusName, props.mode, "status")
 
         // Set a timeout to close the success modal after 3 seconds
         successModalTimeout.value = setTimeout(() => {
@@ -122,7 +133,7 @@ async function saveStatus() {
     } else {
       await statusStore.createStatus(updatedStatus)
       await statusStore.fetchAllStatuses()
-      modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
+      modalStore.openSuccessModal(updatedStatus.statusName, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
       successModalTimeout.value = setTimeout(() => {
@@ -135,39 +146,16 @@ async function saveStatus() {
   }
 }
 
+function formatStatus(status) {
+  return status
+    .toUpperCase()
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+}
+
 function closeModal() {
   router.push("/status/manage")
   resetForm()
 }
-
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-  if (props.mode === "edit") {
-    const statusId = router.currentRoute.value.params.id
-    console.log("Status ID:", statusId) // Add this line
-    try {
-      const data = await statusStore.getStatusById(statusId)
-      console.log("Fetched Status:", data) // Add this line
-      if (data) {
-        editedStatus.value = {
-          ...data,
-          colorCode: data.colorCode
-        }
-        originalStatus.value = { ...data }
-        nameError.value = ""
-      } else {
-        console.error("Status not found")
-        editedStatus.value = null
-      }
-    } catch (error) {
-      console.error("Error fetching status:", error)
-      editedStatus.value = null
-    }
-  } else {
-    resetForm()
-    nameError.value = "Name is required."
-  }
-})
 </script>
 
 <template>
@@ -191,7 +179,7 @@ onMounted(async () => {
                 <label class="block text-sm font-bold mb-1">Name:</label>
                 <textarea
                   rows="2"
-                  v-model="editedStatus.name"
+                  v-model="editedStatus.statusName"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   :maxlength="50"
                 ></textarea>
@@ -199,7 +187,7 @@ onMounted(async () => {
                   {{ nameError }}
                 </p>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedStatus.name.length }}/100 characters
+                  {{ editedStatus.statusName ? editedStatus.statusName.length : 0 }}/50 characters
                 </p>
               </div>
 
@@ -207,13 +195,17 @@ onMounted(async () => {
                 <label class="block text-sm font-bold mb-1">Description:</label>
                 <textarea
                   rows="5"
-                  v-model="editedStatus.description"
+                  v-model="editedStatus.statusDescription"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
                   :maxlength="200"
                 ></textarea>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedStatus.description.length }}/200 characters
+                  {{
+                    editedStatus.statusDescription
+                      ? editedStatus.statusDescription.length
+                      : 0
+                  }}/200 characters
                 </p>
               </div>
 
@@ -236,7 +228,7 @@ onMounted(async () => {
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                 isNameValid,
-              'bg-gray-300 cursor-not-allowed': !isNameValid
+              'bg-gray-300 cursor-not-allowed': !isNameValid,
             }"
             @click="saveStatus"
             :disabled="!isNameValid"

@@ -87,7 +87,7 @@ const formatStatus = (status) => {
   if (!status) return ''
   return status
     .toUpperCase()
-    .replace(/_/g, " ")
+    // .replace(/_/g, " ")
     .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 </script>

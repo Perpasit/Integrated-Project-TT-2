@@ -13,6 +13,9 @@ export const useModalStore = defineStore('modalStore', {
       this.taskTitle = title;
       this.mode = mode;
       this.entityType = entityType;
+      setTimeout(() => {
+        this.closeSuccessModal()
+      }, 3000)
     },
     closeSuccessModal() {
       this.showSuccessModal = false;

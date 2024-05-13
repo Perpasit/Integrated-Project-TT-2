@@ -7,6 +7,7 @@ import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 
+const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
 const statusStore = useStatusStore()
 const router = useRouter()
@@ -60,13 +61,48 @@ const saveStatus = (status) => {
   selectedStatus.value = null
 }
 
+async function confirmDeleteStatus() {
+  if (selectedStatusToDelete) {
+    try {
+      const result = await statusStore.deleteStatus(selectedStatusToDelete.id)
+
+      if (result.notFound) {
+        showDeleteConfirmationModal.value = false
+        selectedStatusToDelete = null
+        showNotFoundModal.value = true
+
+        statusStore.fetchAllStatuses()
+        setTimeout(() => {
+          showNotFoundModal.value = false
+        }, 3000)
+      } else if (result.needsTransfer) {
+        showDeleteConfirmationModal.value = false
+        confirmDeleteTransfer(selectedStatusToDelete)
+      } else {
+        showDeleteConfirmationModal.value = false
+        selectedStatusToDelete = null
+        showSuccessModal.value = true
+        setTimeout(() => {
+          router.push({ name: "ManageStatus" })
+        }, 3000)
+      }
+    } catch (error) {
+      console.error("Error deleting status:", error)
+      
+    }
+    setTimeout(() => {
+      closeDeleteModal()
+    }, 3000)
+  }
+}
+
 const canDeleteStatus = computed(() => {
   return selectedStatusToDelete && selectedStatusToDelete.id !== 1
 })
 
 const confirmDeleteTransfer = (status) => {
-  selectedStatusToDelete = status
-  if (status.id !== 1) {
+  if (status && status.id !== 1) {
+    selectedStatusToDelete = status
     showDeleteTransferModal.value = true
   } else {
     showCannotEditDeleteModal.value = true
@@ -92,7 +128,9 @@ const deleteAndTransfer = async (newStatusId) => {
       showDeleteTransferModal.value = false
       statusStore.fetchAllStatuses()
 
-      if (result.status === 404) {
+      if (result.notFound) {
+        showNotFoundModal.value = true
+      } else if (result.status === 404) {
         showNotFoundModal.value = true
       } else {
         showSuccessModal.value = true
@@ -123,10 +161,12 @@ const cancelDeleteTransfer = () => {
 }
 
 const formatStatus = (status) => {
-  return status
-    .toUpperCase()
-    .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  return (
+    status
+      .toUpperCase()
+      // .replace(/_/g, " ")
+      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  )
 }
 
 const closeSuccessModal = () => {
@@ -136,7 +176,6 @@ const closeSuccessModal = () => {
 onMounted(async () => {
   await statusStore.fetchAllStatuses()
 })
-
 
 // Copy to clipboard
 const showTooltip = ref(null)
@@ -159,7 +198,6 @@ const copyColorToClipboard = (color) => {
     }
   )
 }
-
 </script>
 
 <template>
@@ -224,11 +262,8 @@ const copyColorToClipboard = (color) => {
                   class="w-6 h-6 rounded-full mx-auto cursor-pointer"
                   :style="{ 'background-color': getStatusColor(status) }"
                   @click="copyColorToClipboard(getStatusColor(status))"
-                  @mouseenter="showTooltip = status.id ,copiedColor = null
-                  "
-                  @mouseleave="showTooltip = null ,copiedColor = null"
-                    
-                  
+                  @mouseenter=";(showTooltip = status.id), (copiedColor = null)"
+                  @mouseleave=";(showTooltip = null), (copiedColor = null)"
                 >
                   <div
                     v-if="showTooltip === status.id"
@@ -270,7 +305,15 @@ const copyColorToClipboard = (color) => {
 
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                  @click="confirmDeleteTransfer(status)"
+                  @click="
+                    if (status.id === 1) {
+                      showCannotEditDeleteModal = true;
+                      selectedStatusToDelete = status;
+                    } else {
+                      showDeleteConfirmationModal = true;
+                      selectedStatusToDelete = status;
+                    }
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -570,6 +613,35 @@ const copyColorToClipboard = (color) => {
             </button>
           </span>
         </div>
+      </div>
+    </div>
+  </div>
+  <div
+    v-if="showDeleteConfirmationModal"
+    class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
+  >
+    <div class="bg-white p-8 rounded-lg">
+      <p class="text-lg mb-4 itbkk-message">
+        Are you sure you want to delete the status "{{
+          selectedStatusToDelete.name
+        }}"?
+      </p>
+      <div class="flex justify-end">
+        <button
+          class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+          @click="
+            ;(showDeleteConfirmationModal = false),
+              (selectedStatusToDelete = null)
+          "
+        >
+          Cancel
+        </button>
+        <button
+          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          @click="confirmDeleteStatus"
+        >
+          Delete
+        </button>
       </div>
     </div>
   </div>
