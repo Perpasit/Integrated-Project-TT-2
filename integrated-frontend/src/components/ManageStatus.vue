@@ -88,7 +88,11 @@ async function confirmDeleteStatus() {
       }
     } catch (error) {
       console.error("Error deleting status:", error)
+      
     }
+    setTimeout(() => {
+      closeDeleteModal()
+    }, 3000)
   }
 }
 
