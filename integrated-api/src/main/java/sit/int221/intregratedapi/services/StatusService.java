@@ -39,6 +39,14 @@ public class StatusService {
         return statuses;
     }
 
+    public List<TaskDTO> getTasksByStatusId(Integer statusId) {
+        Status status = statusRepository.findById(statusId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist!"));
+
+        List<Task> tasks = taskRepository.findByStatusId(statusId);
+        return listMapper.mapList(tasks, TaskDTO.class);
+    }
+
     public StatusRDTO getStatusById(Integer id) {
         Status status = statusRepository.findById(id).orElse(null);
         if (status != null) {

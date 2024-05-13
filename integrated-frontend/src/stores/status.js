@@ -74,9 +74,14 @@ export const useStatusStore = defineStore("status", {
     },
     async updateStatus(id, updatedStatus) {
       try {
+        const formattedStatus = {
+          name: updatedStatus.statusName,
+          description: updatedStatus.statusDescription,
+          colorCode: updatedStatus.colorCode
+        }
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`,
-          updatedStatus
+          formattedStatus
         )
         const index = this.statuses.findIndex((status) => status.id === id)
         if (index !== -1) {
@@ -90,14 +95,36 @@ export const useStatusStore = defineStore("status", {
     },
     async deleteStatus(id) {
       try {
-        const deleteStatus = await deleteItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
-        )
-        this.statuses = this.statuses.filter((status) => status.id !== id)
-        return deleteStatus
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/tasks`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        if (!response.ok) {
+          // If the status is not found, display the "Status Not Found" modal
+          if (response.status === 404) {
+            return { notFound: true };
+          } else {
+            throw new Error('Failed to fetch tasks');
+          }
+        }
+    
+        const tasks = await response.json();
+    
+        if (tasks.length > 0) {
+          // If there are tasks, return a special value to indicate the need for transfer
+          return { needsTransfer: true, statusId: id };
+        } else {
+          // If no tasks, proceed with the deletion
+          const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
+          this.statuses = this.statuses.filter((status) => status.id !== id);
+          return deleteStatus;
+        }
       } catch (error) {
-        console.error("Error deleting status:", error)
-        throw error
+        console.error("Error deleting status:", error);
+        throw error;
       }
     }
   }
