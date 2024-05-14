@@ -95,6 +95,10 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
+        if (id.equals(1)) {
+            throw new IllegalArgumentException("Status with ID 1 cannot be deleted!");
+        }
+
         Status status = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
         statusRepository.delete(status);
@@ -104,6 +108,10 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
+        if (id.equals(1)) {
+            throw new IllegalArgumentException("Status with ID 1 cannot be deleted or transferred!");
+        }
+
         if (id.equals(newId)) {
             throw new IllegalArgumentException("The status you are transferring to cannot be the status you are deleting!");
         }
@@ -127,11 +135,20 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
+        if (id.equals(1)) {
+            throw new IllegalArgumentException("Status with ID 1 cannot be updated!");
+        }
+
         Status existingStatus = statusRepository.findById(id).orElse(null);
         if (existingStatus != null) {
             existingStatus.setName(status.getName().trim());
             existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
-            existingStatus.setColorCode(status.getColorCode());
+
+            // Set the colorCode to the existing value if it is not provided in the request body
+            if (status.getColorCode() != null) {
+                existingStatus.setColorCode(status.getColorCode());
+            }
+
             Status savedStatus = statusRepository.save(existingStatus);
             StatusUDTO statusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
             return ResponseEntity.ok(statusUDTO);
@@ -148,6 +165,9 @@ public class StatusService {
         }
         if (status.getUpdatedOn() == null) {
             status.setUpdatedOn(LocalDateTime.now());
+        }
+        if (status.getDescription() == null || status.getDescription().isEmpty()) {
+            status.setDescription(null);
         }
     }
 }

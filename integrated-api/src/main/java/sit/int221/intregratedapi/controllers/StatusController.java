@@ -7,7 +7,7 @@ import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.services.StatusService;
 import sit.int221.intregratedapi.utils.ListMapper;
-
+import sit.int221.intregratedapi.dtos.StatusUpdateDTO;
 import java.util.List;
 
 @RestController
@@ -52,7 +52,22 @@ public class StatusController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StatusUDTO> updateStatus(@RequestBody Status status,@PathVariable Integer id) {
+    public ResponseEntity<StatusUDTO> updateStatus(@RequestBody StatusUpdateDTO statusUpdateDTO, @PathVariable Integer id) {
+        Status status = new Status();
+        status.setName(statusUpdateDTO.getName().trim());
+
+        // Check if the description is not null before trimming
+        if (statusUpdateDTO.getDescription() != null) {
+            status.setDescription(statusUpdateDTO.getDescription().trim());
+        } else {
+            status.setDescription(null);
+        }
+
+        // Set the colorCode if provided in the request body
+        if (statusUpdateDTO.getColorCode() != null) {
+            status.setColorCode(statusUpdateDTO.getColorCode());
+        }
+
         return statusService.updateStatus(id, status);
     }
 
