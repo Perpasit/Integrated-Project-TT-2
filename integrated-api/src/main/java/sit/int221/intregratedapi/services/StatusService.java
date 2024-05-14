@@ -57,6 +57,7 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusCDTO> createStatus(Status status) {
+        trimStatus(status);
         setDefaultValuesForStatus(status);
         Status savedStatus = statusRepository.save(status);
         return ResponseEntity.status(HttpStatus.CREATED).body(toStatusCDTO(savedStatus));
@@ -104,16 +105,16 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
-        Status existingStatus = statusRepository.findById(id).orElse(null);
-        if (existingStatus != null) {
-            existingStatus.setStatusName(status.getStatusName().trim());
-            existingStatus.setStatusDescription(status.getStatusDescription() != null ? status.getStatusDescription().trim() : null);
-            existingStatus.setColorCode(status.getColorCode());
-            Status savedStatus = statusRepository.save(existingStatus);
-            return ResponseEntity.ok(toStatusUDTO(savedStatus));
-        }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
+        Status existingStatus = statusRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+        trimStatus(status);
+        existingStatus.setStatusName(status.getStatusName().trim());
+        existingStatus.setStatusDescription(status.getStatusDescription() != null ? status.getStatusDescription().trim() : null);
+        existingStatus.setColorCode(status.getColorCode());
+        existingStatus.setUpdatedOn(LocalDateTime.now());
+        Status savedStatus = statusRepository.save(existingStatus);
+        return ResponseEntity.ok(toStatusUDTO(savedStatus));
     }
+
 
     private void setDefaultValuesForStatus(Status status) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
@@ -126,6 +127,17 @@ public class StatusService {
             status.setUpdatedOn(LocalDateTime.now());
         }
     }
+
+    private void trimStatus(Status status) {
+        if (status.getStatusName() != null) {
+            status.setStatusName(status.getStatusName().trim());
+        }
+
+        if (status.getStatusDescription() != null) {
+            status.setStatusDescription(status.getStatusDescription().trim());
+        }
+    }
+
 
     private StatusRDTO toStatusRDTO(Status status) {
         return StatusRDTO.builder()
