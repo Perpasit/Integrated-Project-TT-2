@@ -12,12 +12,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+
 public class TaskCDTO {
-    private String id;
+    private Integer id;
     private String title;
     private String description;
     private String assignees;
-    private String status;
+    private Integer status;
 }
 

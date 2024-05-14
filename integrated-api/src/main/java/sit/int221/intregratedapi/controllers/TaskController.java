@@ -3,15 +3,17 @@ package sit.int221.intregratedapi.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.intregratedapi.dtos.*;
+import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v2/tasks")
-@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th","http://intproj23.sit.kmutt.ac.th" })
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class TaskController {
     private final TaskService taskService;
     private final ListMapper listMapper;
@@ -30,13 +32,12 @@ public class TaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
-        TaskRDTO taskRDTO = taskService.getTaskRDTOById(id);
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(id);
         return ResponseEntity.ok(taskRDTO);
     }
 
     @PostMapping("")
-    public ResponseEntity<TaskCDTO> addNewTask(@RequestBody Task task) {
-
+    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO task) {
         return taskService.createNewTask(task);
     }
 

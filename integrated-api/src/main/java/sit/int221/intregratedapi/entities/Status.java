@@ -24,10 +24,10 @@ public class Status {
     private Integer id;
 
     @Column(name = "statusName", nullable = false, unique = true)
-    private String statusName;
+    private String name;
 
     @Column(name = "statusDescription")
-    private String statusDescription;
+    private String description;
 
     @Column(name = "colorCode")
     @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "Invalid color code format")
@@ -44,7 +44,7 @@ public class Status {
 
     @Override
     public String toString() {
-        return statusName;
+        return name;
     }
 
     @PrePersist
@@ -58,13 +58,5 @@ public class Status {
         updatedOn = LocalDateTime.now();
     }
 
-    @JsonProperty("name")
-    public String getStatusName() {
-        return statusName;
-    }
 
-    @JsonProperty("description")
-    public String getStatusDescription() {
-        return statusDescription;
-    }
 }

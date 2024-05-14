@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+
 public class StatusRDTO {
     private Integer id;
-    private String statusName;
-    private String statusDescription;
+    private String name;
+    private String description;
     private String colorCode;
     private String createdOn;
     private String updatedOn;
