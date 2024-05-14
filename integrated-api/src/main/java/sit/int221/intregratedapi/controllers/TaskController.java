@@ -1,68 +1,52 @@
 package sit.int221.intregratedapi.controllers;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sit.int221.intregratedapi.dtos.TaskDTO;
+import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-
 @RestController
-@RequestMapping("/tasks")
-@CrossOrigin(origins = {"http://localhost:4173/","http://localhost:5173/"})
+@RequestMapping("/v2/tasks")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th","http://intproj23.sit.kmutt.ac.th" })
 public class TaskController {
     private final TaskService taskService;
-    private final ModelMapper modelMapper;
     private final ListMapper listMapper;
 
-    @Autowired
-    public TaskController(TaskService taskService, ModelMapper modelMapper, ListMapper listMapper) {
+    public TaskController(TaskService taskService, ListMapper listMapper) {
         this.taskService = taskService;
-        this.modelMapper = modelMapper;
         this.listMapper = listMapper;
     }
 
-//    @GetMapping("")
-//    public ResponseEntity<List<Task>> getTasksDetail() {
-//        List<Task> tasks = taskService.getAllTasks();
-//        return ResponseEntity.ok().body(tasks);
-//    }
-
     @GetMapping("")
     public ResponseEntity<List<TaskDTO>> getTasks() {
-        List<TaskDTO> taskDTOs = listMapper.mapList(taskService.getAllTasks(), TaskDTO.class);
+        List<Task> tasks = taskService.getAllTasks();
+        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
         return ResponseEntity.ok(taskDTOs);
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Integer id) {
-        return ResponseEntity.ok(taskService.getTaskById(id));
+    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
+        TaskRDTO taskRDTO = taskService.getTaskRDTOById(id);
+        return ResponseEntity.ok(taskRDTO);
     }
 
     @PostMapping("")
-    public ResponseEntity<TaskDTO> addNewTask(@RequestBody Task task) {
+    public ResponseEntity<TaskCDTO> addNewTask(@RequestBody Task task) {
+
         return taskService.createNewTask(task);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<TaskDTO> removeTask(@PathVariable Integer id) {
+    public ResponseEntity<TaskDDTO> removeTask(@PathVariable Integer id) {
         return taskService.removeTask(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
-        TaskDTO updatedTaskDTO = taskService.updateTask(id, task);
-        return ResponseEntity.ok(updatedTaskDTO);
+    public ResponseEntity<TaskUDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
+        return taskService.updateTask(id, task);
     }
-
-
-
 }

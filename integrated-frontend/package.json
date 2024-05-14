@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --base=/tt2/",
     "preview": "vite preview",
-    "backend": "json-server --watch ./data/data.json --port 9999",
+    "backend": "json-server --watch ./data/data.json --port 8080",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",

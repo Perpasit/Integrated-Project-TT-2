@@ -1,41 +1,43 @@
 package sit.int221.intregratedapi.services;
 
-
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
-import org.modelmapper.ModelMapper;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.server.ResponseStatusException;
-import sit.int221.intregratedapi.dtos.TaskDTO;
+import sit.int221.intregratedapi.dtos.*;
+import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
+import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.repositories.TaskRepository;
+import sit.int221.intregratedapi.utils.ListMapper;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
+@NoArgsConstructor
 @Service
 public class TaskService {
-    private final TaskRepository taskRepository;
-    private final ModelMapper modelMapper;
+    @Autowired
+    private TaskRepository taskRepository;
+    @Autowired
+    private StatusRepository statusRepository;
+    @Autowired
+    private ListMapper listMapper;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, ModelMapper modelMapper) {
+    public TaskService(TaskRepository taskRepository, StatusRepository statusRepository, ListMapper listMapper) {
         this.taskRepository = taskRepository;
-        this.modelMapper = modelMapper;
+        this.statusRepository = statusRepository;
+        this.listMapper = listMapper;
     }
 
     public Task getTaskById(Integer id) {
-        return taskRepository.findById(id).orElseThrow(
-                () -> new ItemNotFoundException(
-                        "Task " + id + " does not exist !!!!")
-        );
-
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
     public List<Task> getAllTasks() {
@@ -43,60 +45,142 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskDTO> createNewTask(Task task) {
-        Task savedTask = taskRepository.save(task);
-
-        TaskDTO postedTaskDTO = new TaskDTO();
-        postedTaskDTO.setId(savedTask.getId().toString());
-        postedTaskDTO.setTitle(savedTask.getTitle());
-        postedTaskDTO.setDescription(savedTask.getDescription());
-        postedTaskDTO.setAssignees(savedTask.getAssignees());
-        postedTaskDTO.setStatus(savedTask.getStatus().toString());
-
-        return ResponseEntity.ok(postedTaskDTO);
+    public ResponseEntity<TaskCDTO> createNewTask(Task task) {
+        setDefaultValuesForTask(task);
+        taskRepository.save(task);
+        TaskCDTO taskCDTO = toTaskCUDDTO(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskCDTO);
     }
 
     @Transactional
-    public ResponseEntity<TaskDTO> removeTask(Integer taskId) {
-        if (taskId == null) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Task ID cannot be null");
+    public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
+        taskRepository.delete(task);
+        TaskDDTO taskDDTO = toTaskDDTO(task);
+        return ResponseEntity.ok(taskDDTO);
+    }
+
+    @Transactional
+    public ResponseEntity<TaskUDTO> updateTask(Integer taskId, Task task) {
+        Task existingTask = getTaskById(taskId);
+        setDefaultValuesForTask(task);
+        updateTaskFromDTO(existingTask, task);
+        Task updatedTask = taskRepository.save(existingTask);
+        TaskUDTO taskUDTO = toTaskUDTO(updatedTask);
+        return ResponseEntity.ok(taskUDTO);
+    }
+
+    public TaskRDTO getTaskRDTOById(Integer id) {
+        Task task = getTaskById(id);
+        return toTaskRDTO(task);
+    }
+
+    private void setDefaultValuesForTask(Task task) {
+        if (task.getStatus() == null || task.getStatus().getId() == null) {
+            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("NO_STATUS")
+                    .orElseGet(() -> statusRepository.save(Status.builder()
+                            .statusName("NO_STATUS")
+                            .build()));
+            task.setStatus(defaultStatus);
         }
 
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!"));
+        if (task.getTaskTitle() == null) {
+            throw new IllegalArgumentException("Task title is required");
+        } else {
+            task.setTaskTitle(task.getTaskTitle().trim());
+        }
 
-        TaskDTO deletedTaskDTO = new TaskDTO();
-        deletedTaskDTO.setId(task.getId().toString());
-        deletedTaskDTO.setTitle(task.getTitle());
-        deletedTaskDTO.setDescription(task.getDescription());
-        deletedTaskDTO.setAssignees(task.getAssignees());
-        deletedTaskDTO.setStatus(task.getStatus().toString());
+        if (task.getTaskDescription() != null) {
+            task.setTaskDescription(task.getTaskDescription().trim());
+        }
 
-        taskRepository.delete(task);
+        if (task.getTaskAssignees() != null) {
+            task.setTaskAssignees(task.getTaskAssignees().trim());
+        }
 
-        return ResponseEntity.ok(deletedTaskDTO);
+        if (task.getCreatedOn() == null) {
+            task.setCreatedOn(LocalDateTime.now());
+        }
+        task.setUpdatedOn(LocalDateTime.now());
     }
 
-    @Transactional
-    public TaskDTO updateTask(Integer taskId, Task task) {
-        Task existingTask = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
-
-        existingTask.setTitle(task.getTitle());
-        existingTask.setDescription(task.getDescription());
-        existingTask.setAssignees(task.getAssignees());
-        existingTask.setStatus(task.getStatus());
-
-        Task updatedTask = taskRepository.save(existingTask);
-
-        TaskDTO updatedTaskDTO = new TaskDTO();
-        updatedTaskDTO.setId(String.valueOf(updatedTask.getId()));
-        updatedTaskDTO.setTitle(updatedTask.getTitle());
-        updatedTaskDTO.setDescription(updatedTask.getDescription());
-        updatedTaskDTO.setAssignees(updatedTask.getAssignees());
-        updatedTaskDTO.setStatus(updatedTask.getStatus().toString());
-
-        return updatedTaskDTO;
+    private void updateTaskFromDTO(Task existingTask, Task task) {
+        existingTask.setTaskTitle(task.getTaskTitle());
+        existingTask.setTaskDescription(task.getTaskDescription());
+        existingTask.setTaskAssignees(task.getTaskAssignees());
+        existingTask.setStatus(Optional.ofNullable(task.getStatus()).orElseGet(() -> {
+            Status defaultStatus = statusRepository.findByStatusNameIgnoreCase("NO_STATUS")
+                    .orElseGet(() -> statusRepository.save(Status.builder()
+                            .statusName("NO_STATUS")
+                            .build()));
+            return defaultStatus;
+        }));
+        existingTask.setUpdatedOn(LocalDateTime.now());
     }
 
+    private TaskDTO toTaskDTO(Task task) {
+        return TaskDTO.builder()
+                .id(task.getId().toString())
+                .title(new StringBuilder(task.getTaskTitle()))
+                .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
+                .status(statusRepository.findById(task.getStatus().getId())
+                        .map(Status::getStatusName)
+                        .orElse("NO_STATUS"))
+                .build();
+    }
+
+    private TaskRDTO toTaskRDTO(Task task) {
+        return TaskRDTO.builder()
+                .id(task.getId().toString())
+                .title(new StringBuilder(task.getTaskTitle()))
+                .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
+                .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
+                .status(task.getStatus().getId().toString())
+                .createdOn(task.getCreatedOn().toString())
+                .updatedOn(task.getUpdatedOn().toString())
+                .build();
+    }
+
+    private TaskCDTO toTaskCUDDTO(Task task) {
+        String statusName = (task.getStatus() != null && task.getStatus().getId() != null)
+                ? statusRepository.findById(task.getStatus().getId())
+                .map(Status::getStatusName)
+                .orElse("NO_STATUS")
+                : "NO_STATUS";
+
+        return TaskCDTO.builder()
+                .id(task.getId().toString())
+                .title(task.getTaskTitle())
+                .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
+                .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
+                .status(statusName)
+                .build();
+    }
+    private TaskDDTO toTaskDDTO(Task task) {
+        return TaskDDTO.builder()
+                .id(task.getId().toString())
+                .title(task.getTaskTitle())
+                .assignees(task.getTaskAssignees())
+                .status(task.getStatus().getStatusName())
+                .build();
+    }
+
+    private TaskUDTO toTaskUDTO(Task task) {
+        String statusName;
+        if (task.getStatus() != null && task.getStatus().getId() != null) {
+            Status status = statusRepository.findById(task.getStatus().getId())
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + task.getStatus().getId() + " does not exist!"));
+            statusName = status.getStatusName();
+        } else {
+            statusName = "No Status";
+        }
+
+        return TaskUDTO.builder()
+                .title(task.getTaskTitle())
+                .description(task.getTaskDescription() != null ? task.getTaskDescription() : "")
+                .assignees(task.getTaskAssignees() != null ? task.getTaskAssignees() : "")
+                .status(statusName)
+                .build();
+    }
 }

@@ -1,23 +1,32 @@
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
-import Modal from "./Modal.vue"
-import { routerKey } from "vue-router"
-import { useRoute, useRouter } from "vue-router"
+import { useStatusStore } from "../stores/status"
+import AddEditTask from "./AddEditTask.vue"
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 const taskStore = useTaskStore()
-const tasks = ref([])
+const statusStore = useStatusStore()
+const tasks = computed(() => taskStore.getTasks)
 const selectedTask = ref(null)
 const sortOrder = ref("asc")
-const route = useRoute()
-const router = useRouter()
 
 const showDeleteConfirmation = ref(false)
 let selectedTaskToDelete = null
 const showSuccessModal = ref(false)
+const showNotFoundModal = ref(false)
+
+const showTaskDetail = (task) => {
+  router.push({
+    name: "taskDetail",
+    params: { taskId: task.id },
+    state: { task }
+  })
+}
 
 const showModal = (task) => {
-  router.push(`/task/${task.id}`)
+  selectedTask.value = task
 }
 
 const closeModal = () => {
@@ -35,20 +44,15 @@ const saveTask = async (updatedTask) => {
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = task.status.toLowerCase()
-    let formatted = ""
-    let capitalizeNext = true
-    for (let i = 0; i < status.length; i++) {
-      const char = status[i]
-      if (char === "_") {
-        formatted += " "
-        capitalizeNext = true
-      } else {
-        formatted += capitalizeNext ? char.toUpperCase() : char
-        capitalizeNext = false
-      }
+    const status = statusStore.getStatusByName(task.status)
+    if (status) {
+      return status.name
+        .toUpperCase()
+        // .replace(/_/g, " ")
+        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    } else {
+      return "Unknown"
     }
-    return formatted
   }
 })
 
@@ -66,28 +70,33 @@ const toggleSortOrder = () => {
   sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc"
 }
 
-
 const confirmDelete = (task) => {
   selectedTaskToDelete = task
   showDeleteConfirmation.value = true
 }
 
 const deleteTask = async () => {
-  await taskStore.deleteTask(selectedTaskToDelete.id)
-  selectedTaskToDelete = null
   showDeleteConfirmation.value = false
+  const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
+  if (selectedTask.status === 404) {
+    showNotFoundModal.value = true
+  } else {
+    showSuccessModal.value = true
+  }
+  selectedTaskToDelete = null
+  await fetchTasks()
 
-  await taskStore.fetchAllTasks()
-  tasks.value = taskStore.getTasks
-
-  showSuccessModal.value = true
   setTimeout(() => {
-    closeSuccessModal()
+    closeDeleteModal()
   }, 3000)
 }
+const fetchTasks = async () => {
+  await taskStore.fetchAllTasks()
+}
 
-function closeSuccessModal() {
+function closeDeleteModal() {
   showSuccessModal.value = false
+  showNotFoundModal.value = false
 }
 
 const cancelDelete = () => {
@@ -96,15 +105,18 @@ const cancelDelete = () => {
 }
 
 const editTask = (task) => {
-  selectedTask.value = task;
-  router.push({ name: 'edit-task', params: { id: task.id } }); // Assuming you have a route named 'edit-task'
-};
+  if (task && task.id) {
+    router.push({ name: "EditTask", params: { id: task.id } })
+  }
+}
 
 onMounted(async () => {
   await taskStore.fetchAllTasks()
-  tasks.value = taskStore.getTasks
+  await statusStore.fetchAllStatuses()
+  await fetchTasks()
 })
 </script>
+
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex justify-end mb-10"></div>
@@ -115,16 +127,15 @@ onMounted(async () => {
       >
         <thead>
           <tr class="text-white w-full">
-            <!-- bg-purple-100 -->
-            <th class="w-19 px-4 py-2 rounded-l-lg">No.</th>
+            <th class="w-19 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
             <th
-              class="w-1/3 px-4 py-2 cursor-pointer"
+              class="w-1/3 px-4 py-2 text-xl font-medium"
               @click="toggleSortOrder('title')"
             >
               Title
             </th>
-            <th class="w-1/3 px-4 py-2">Assignees</th>
-            <th class="w-1/6 px-4 py-2">Status</th>
+            <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
+            <th class="w-1/6 px-4 py-2 text-xl font-medium">Status</th>
             <th class="w-1/8 px-4 py-2 rounded-r-lg"></th>
           </tr>
         </thead>
@@ -132,13 +143,13 @@ onMounted(async () => {
           <tr
             v-for="(task, index) in sortedTasks"
             :key="index"
-            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item"
+            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
           >
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
               <p
                 class="truncate cursor-pointer itbkk-title"
-                @click="showModal(task)"
+                @click="showTaskDetail(task)"
               >
                 {{ task.title }}
               </p>
@@ -160,8 +171,8 @@ onMounted(async () => {
 
             <td class="px-5 py-2 text-center">
               <span
-                class="inline-block px-2 py-1 rounded-full text-center itbkk-status"
-                :class="taskStore.getStatusClass(formattedStatus(task))"
+                class="truncate inline-block px-2 py-1 rounded-full text-center itbkk-status w-32 h-10"
+                :style="statusStore.getStatusClass(task.status)"
               >
                 {{ formattedStatus(task) }}
               </span>
@@ -212,16 +223,24 @@ onMounted(async () => {
         </tbody>
       </table>
     </div>
+
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No task
     </div>
-    <modal
+
+    <AddEditTask
       v-if="selectedTask"
-      :task="selectedTask"
+      :show="!!selectedTask"
+      :task="{
+        ...selectedTask,
+        status: selectedTask.status
+      }"
+      mode="edit"
       @close="closeModal"
       @save="saveTask"
     />
   </div>
+
   <div
     v-if="showDeleteConfirmation"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
@@ -261,7 +280,7 @@ onMounted(async () => {
             <button
               type="button"
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeSuccessModal"
+              @click="closeDeleteModal"
             >
               <svg
                 class="h-6 w-6"
@@ -289,7 +308,58 @@ onMounted(async () => {
             <button
               type="button"
               class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeSuccessModal"
+              @click="closeDeleteModal"
+            >
+              OK
+            </button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-red-600">
+              Task Not Found
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeDeleteModal"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="text-sm leading-5 text-red-600 itbkk-message">
+              The Task is not found.
+            </p>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeDeleteModal"
             >
               OK
             </button>

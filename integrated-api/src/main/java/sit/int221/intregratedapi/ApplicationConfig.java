@@ -7,13 +7,14 @@ import sit.int221.intregratedapi.utils.ListMapper;
 
 @Configuration
 public class ApplicationConfig {
+
     @Bean
-    public ModelMapper modelMapperBean() {
+    public ModelMapper modelMapper() {
         return new ModelMapper();
     }
 
     @Bean
-    public ListMapper listMapperBean() {
-        return ListMapper.getInstance();
+    public ListMapper listMapper(ModelMapper modelMapper) {
+        return new ListMapper(modelMapper);
     }
 }

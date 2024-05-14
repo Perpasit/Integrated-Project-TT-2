@@ -1,22 +1,26 @@
 package sit.int221.intregratedapi.dtos;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TaskDTO {
     private String id;
-    private String title;
-    private String description;
-    private String assignees;
+    private StringBuilder title;
+    private StringBuilder assignees;
     private String status;
+
+    public void setTitle(String title) {
+        this.title = (title == null) ? new StringBuilder() : new StringBuilder(title);
+    }
+
+
+    public void setAssignees(String assignees) {
+        this.assignees = (assignees == null) ? new StringBuilder() : new StringBuilder(assignees);
+    }
 }
