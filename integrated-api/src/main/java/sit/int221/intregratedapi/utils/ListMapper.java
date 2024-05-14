@@ -23,8 +23,8 @@ public class ListMapper {
         modelMapper.addMappings(new PropertyMap<Task, TaskDTO>() {
             @Override
             protected void configure() {
-                map().setTitle(source.getTaskTitle());
-                map().setAssignees(source.getTaskAssignees());
+                map().setTitle(source.getTitle());
+                map().setAssignees(source.getAssignees());
             }
         });
     }

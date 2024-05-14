@@ -21,13 +21,13 @@ public class Task {
     private Integer id;
 
     @Column(name = "taskTitle", length = 100, nullable = false)
-    private String taskTitle;
+    private String title;
 
     @Column(name = "taskDescription", length = 500)
-    private String taskDescription;
+    private String description;
 
     @Column(name = "taskAssignees", length = 30)
-    private String taskAssignees;
+    private String assignees;
 
     @ManyToOne
     @JoinColumn(name = "statusId", foreignKey = @ForeignKey(name = "fk_status"))

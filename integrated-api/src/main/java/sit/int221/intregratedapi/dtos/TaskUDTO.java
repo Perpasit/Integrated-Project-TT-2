@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+
 public class TaskUDTO {
     private String title;
     private String description;
     private String assignees;
-    private String status;
+    private Integer status;
 }

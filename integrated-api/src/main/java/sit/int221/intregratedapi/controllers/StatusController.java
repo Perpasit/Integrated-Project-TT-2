@@ -36,7 +36,8 @@ public class StatusController {
     }
 
     @PostMapping("")
-    public ResponseEntity<StatusCDTO> addNewStatus(@RequestBody Status status) {
+    public ResponseEntity<Object> addNewStatus(@RequestBody StatusCDTO status) {
+
         return statusService.createStatus(status);
     }
 

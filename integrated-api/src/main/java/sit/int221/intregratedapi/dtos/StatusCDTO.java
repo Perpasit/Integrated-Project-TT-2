@@ -10,13 +10,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+
 public class StatusCDTO {
     private Integer id;
-
-    @JsonProperty("name")
-    private String statusName;
-
-    @JsonProperty("description")
-    private String statusDescription;
+    private String name;
+    private String description;
 }
