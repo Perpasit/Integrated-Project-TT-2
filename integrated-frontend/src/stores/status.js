@@ -57,8 +57,8 @@ export const useStatusStore = defineStore("status", {
     async createStatus(newStatus) {
       try {
         const formattedStatus = {
-          name: newStatus.statusName,
-          description: newStatus.statusDescription,
+          name: newStatus.name,
+          description: newStatus.description,
           colorCode: newStatus.colorCode
         }
         const createdStatus = await postItem(
@@ -75,8 +75,8 @@ export const useStatusStore = defineStore("status", {
     async updateStatus(id, updatedStatus) {
       try {
         const formattedStatus = {
-          name: updatedStatus.statusName,
-          description: updatedStatus.statusDescription,
+          name: updatedStatus.name,
+          description: updatedStatus.description,
           colorCode: updatedStatus.colorCode
         }
         const updatedData = await putItem(

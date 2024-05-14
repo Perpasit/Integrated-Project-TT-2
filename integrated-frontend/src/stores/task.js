@@ -25,10 +25,10 @@ export const useTaskStore = defineStore("task", {
     async addTask(newTask) {
       try {
         const formattedTask = {
-          taskTitle: newTask.title.trim(),
-          taskDescription: newTask.description.trim(),
-          taskAssignees: newTask.assignees.trim(),
-          status: { id: newTask.status }
+          title: newTask.title.trim(),
+          description: newTask.description.trim(),
+          assignees: newTask.assignees.trim(),
+          status:  newTask.status 
         }
 
         const createdTask = await postItem(
@@ -44,10 +44,10 @@ export const useTaskStore = defineStore("task", {
     async updateTask(id, updatedTask) {
       try {
         const formattedTask = {
-          taskTitle: updatedTask.title.trim(),
-          taskDescription: updatedTask.description.trim(),
-          taskAssignees: updatedTask.assignees.trim(),
-          status: { id: updatedTask.status }
+          title: updatedTask.title.trim(),
+          description: updatedTask.description.trim(),
+          assignees: updatedTask.assignees.trim(),
+          status: updatedTask.status 
         }
 
         const updatedData = await putItem(

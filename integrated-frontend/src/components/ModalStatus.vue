@@ -66,7 +66,7 @@ const formatStatusName = (statusName) => {
             <textarea
               rows="2"
               readonly
-              :value="formatStatusName(status.statusName)"
+              :value="formatStatusName(status.name)"
               class="itbkk-status-name w-full border border-gray-300 rounded-md p-1 shadow-sm mt-1"
             ></textarea>
           </div>

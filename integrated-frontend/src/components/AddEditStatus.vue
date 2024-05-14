@@ -19,7 +19,7 @@ const props = defineProps({
     type: Object,
     default: () => ({
       id: "",
-      statusName: "",
+      name: "",
       statusDescription: "",
       colorCode: "#000000",
     }),
@@ -33,7 +33,7 @@ const props = defineProps({
 const emit = defineEmits(["close", "statusSaved"])
 const editedStatus = ref({
   id: "",
-  statusName: "",
+  name: "",
   statusDescription: "",
   colorCode: "#000000",
 });
@@ -43,12 +43,12 @@ const nameError = ref("")
 const isNameValid = computed(() => {
   return (
     editedStatus.value &&
-    editedStatus.value.statusName &&
-    editedStatus.value.statusName.trim() !== "" &&
+    editedStatus.value.name &&
+    editedStatus.value.name.trim() !== "" &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
         originalStatus.value &&
-        (editedStatus.value.statusName !== originalStatus.value.statusName ||
+        (editedStatus.value.name !== originalStatus.value.name ||
           editedStatus.value.statusDescription !== originalStatus.value.statusDescription ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
   )
@@ -71,7 +71,7 @@ watch(
           const data = await response.json();
           editedStatus.value = {
             ...data,
-            statusName: data.statusName || "",
+            name: data.name || "",
             statusDescription: data.statusDescription || "",
             colorCode: data.colorCode,
           };
@@ -91,7 +91,7 @@ watch(
 );
 function resetForm() {
   editedStatus.value = {
-    statusName: "",
+    name: "",
     statusDescription: "",
     colorCode: "#000000",
   }
@@ -110,7 +110,7 @@ async function saveStatus() {
 
   try {
     const updatedStatus = {
-      statusName: editedStatus.value.statusName.trim(),
+      name: editedStatus.value.name.trim(),
       statusDescription: editedStatus.value.statusDescription.trim(),
       colorCode: editedStatus.value.colorCode,
     }
@@ -121,7 +121,7 @@ async function saveStatus() {
         await statusStore.updateStatus(statusId, updatedStatus)
         await statusStore.fetchAllStatuses()
         emit("statusSaved")
-        modalStore.openSuccessModal(updatedStatus.statusName, props.mode, "status")
+        modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
 
         // Set a timeout to close the success modal after 3 seconds
         successModalTimeout.value = setTimeout(() => {
@@ -133,7 +133,7 @@ async function saveStatus() {
     } else {
       await statusStore.createStatus(updatedStatus)
       await statusStore.fetchAllStatuses()
-      modalStore.openSuccessModal(updatedStatus.statusName, props.mode, "status")
+      modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
       successModalTimeout.value = setTimeout(() => {
@@ -179,7 +179,7 @@ function closeModal() {
                 <label class="block text-sm font-bold mb-1">Name:</label>
                 <textarea
                   rows="2"
-                  v-model="editedStatus.statusName"
+                  v-model="editedStatus.name"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   :maxlength="50"
                 ></textarea>
@@ -187,7 +187,7 @@ function closeModal() {
                   {{ nameError }}
                 </p>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedStatus.statusName ? editedStatus.statusName.length : 0 }}/50 characters
+                  {{ editedStatus.name ? editedStatus.name.length : 0 }}/50 characters
                 </p>
               </div>
 
