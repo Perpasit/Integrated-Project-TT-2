@@ -14,5 +14,5 @@ public class TaskUDTO {
     private String title;
     private String description;
     private String assignees;
-    private Integer status;
+    private String status;
 }

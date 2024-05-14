@@ -18,6 +18,6 @@ public class TaskCDTO {
     private String title;
     private String description;
     private String assignees;
-    private Integer status;
+    private String status;
 }
 

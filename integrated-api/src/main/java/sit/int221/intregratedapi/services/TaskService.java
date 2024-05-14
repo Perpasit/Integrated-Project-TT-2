@@ -61,7 +61,7 @@ public class TaskService {
         Task task = modelMapper.map(taskCDTO, Task.class);
 
         if (taskCDTO.getStatus() != null) {
-            Status status = statusRepository.findById(taskCDTO.getStatus())
+            Status status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
             task.setStatus(status);
         }
@@ -106,13 +106,12 @@ public class TaskService {
             task.setTitle(task.getTitle().trim());
         }
 
-        if (task.getDescription() != null) {
-            task.setDescription(task.getDescription().trim());
-        }
+        // Set description to null if it is null or empty after trimming whitespace
+        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
 
-        if (task.getAssignees() != null) {
-            task.setAssignees(task.getAssignees().trim());
-        }
+        // Set assignees to null if it is null or empty after trimming whitespace
+        task.setAssignees((task.getAssignees() == null || task.getAssignees().trim().isEmpty()) ? null : task.getAssignees().trim());
+
 
         if (task.getCreatedOn() == null) {
             task.setCreatedOn(LocalDateTime.now());

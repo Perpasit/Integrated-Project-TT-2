@@ -14,5 +14,5 @@ public class TaskDDTO {
     private Integer id;
     private String title;
     private String assignees;
-    private Integer status;
+    private String status;
 }
