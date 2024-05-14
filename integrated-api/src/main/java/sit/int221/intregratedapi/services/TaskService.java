@@ -132,15 +132,21 @@ public class TaskService {
 
     private TaskRDTO toTaskRDTO(Task task) {
         return TaskRDTO.builder()
-                .id(task.getId().toString())
+                .id(task.getId().toString())  // Again, consider whether you need the ID as a string.
                 .title(new StringBuilder(task.getTaskTitle()))
-                .description(new StringBuilder(task.getTaskDescription() == null ? "" : task.getTaskDescription()))
-                .assignees(new StringBuilder(task.getTaskAssignees() == null ? "" : task.getTaskAssignees()))
-                .status(task.getStatus().getId().toString())
+                .description(isNullOrEmpty(task.getTaskDescription()) ? null : new StringBuilder(task.getTaskDescription()))
+                .assignees(isNullOrEmpty(task.getTaskAssignees()) ? null : new StringBuilder(task.getTaskAssignees()))
+                .status(task.getStatus().getStatusName())
                 .createdOn(task.getCreatedOn().toString())
                 .updatedOn(task.getUpdatedOn().toString())
                 .build();
     }
+
+    private boolean isNullOrEmpty(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+
 
     private TaskCDTO toTaskCUDDTO(Task task) {
         String statusName = (task.getStatus() != null && task.getStatus().getId() != null)
