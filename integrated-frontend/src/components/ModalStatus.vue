@@ -56,13 +56,11 @@ const formatStatusName = (statusName) => {
       class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
     >
       <div class="mt-5 sm:mt-6 sm:mx-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-          Status Details
-        </h3>
+        
         <div v-if="loading" class="px-4 py-5">Loading status...</div>
         <div v-else-if="status" class="px-4 py-5">
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <label class="block text-sm font-bold mb-1">Name :</label>
             <textarea
               rows="2"
               readonly
@@ -71,7 +69,7 @@ const formatStatusName = (statusName) => {
             ></textarea>
           </div>
           <div class="mb-4">
-            <label class="text-sm font-medium text-gray-500">Description</label>
+            <label class="block text-sm font-bold mb-1">Description :</label>
             <textarea
               v-if="status.statusDescription"
               rows="6"
@@ -93,11 +91,11 @@ No Description Provided</textarea
           </div>
           <div class="flex justify-between mb-4">
             <div>
-              <label class="text-sm font-medium text-gray-500">TimeZone</label>
+              <label class="block text-sm font-bold mb-1">TimeZone</label>
               <label class="itbkk-timezone block">{{ localTimeZone }}</label>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-500"
+              <label class="block text-sm font-bold mb-1"
                 >Created On</label
               >
               <label class="itbkk-created-on block">{{
@@ -105,7 +103,7 @@ No Description Provided</textarea
               }}</label>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-500"
+              <label class="block text-sm font-bold mb-1"
                 >Updated On</label
               >
               <label class="itbkk-updated-on block">{{

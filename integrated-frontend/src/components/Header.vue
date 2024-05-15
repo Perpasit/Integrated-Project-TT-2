@@ -1,20 +1,23 @@
 <script setup>
-import { computed, inject } from "vue"
+import { computed } from "vue"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
-const showModal = inject("showModal", null)
 
 const isHomePage = computed(() => {
-  return router.currentRoute.value.name === "home"
+  return router.currentRoute.value.path === "/task"
 })
 
 const isManageStatusPage = computed(() => {
-  return (
-    router.currentRoute.value.name === "ManageStatus" ||
-    router.currentRoute.value.name === "EditStatus" ||
-    router.currentRoute.value.name === "AddStatus"
-  )
+  return router.currentRoute.value.path.startsWith("/status/manage")
+})
+
+const isTaskPage = computed(() => {
+  return router.currentRoute.value.path.startsWith("/task")
+})
+
+const isManagePage = computed(() => {
+  return router.currentRoute.value.path.startsWith("/status/manage")
 })
 
 const addTask = () => {
@@ -63,14 +66,14 @@ const addStatus = () => {
         Manage Status
       </span>
       <button
-        v-if="isHomePage && !showModal"
+        v-show="isTaskPage"
         @click="addTask"
         class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded"
       >
         + NEW TASK
       </button>
       <button
-        v-else-if="isManageStatusPage && !showModal"
+        v-show="isManagePage"
         @click="addStatus"
         class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded"
       >
@@ -79,3 +82,4 @@ const addStatus = () => {
     </div>
   </div>
 </template>
+
