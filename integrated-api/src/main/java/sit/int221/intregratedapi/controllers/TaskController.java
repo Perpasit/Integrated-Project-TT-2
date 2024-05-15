@@ -31,8 +31,11 @@ public class TaskController {
 //    }
 
     @GetMapping("")
-    public ResponseEntity<List<TaskDTO>> getTasks(@RequestParam(required = false) String sortByStatusName) {
-        List<Task> tasks = taskService.getAllTasks(sortByStatusName);
+    public ResponseEntity<List<TaskDTO>> getTasks(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) List<String> filterStatuses
+    ) {
+        List<Task> tasks = taskService.getAllTasks(sortBy, filterStatuses);
         List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
         return ResponseEntity.ok(taskDTOs);
     }

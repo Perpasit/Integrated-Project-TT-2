@@ -56,15 +56,25 @@ public class TaskService {
 //        return tasks;
 //    }
 
-    public List<Task> getAllTasks(String sortByStatusName) {
-        if (sortByStatusName != null && sortByStatusName.equalsIgnoreCase("asc")) {
-            return taskRepository.findAll(Sort.by(Sort.Direction.ASC, "status.name"));
-        } else if (sortByStatusName != null && sortByStatusName.equalsIgnoreCase("desc")) {
-            return taskRepository.findAll(Sort.by(Sort.Direction.DESC, "status.name"));
+    public List<Task> getAllTasks(String sortBy, List<String> filterStatuses) {
+        Sort sort;
+        if (sortBy != null && sortBy.equalsIgnoreCase("asc")) {
+            sort = Sort.by(Sort.Direction.ASC, "status.name");
+        } else if (sortBy != null && sortBy.equalsIgnoreCase("desc")) {
+            sort = Sort.by(Sort.Direction.DESC, "status.name");
         } else {
-            return taskRepository.findAll(Sort.by("createdOn").ascending());
+            sort = Sort.by("createdOn").ascending();
+        }
+
+        if (filterStatuses != null && !filterStatuses.isEmpty()) {
+            return taskRepository.findByStatusNameIn(filterStatuses, sort);
+        } else {
+            return taskRepository.findAll(sort);
         }
     }
+
+
+
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         Task task = modelMapper.map(taskCDTO, Task.class);
