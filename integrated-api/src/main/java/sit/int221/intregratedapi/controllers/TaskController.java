@@ -23,9 +23,16 @@ public class TaskController {
         this.listMapper = listMapper;
     }
 
+//    @GetMapping("")
+//    public ResponseEntity<List<TaskDTO>> getTasks() {
+//        List<Task> tasks = taskService.getAllTasks();
+//        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+//        return ResponseEntity.ok(taskDTOs);
+//    }
+
     @GetMapping("")
-    public ResponseEntity<List<TaskDTO>> getTasks() {
-        List<Task> tasks = taskService.getAllTasks();
+    public ResponseEntity<List<TaskDTO>> getTasks(@RequestParam(required = false) String sortByStatusName) {
+        List<Task> tasks = taskService.getAllTasks(sortByStatusName);
         List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
         return ResponseEntity.ok(taskDTOs);
     }

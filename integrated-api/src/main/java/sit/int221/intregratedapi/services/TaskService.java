@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -50,12 +51,20 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public List<Task> getAllTasks() {
-        List<Task> tasks = taskRepository.findAll();
-        return tasks;
+//    public List<Task> getAllTasks() {
+//        List<Task> tasks = taskRepository.findAll();
+//        return tasks;
+//    }
+
+    public List<Task> getAllTasks(String sortByStatusName) {
+        if (sortByStatusName != null && sortByStatusName.equalsIgnoreCase("asc")) {
+            return taskRepository.findAll(Sort.by(Sort.Direction.ASC, "status.name"));
+        } else if (sortByStatusName != null && sortByStatusName.equalsIgnoreCase("desc")) {
+            return taskRepository.findAll(Sort.by(Sort.Direction.DESC, "status.name"));
+        } else {
+            return taskRepository.findAll(Sort.by("createdOn").ascending());
+        }
     }
-
-
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         Task task = modelMapper.map(taskCDTO, Task.class);
