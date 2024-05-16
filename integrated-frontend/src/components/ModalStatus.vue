@@ -71,17 +71,17 @@ const formatStatusName = (statusName) => {
           <div class="mb-4">
             <label class="block text-sm font-bold mb-1">Description :</label>
             <textarea
-              v-if="status.statusDescription"
+              v-if="status.description"
               rows="6"
-              v-model="status.statusDescription"
+              v-model="status.description"
               class="itbkk-status-description w-full border border-gray-300 rounded-md p-1 shadow-sm mt-2 text-sm text-gray-600"
               readonly
-              >{{ status.statusDescription }}</textarea
+              >{{ status.description }}</textarea
             >
             <textarea
               v-else
               rows="6"
-              v-model="status.statusDescription"
+              v-model="status.description"
               class="itbkk-status-description w-full border border-gray-300 rounded-md p-1 shadow-sm mt-2 text-sm text-gray-400 italic"
               placeholder="No Description Provided"
               readonly
