@@ -12,4 +12,5 @@ public class StatusUpdateDTO {
     private String description;
     private String colorCode;
     private boolean limitMaximumTask;
+    private Integer maximumTaskLimit;
 }
