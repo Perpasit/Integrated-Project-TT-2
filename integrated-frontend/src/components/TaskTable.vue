@@ -164,11 +164,130 @@ const toggleSortOrder = () => {
   }
 }
 
+const isDropdownOpen = ref(false)
+const selectedStatuses = ref([])
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const toggleStatus = (status) => {
+  if (selectedStatuses.value.includes(status)) {
+    selectedStatuses.value = selectedStatuses.value.filter((s) => s !== status)
+  } else {
+    selectedStatuses.value.push(status)
+  }
+}
+
+const clearStatusFilter = () => {
+  selectedStatuses.value = []
+  searchKeyword.value = ""
+}
+
+
+const searchKeyword = ref('');
+const sortedAndFilteredTasks = computed(() => {
+  let result = [...tasks.value];
+
+
+  // Apply filtering based on selected statuses
+  if (selectedStatuses.value.length > 0) {
+    result = result.filter((task) => selectedStatuses.value.includes(task.status));
+  }
+
+  // Apply sorting based on the selected sort criterion and order
+  if (sortCriterion.value === 'status') {
+    result.sort((a, b) => {
+      const statusA = statusStore.getStatusByName(a.status).name.toLowerCase();
+      const statusB = statusStore.getStatusByName(b.status).name.toLowerCase();
+      if (sortOrder.value === 'asc') {
+        return statusA.localeCompare(statusB);
+      } else {
+        return statusB.localeCompare(statusA);
+      }
+    });
+  } else {
+    result.sort((a, b) => {
+      if (sortOrder.value === 'asc') {
+        return new Date(a.createdOn) - new Date(b.createdOn);
+      } else {
+        return new Date(b.createdOn) - new Date(a.createdOn);
+      }
+    });
+  }
+
+  return result;
+});
+
+const filteredStatuses = computed(() => {
+  if (searchKeyword.value) {
+    return statusStore.statuses.filter(status =>
+      status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+    );
+  }
+  return statusStore.statuses;
+});
+
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex justify-end mb-10"></div>
+
+
+    <!-- <div class="flex items-center mb-4 justify-end">
+      <span class="mr-4">Filter by status:</span>
+      <div class="relative">
+  <button @click="toggleDropdown" class="bg-gray-200 px-4 py-2 rounded flex items-center justify-between w-full text-gray-700">
+    Filter by Status
+    <svg :class="{'transform rotate-180': isDropdownOpen}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+    </svg>
+  </button>
+  <div v-if="isDropdownOpen" class="absolute mt-1 w-full bg-white rounded shadow-lg z-10">
+    <div class="py-1">
+      <label v-for="status in statusStore.statuses" :key="status.name" class="flex items-center px-4 py-2 text-sm text-gray-700">
+        <input type="checkbox" v-model="selectedStatuses" :value="status.name" class="mr-2">
+        {{ status.name }}
+      </label>
+    </div>
+  </div>
+</div>
+      <button v-if="selectedStatuses.length > 0" @click="clearStatusFilter" class="ml-2 text-gray-600 hover:text-gray-900">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div> -->
+
+    <div class="flex items-center mb-4 justify-end">
+  <div class="relative">
+    <button @click="toggleDropdown" class="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center justify-between w-36">
+      Filter Status
+      <svg :class="{'transform rotate-180': isDropdownOpen}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-2">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+    <div v-if="isDropdownOpen" class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10">
+      <div class="py-1">
+        <div class="px-4 py-2">
+          <input type="text" v-model="searchKeyword" placeholder="Search keywords..." class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="px-4 py-2">
+  <span class="block font-medium text-sm text-gray-700">Status</span>
+  <label v-for="status in filteredStatuses" :key="status.name" class="flex items-center text-sm text-gray-700 mt-1">
+    <input type="checkbox" v-model="selectedStatuses" :value="status.name" class="mr-2">
+    {{ status.name }}
+  </label>
+</div>
+
+        <div class="px-4 py-2 flex justify-between">
+          <button @click="clearStatusFilter" class="text-sm text-gray-600 hover:text-gray-800">Clear all</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
     <div class="overflow-x-auto">
       <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
@@ -211,7 +330,7 @@ const toggleSortOrder = () => {
 
 
         <tbody>
-          <tr v-for="(task, index) in sortedTasks" :key="index"
+          <tr v-for="(task, index) in sortedAndFilteredTasks" :key="index"
             class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out">
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
