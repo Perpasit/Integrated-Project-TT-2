@@ -11,4 +11,6 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Integer> {
     List<Task> findByStatusId(Integer statusId);
     List<Task> findByStatusNameIn(List<String> statusNames, Sort sort);
+
+    int countByStatusId(Integer id);
 }

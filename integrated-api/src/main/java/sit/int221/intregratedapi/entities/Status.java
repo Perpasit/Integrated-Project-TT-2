@@ -39,6 +39,13 @@ public class Status {
     @Column(name = "updatedOn", nullable = false)
     private LocalDateTime updatedOn;
 
+    @Column(name = "maximumTaskLimit")
+    private Integer maximumTaskLimit;
+
+    @Column(name = "limitMaximumTask")
+    private boolean limitMaximumTask;
+
+
     @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)
     private List<Task> tasks = new ArrayList<>();
 
@@ -57,6 +64,4 @@ public class Status {
     protected void onUpdate() {
         updatedOn = LocalDateTime.now();
     }
-
-
 }
