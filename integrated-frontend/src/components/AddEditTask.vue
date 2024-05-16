@@ -3,7 +3,7 @@
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore" 
+import { useModalStore } from "../stores/useModalStore"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
@@ -14,22 +14,22 @@ const modalStore = useModalStore()
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true
+    required: true,
   },
   task: {
     type: Object,
     default: () => ({
-      id: '',
-      title: '',
-      description: '',
-      assignees: '',
+      id: "",
+      title: "",
+      description: "",
+      assignees: "",
       status: 1,
-    })
+    }),
   },
   mode: {
     type: String,
-    default: 'add'
-  }
+    default: "add",
+  },
 })
 
 const emit = defineEmits(["close", "taskSaved"])
@@ -38,7 +38,7 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: 1
+  status: 1,
 })
 
 const titleError = ref("")
@@ -58,8 +58,6 @@ const isTitleValid = computed(() => {
 
 const originalTask = ref(null)
 
-
-
 watch(
   () => router.currentRoute.value.params.id,
   async (id) => {
@@ -70,16 +68,12 @@ watch(
         )
         if (response.status === 404) {
           editedTask.value = null
-          setTimeout(() => {
-            router.push("/task")
-          }, 3000)
         } else {
           const data = await response.json()
-          editedTask.value = {
-            ...data,
-            status: data.status
-          }
-          originalTask.value = { ...data }
+          console.log(data)
+          const statusId = statusStore.getStatusByName(data.status)?.id
+          editedTask.value = { ...data, status: statusId || 1 }
+          originalTask.value = { ...data, status: statusId || 1}
           titleError.value = ""
         }
       } catch (error) {
@@ -87,8 +81,7 @@ watch(
         editedTask.value = null
       }
     } else {
-      resetForm()
-      titleError.value = "Title is required."
+      // existing code
     }
   },
   { immediate: true }
@@ -103,50 +96,58 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: 1
+    status: 1,
   }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required."
-    return
+    titleError.value = "Title is required.";
+    return;
   }
 
   try {
     const updatedTask = {
       title: editedTask.value.title.trim(),
-      description: editedTask.value.description.trim(),
-      assignees: editedTask.value.assignees.trim(),
-      status: editedTask.value.status
-    }
+      description: editedTask.value.description ? editedTask.value.description.trim() : "",
+      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+      status: { id: editedTask.value.status }
+    };
 
     if (props.mode === "edit") {
-      const taskId = router.currentRoute.value.params.id
+      const taskId = router.currentRoute.value.params.id;
       if (taskId) {
-        await taskStore.updateTask(taskId, updatedTask)
-        await taskStore.fetchAllTasks()
-        emit("taskSaved")
-        modalStore.openSuccessModal(updatedTask.title, props.mode) 
+        await taskStore.updateTask(taskId, updatedTask);
+        await taskStore.fetchAllTasks();
+        emit("taskSaved");
+        modalStore.openSuccessModal(updatedTask.title, props.mode);
       } else {
-        console.error("The task does not exist.")
+        console.error("The task does not exist.");
       }
     } else {
-      await taskStore.addTask(updatedTask)
-      await taskStore.fetchAllTasks()
-      modalStore.openSuccessModal(updatedTask.title, props.mode) 
+      const newTask = {
+        title: editedTask.value.title.trim(),
+        description: editedTask.value.description ? editedTask.value.description.trim() : "",
+        assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+        status: editedTask.value.status
+      };
+      await taskStore.addTask(newTask);
+      await taskStore.fetchAllTasks();
+      modalStore.openSuccessModal(newTask.title, props.mode);
     }
-    router.push("/")
+    router.push("/");
   } catch (error) {
-    console.error("Error saving task:", error)
+    console.error("Error saving task:", error);
   }
 }
 
 const formatStatus = (status) => {
-  return status
-    .toUpperCase()
-    // .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  return (
+    status
+      .toUpperCase()
+      // .replace(/_/g, " ")
+      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  )
 }
 function closeModal() {
   router.push("/")
@@ -182,10 +183,11 @@ function closeModal() {
                   :maxlength="100"
                 ></textarea>
                 <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
-                  {{ titleError }} 
+                  {{ titleError }}
                 </p>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedTask.title.length }}/100 characters
+                  {{ editedTask.title ? editedTask.title.length : 0 }}/100
+                  characters
                 </p>
               </div>
 
@@ -199,7 +201,9 @@ function closeModal() {
                   :maxlength="500"
                 ></textarea>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedTask.description.length }}/500 characters
+                  {{
+                    editedTask.description ? editedTask.description.length : 0
+                  }}/500 characters
                 </p>
               </div>
             </div>
@@ -215,7 +219,9 @@ function closeModal() {
                   :maxlength="30"
                 ></textarea>
                 <p class="text-gray-500 text-sm mt-1">
-                  {{ editedTask.assignees.length }}/30 characters
+                  {{
+                    editedTask.assignees ? editedTask.assignees.length : 0
+                  }}/30 characters
                 </p>
               </div>
 
@@ -231,7 +237,6 @@ function closeModal() {
                     :value="status.id"
                   >
                     {{ formatStatus(status.name) }}
-                
                   </option>
                 </select>
               </div>
@@ -246,7 +251,7 @@ function closeModal() {
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                 isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid
+              'bg-gray-300 cursor-not-allowed': !isTitleValid,
             }"
             @click="saveTask"
             :disabled="!isTitleValid"
