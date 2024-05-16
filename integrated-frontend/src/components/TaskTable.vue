@@ -56,19 +56,19 @@ const formattedStatus = computed(() => {
   }
 })
 
-const sortedTasks = computed(() => {
-  return [...tasks.value].sort((a, b) => {
-    if (sortOrder.value === "asc") {
-      return new Date(a.createdOn) - new Date(b.createdOn)
-    } else {
-      return new Date(b.createdOn) - new Date(a.createdOn)
-    }
-  })
-})
+// const sortedTasks = computed(() => {
+//   return [...tasks.value].sort((a, b) => {
+//     if (sortOrder.value === "asc") {
+//       return new Date(a.createdOn) - new Date(b.createdOn)
+//     } else {
+//       return new Date(b.createdOn) - new Date(a.createdOn)
+//     }
+//   })
+// })
 
-const toggleSortOrder = () => {
-  sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc"
-}
+// const toggleSortOrder = () => {
+//   sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc"
+// }
 
 const confirmDelete = (task) => {
   selectedTaskToDelete = task
@@ -115,6 +115,53 @@ onMounted(async () => {
   await statusStore.fetchAllStatuses()
   await fetchTasks()
 })
+
+const sortedTasksByStatus = computed(() => {
+  return [...tasks.value].sort((a, b) => {
+    const statusA = statusStore.getStatusByName(a.status).name.toLowerCase()
+    const statusB = statusStore.getStatusByName(b.status).name.toLowerCase()
+    if (sortOrder.value === 'asc') {
+      return statusA.localeCompare(statusB)
+    } else {
+      return statusB.localeCompare(statusA)
+    }
+  })
+})
+
+const sortCriterion = ref('createdOn')
+
+const sortedTasks = computed(() => {
+  return [...tasks.value].sort((a, b) => {
+    if (sortCriterion.value === 'status') {
+      const statusA = statusStore.getStatusByName(a.status).name.toLowerCase()
+      const statusB = statusStore.getStatusByName(b.status).name.toLowerCase()
+      if (sortOrder.value === 'asc') {
+        return statusA.localeCompare(statusB)
+      } else {
+        return statusB.localeCompare(statusA)
+      }
+    } else {
+      if (sortOrder.value === 'asc') {
+        return new Date(a.createdOn) - new Date(b.createdOn)
+      } else {
+        return new Date(b.createdOn) - new Date(a.createdOn)
+      }
+    }
+  })
+})
+
+const toggleSortOrder = () => {
+  if (sortCriterion.value === 'createdOn') {
+    sortCriterion.value = 'status'
+    sortOrder.value = 'asc'
+  } else if (sortCriterion.value === 'status') {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortCriterion.value = 'createdOn'
+    sortOrder.value = 'asc' // เปลี่ยนเป็น 'desc' หากต้องการเรียงลำดับจากมากไปน้อย
+  }
+}
+
 </script>
 
 <template>
@@ -122,35 +169,50 @@ onMounted(async () => {
     <div class="flex justify-end mb-10"></div>
 
     <div class="overflow-x-auto">
-      <table
-        class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
-      >
+      <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
         <thead>
           <tr class="text-white w-full">
             <th class="w-19 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
-            <th
-              class="w-1/3 px-4 py-2 text-xl font-medium"
-              @click="toggleSortOrder('title')"
-            >
+            <th class="w-1/3 px-4 py-2 text-xl font-medium" @click="toggleSortOrder('title')">
               Title
             </th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
-            <th class="w-1/6 px-4 py-2 text-xl font-medium">Status</th>
+
+
+            <th class="w-1/6 px-4 py-2 text-xl font-medium" @click="toggleSortOrder">
+              Status
+              <button class="ml-2 itbkk-status-sort">
+                <svg v-if="sortCriterion === 'status' && sortOrder === 'asc'" xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512" class="w-5 h-5">
+                  <path fill="#000000"
+                    d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z" />
+                </svg>
+
+                <svg v-else-if="sortCriterion === 'status' && sortOrder === 'desc'" xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512" class="w-5 h-5">
+                  <path fill="#000000"
+                    d="M16 160h48v304a16 16 0 0 0 16 16h32a16 16 0 0 0 16-16V160h48c14.2 0 21.4-17.2 11.3-27.3l-80-96a16 16 0 0 0 -22.6 0l-80 96C-5.4 142.7 1.8 160 16 160zm400 128H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z" />
+                </svg>
+
+                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-5 h-5">
+                  <path fill="#ffffff"
+                    d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z" />
+                </svg>
+              </button>
+            </th>
+
+
             <th class="w-1/8 px-4 py-2 rounded-r-lg"></th>
           </tr>
         </thead>
+
+
         <tbody>
-          <tr
-            v-for="(task, index) in sortedTasks"
-            :key="index"
-            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
-          >
+          <tr v-for="(task, index) in sortedTasks" :key="index"
+            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out">
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
-              <p
-                class="truncate cursor-pointer itbkk-title"
-                @click="showTaskDetail(task)"
-              >
+              <p class="truncate cursor-pointer itbkk-title" @click="showTaskDetail(task)">
                 {{ task.title }}
               </p>
             </td>
@@ -158,64 +220,37 @@ onMounted(async () => {
             <td class="truncate px-4 py-5 text-center itbkk-assignees">
               <span v-if="task.assignees">
                 {{
-                  task.assignees
-                    .split(",")
-                    .map((a) => a.trim())
-                    .join(", ")
-                }}
+              task.assignees
+                .split(",")
+                .map((a) => a.trim())
+                .join(", ")
+            }}
               </span>
-              <span v-else class="text-gray-400 italic itbkk-assignees"
-                >Unassigned</span
-              >
+              <span v-else class="text-gray-400 italic itbkk-assignees">Unassigned</span>
             </td>
 
             <td class="px-5 py-2 text-center">
-              <span
-                class="truncate inline-block px-2 py-1 rounded-full text-center itbkk-status w-32 h-10"
-                :style="statusStore.getStatusClass(task.status)"
-              >
+              <span class="truncate inline-block px-2 py-1 rounded-full text-center itbkk-status w-32 h-10"
+                :style="statusStore.getStatusClass(task.status)">
                 {{ formattedStatus(task) }}
               </span>
             </td>
 
             <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
-              <button
-                class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
-                @click="editTask(task)"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
+              <button class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
+                @click="editTask(task)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </button>
 
-              <button
-                class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                @click="confirmDelete(task)"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="red"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
+              <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                @click="confirmDelete(task)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             </td>
@@ -228,39 +263,23 @@ onMounted(async () => {
       No task
     </div>
 
-    <AddEditTask
-      v-if="selectedTask"
-      :show="!!selectedTask"
-      :task="{
-        ...selectedTask,
-        status: selectedTask.status
-      }"
-      mode="edit"
-      @close="closeModal"
-      @save="saveTask"
-    />
+    <AddEditTask v-if="selectedTask" :show="!!selectedTask" :task="{
+              ...selectedTask,
+              status: selectedTask.status
+            }" mode="edit" @close="closeModal" @save="saveTask" />
   </div>
 
-  <div
-    v-if="showDeleteConfirmation"
-    class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
-  >
+  <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
     <div class="bg-white p-8 rounded-lg">
       <p class="text-lg mb-4">
         Are you sure you want to delete
         <span class="text-red-500">{{ selectedTaskToDelete.title }}</span> task?
       </p>
       <div class="flex justify-end">
-        <button
-          class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
-          @click="cancelDelete"
-        >
+        <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2" @click="cancelDelete">
           Cancel
         </button>
-        <button
-          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          @click="deleteTask(selectedTask)"
-        >
+        <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded" @click="deleteTask(selectedTask)">
           Delete
         </button>
       </div>
@@ -269,31 +288,17 @@ onMounted(async () => {
 
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
+      <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
             <div class="text-lg leading-6 font-medium text-gray-900">
               Success
             </div>
-            <button
-              type="button"
+            <button type="button"
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeDeleteModal"
-            >
-              <svg
-                class="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
+              @click="closeDeleteModal">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
@@ -305,11 +310,9 @@ onMounted(async () => {
         </div>
         <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
           <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-            <button
-              type="button"
+            <button type="button"
               class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeDeleteModal"
-            >
+              @click="closeDeleteModal">
               OK
             </button>
           </span>
@@ -320,31 +323,17 @@ onMounted(async () => {
 
   <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
+      <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
             <div class="text-lg leading-6 font-medium text-red-600">
               Task Not Found
             </div>
-            <button
-              type="button"
+            <button type="button"
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeDeleteModal"
-            >
-              <svg
-                class="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
+              @click="closeDeleteModal">
+              <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
@@ -356,11 +345,9 @@ onMounted(async () => {
         </div>
         <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
           <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-            <button
-              type="button"
+            <button type="button"
               class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeDeleteModal"
-            >
+              @click="closeDeleteModal">
               OK
             </button>
           </span>
