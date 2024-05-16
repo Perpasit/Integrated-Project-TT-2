@@ -187,11 +187,18 @@ public class StatusService {
         if (isDuplicate) {
             System.out.println("Duplicate status name detected");
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(new StatusMaximumTaskDTO(id, status.getName(), status.isLimitMaximumTask(), taskRepository.countByStatusId(id)));
+                    .body(StatusMaximumTaskDTO.builder()
+                            .id(id)
+                            .name(status.getName())
+                            .limitMaximumTask(status.isLimitMaximumTask())
+                            .maximumTaskLimit(status.getMaximumTaskLimit())
+                            .noOfTasks(taskRepository.countByStatusId(id))
+                            .build());
         }
 
         status.setName(statusUpdateDTO.getName().trim());
         status.setLimitMaximumTask(statusUpdateDTO.isLimitMaximumTask());
+        status.setMaximumTaskLimit(statusUpdateDTO.getMaximumTaskLimit());
 
         status.setUpdatedOn(LocalDateTime.now());
         System.out.println("Updated status: " + status);
@@ -201,11 +208,13 @@ public class StatusService {
 
         int noOfTasks = taskRepository.countByStatusId(id);
 
-        StatusMaximumTaskDTO responseDTO = new StatusMaximumTaskDTO();
-        responseDTO.setId(updatedStatus.getId());
-        responseDTO.setName(updatedStatus.getName());
-        responseDTO.setLimitMaximumTask(updatedStatus.isLimitMaximumTask());
-        responseDTO.setNoOfTasks(noOfTasks);
+        StatusMaximumTaskDTO responseDTO = StatusMaximumTaskDTO.builder()
+                .id(updatedStatus.getId())
+                .name(updatedStatus.getName())
+                .limitMaximumTask(updatedStatus.isLimitMaximumTask())
+                .maximumTaskLimit(updatedStatus.getMaximumTaskLimit())
+                .noOfTasks(noOfTasks)
+                .build();
 
         System.out.println("Returning response DTO: " + responseDTO);
         return ResponseEntity.ok(responseDTO);
