@@ -170,4 +170,44 @@ public class StatusService {
             status.setDescription(null);
         }
     }
+
+    @Transactional
+    public ResponseEntity<StatusMaximumTaskDTO> updateStatusMaximumTask(Integer id, StatusUpdateDTO statusUpdateDTO) {
+        System.out.println("Entering updateStatusMaximumTask method");
+
+        Status status = statusRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Status with id " + id + " does not exist!"));
+
+        System.out.println("Found status: " + status);
+
+        String trimmedName = statusUpdateDTO.getName().trim().toLowerCase();
+        boolean isDuplicate = statusRepository.findAll().stream()
+                .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedName) && !existingStatus.getId().equals(id));
+
+        if (isDuplicate) {
+            System.out.println("Duplicate status name detected");
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(new StatusMaximumTaskDTO(id, status.getName(), status.isLimitMaximumTask(), taskRepository.countByStatusId(id)));
+        }
+
+        status.setName(statusUpdateDTO.getName().trim());
+        status.setLimitMaximumTask(statusUpdateDTO.isLimitMaximumTask());
+
+        status.setUpdatedOn(LocalDateTime.now());
+        System.out.println("Updated status: " + status);
+
+        Status updatedStatus = statusRepository.save(status);
+        System.out.println("Saved updated status: " + updatedStatus);
+
+        int noOfTasks = taskRepository.countByStatusId(id);
+
+        StatusMaximumTaskDTO responseDTO = new StatusMaximumTaskDTO();
+        responseDTO.setId(updatedStatus.getId());
+        responseDTO.setName(updatedStatus.getName());
+        responseDTO.setLimitMaximumTask(updatedStatus.isLimitMaximumTask());
+        responseDTO.setNoOfTasks(noOfTasks);
+
+        System.out.println("Returning response DTO: " + responseDTO);
+        return ResponseEntity.ok(responseDTO);
+    }
 }

@@ -56,14 +56,12 @@ public class StatusController {
         Status status = new Status();
         status.setName(statusUpdateDTO.getName().trim());
 
-        // Check if the description is not null before trimming
         if (statusUpdateDTO.getDescription() != null) {
             status.setDescription(statusUpdateDTO.getDescription().trim());
         } else {
             status.setDescription(null);
         }
 
-        // Set the colorCode if provided in the request body
         if (statusUpdateDTO.getColorCode() != null) {
             status.setColorCode(statusUpdateDTO.getColorCode());
         }
@@ -77,4 +75,11 @@ public class StatusController {
         return ResponseEntity.ok(taskDTOs);
     }
 
+    @PatchMapping("/{id}/maximum-task")
+    public ResponseEntity<StatusMaximumTaskDTO> updateStatusMaximumTask(
+            @PathVariable Integer id,
+            @RequestBody StatusUpdateDTO statusUpdateDTO
+    ) {
+        return statusService.updateStatusMaximumTask(id, statusUpdateDTO);
+    }
 }
