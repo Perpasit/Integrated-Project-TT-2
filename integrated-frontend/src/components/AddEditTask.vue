@@ -23,7 +23,7 @@ const props = defineProps({
       title: '',
       description: '',
       assignees: '',
-      status: 1
+      status: 1,
     })
   },
   mode: {

@@ -20,7 +20,7 @@ const props = defineProps({
     default: () => ({
       id: "",
       name: "",
-      statusDescription: "",
+      description: "",
       colorCode: "#000000",
     }),
   },
@@ -34,7 +34,7 @@ const emit = defineEmits(["close", "statusSaved"])
 const editedStatus = ref({
   id: "",
   name: "",
-  statusDescription: "",
+  description: "",
   colorCode: "#000000",
 });
 
@@ -49,7 +49,7 @@ const isNameValid = computed(() => {
       (props.mode === "edit" &&
         originalStatus.value &&
         (editedStatus.value.name !== originalStatus.value.name ||
-          editedStatus.value.statusDescription !== originalStatus.value.statusDescription ||
+          editedStatus.value.description !== originalStatus.value.description ||
           editedStatus.value.colorCode !== originalStatus.value.colorCode)))
   )
 })
@@ -72,7 +72,7 @@ watch(
           editedStatus.value = {
             ...data,
             name: data.name || "",
-            statusDescription: data.statusDescription || "",
+            description: data.description || "",
             colorCode: data.colorCode,
           };
           // console.log("Fetched status data:", editedStatus.value); 
@@ -92,7 +92,7 @@ watch(
 function resetForm() {
   editedStatus.value = {
     name: "",
-    statusDescription: "",
+    description: "",
     colorCode: "#000000",
   }
 }
@@ -111,7 +111,7 @@ async function saveStatus() {
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
-      statusDescription: editedStatus.value.statusDescription.trim(),
+      description: editedStatus.value.description.trim(),
       colorCode: editedStatus.value.colorCode,
     }
 
@@ -195,15 +195,15 @@ function closeModal() {
                 <label class="block text-sm font-bold mb-1">Description:</label>
                 <textarea
                   rows="5"
-                  v-model="editedStatus.statusDescription"
+                  v-model="editedStatus.description"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
                   :maxlength="200"
                 ></textarea>
                 <p class="text-gray-500 text-sm mt-1">
                   {{
-                    editedStatus.statusDescription
-                      ? editedStatus.statusDescription.length
+                    editedStatus.description
+                      ? editedStatus.description.length
                       : 0
                   }}/200 characters
                 </p>

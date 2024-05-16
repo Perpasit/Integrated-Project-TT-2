@@ -11,11 +11,10 @@ const props = defineProps({
 
 const route = useRoute()
 const editedTask = ref({})
-const name = computed(() =>
-  statusStore.getStatusNameById(editedTask.value.status) || ''
+const status = computed(() =>
+  statusStore.getStatusByName(editedTask.value.status) || ''
 )
 const loading = ref(true)
-
 onMounted(async () => {
   if (route.state && route.state.task) {
     editedTask.value = route.state.task
@@ -163,7 +162,7 @@ No Description Provided</textarea
                 <label class="block text-sm font-bold mb-1">Status:</label>
                 <input
                   type="text"
-                  :value="formatStatus(name)"
+                  :value="formatStatus(status.name)"
                   readonly
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 />
