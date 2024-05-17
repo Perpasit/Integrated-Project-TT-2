@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +39,9 @@ public class Status {
     @Column(name = "updatedOn", nullable = false)
     private LocalDateTime updatedOn;
 
-    @Column(name = "maximumTaskLimit")
-    private Integer maximumTaskLimit;
-
-    @Column(name = "limitMaximumTask")
-    private boolean limitMaximumTask;
+    @ManyToOne
+    @JoinColumn(name = "global_settings_id", nullable = false)
+    private GlobalSetting globalSetting;
 
     @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)
     private List<Task> tasks = new ArrayList<>();

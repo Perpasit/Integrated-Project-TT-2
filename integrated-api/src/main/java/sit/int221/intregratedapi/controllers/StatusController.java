@@ -75,11 +75,4 @@ public class StatusController {
         return ResponseEntity.ok(taskDTOs);
     }
 
-    @PatchMapping("/{id}/maximum-task")
-    public ResponseEntity<StatusMaximumTaskDTO> updateStatusMaximumTask(
-            @PathVariable Integer id,
-            @RequestBody StatusUpdateDTO statusUpdateDTO
-    ) {
-        return statusService.updateStatusMaximumTask(id, statusUpdateDTO);
-    }
 }
