@@ -7,44 +7,58 @@ export const getItems = async (url) => {
   try {
     return await fetch(url)
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error)
   }
 }
 
 export const postItem = async (url, item) => {
   try {
     return await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(item),
+      body: JSON.stringify(item)
     })
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error)
   }
 }
 
 export const putItem = async (url, item) => {
   try {
     return await fetch(url, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(item),
+      body: JSON.stringify(item)
     })
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error)
   }
 }
 
 export const deleteItem = async (url) => {
   try {
     return await fetch(url, {
-      method: 'DELETE',
+      method: "DELETE"
     })
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error)
+  }
+}
+
+export const patchItem = async (url, item) => {
+  try {
+    return await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(item)
+    })
+  } catch (error) {
+    console.error("Error:", error)
   }
 }
