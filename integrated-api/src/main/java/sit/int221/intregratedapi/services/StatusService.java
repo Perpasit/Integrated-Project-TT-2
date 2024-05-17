@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import sit.int221.intregratedapi.dtos.*;
+import sit.int221.intregratedapi.entities.GlobalSetting;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.repositories.StatusRepository;
@@ -25,16 +26,11 @@ public class StatusService {
     @Autowired
     private TaskRepository taskRepository;
     @Autowired
+    private GlobalSettingService globalSettingService;
+    @Autowired
     private ListMapper listMapper;
     @Autowired
     private ModelMapper modelMapper;
-
-    @Autowired
-    public StatusService(StatusRepository statusRepository, ListMapper listMapper) {
-        this.statusRepository = statusRepository;
-        this.taskRepository = taskRepository;
-        this.listMapper = listMapper;
-    }
 
     public List<Status> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();
@@ -52,7 +48,9 @@ public class StatusService {
     public StatusRDTO getStatusById(Integer id) {
         Status status = statusRepository.findById(id).orElse(null);
         if (status != null) {
-            return modelMapper.map(status, StatusRDTO.class);
+            StatusRDTO statusRDTO = modelMapper.map(status, StatusRDTO.class);
+            statusRDTO.setGlobalSettingId(status.getGlobalSetting().getId());
+            return statusRDTO;
         }
         throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
@@ -85,7 +83,7 @@ public class StatusService {
                 status.setDescription(status.getDescription().trim());
             }
 
-            setDefaultValuesForStatus(status);
+            setDefaultValuesForStatus(status, "General");
             Status createdStatus = statusRepository.save(status);
 
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
@@ -106,6 +104,7 @@ public class StatusService {
         StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
         return ResponseEntity.ok(statusDDTO);
     }
+
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
         Status statusToDelete = statusRepository.findById(id)
@@ -118,13 +117,13 @@ public class StatusService {
         Status newStatus = statusRepository.findById(newId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + newId + "that you are about to transfer does not exist!"));
 
-        int newStatusTaskCount = taskRepository.countByStatusId(newId);
-        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
-
-        if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getMaximumTaskLimit()) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(new StatusTFDDTO(statusToDelete.getId(), statusToDelete.getName(), statusToDelete.getDescription()));
-        }
+//        int newStatusTaskCount = taskRepository.countByStatusId(newId);
+//        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+//
+//        if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getMaximumTaskLimit()) {
+//            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+//                    .body(new StatusTFDDTO(statusToDelete.getId(), statusToDelete.getName(), statusToDelete.getDescription()));
+//        }
 
         List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
         for (Task task : tasksToUpdate) {
@@ -159,7 +158,7 @@ public class StatusService {
         throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
-    private void setDefaultValuesForStatus(Status status) {
+    private void setDefaultValuesForStatus(Status status, String globalSettingName) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
             status.setColorCode("#000000");
         }
@@ -172,45 +171,9 @@ public class StatusService {
         if (status.getDescription() == null || status.getDescription().isEmpty()) {
             status.setDescription(null);
         }
-    }
 
-    @Transactional
-    public ResponseEntity<StatusMaximumTaskDTO> updateStatusMaximumTask(Integer id, StatusUpdateDTO statusUpdateDTO) {
-        Status status = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status with id " + id + " does not exist!"));
-
-        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
-            throw new IllegalArgumentException("Status with name \"" + status.getName() + "\" cannot be updated!");
-        }
-
-        String trimmedName = statusUpdateDTO.getName().trim().toLowerCase();
-        boolean isDuplicate = statusRepository.findAll().stream()
-                .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedName) && !existingStatus.getId().equals(id));
-
-        if (isDuplicate) {
-            int noOfTasks = taskRepository.countByStatusId(id);
-            StatusMaximumTaskDTO responseDTO = ListMapper.mapObject(status, StatusMaximumTaskDTO.class);
-            responseDTO.setNoOfTasks(noOfTasks);
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(responseDTO);
-        }
-
-        status.setName(statusUpdateDTO.getName().trim());
-        status.setLimitMaximumTask(statusUpdateDTO.isLimitMaximumTask());
-
-        if (statusUpdateDTO.getMaximumTaskLimit() != null) {
-            status.setMaximumTaskLimit(statusUpdateDTO.getMaximumTaskLimit());
-        } else {
-            status.setMaximumTaskLimit(null);
-        }
-
-        status.setUpdatedOn(LocalDateTime.now());
-        Status updatedStatus = statusRepository.save(status);
-        int noOfTasks = taskRepository.countByStatusId(id);
-
-        StatusMaximumTaskDTO responseDTO = ListMapper.mapObject(updatedStatus, StatusMaximumTaskDTO.class);
-        responseDTO.setNoOfTasks(noOfTasks);
-        return ResponseEntity.ok(responseDTO);
+        GlobalSetting globalSetting = globalSettingService.getGlobalSettingByName("General");
+        status.setGlobalSetting(globalSetting);
     }
 
 }
