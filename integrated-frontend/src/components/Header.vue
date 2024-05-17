@@ -43,6 +43,7 @@ const addStatus = () => {
   >
     <h1
       class="cursor-default text-5xl font-bold font-italiana pt-2 text-lime-100 mr-96 hover:scale-110 transition-all duration-200 ease-in-out"
+      @click="goHome"
     >
       Kanban
     </h1>
