@@ -1,9 +1,12 @@
+<!-- TaskTable.vue -->
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import AddEditTask from "./AddEditTask.vue"
 import { useRouter } from "vue-router"
+import LimitTaskModal from "./LimitTaskModal.vue"
+
 
 const router = useRouter()
 const taskStore = useTaskStore()
@@ -16,6 +19,8 @@ const showDeleteConfirmation = ref(false)
 let selectedTaskToDelete = null
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
+const showLimitTaskModal = ref(false)
+const maxTasksPerStatus = ref(10)
 
 const showTaskDetail = (task) => {
   router.push({
@@ -55,6 +60,7 @@ const formattedStatus = computed(() => {
     }
   }
 })
+
 
 // const sortedTasks = computed(() => {
 //   return [...tasks.value].sort((a, b) => {
@@ -294,7 +300,7 @@ const filteredStatuses = computed(() => {
         <thead>
           <tr class="text-white w-full">
             <th class="w-19 px-4 py-2 rounded-l-lg text-xl font-medium">No.</th>
-            <th class="w-1/3 px-4 py-2 text-xl font-medium" >
+            <th class="w-1/3 px-4 py-2 text-xl font-medium">
               Title
             </th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
@@ -324,9 +330,25 @@ const filteredStatuses = computed(() => {
             </th>
 
 
-            <th class="w-1/8 px-4 py-2 rounded-r-lg"></th>
+            <th class="w-1/8 px-4 py-2 rounded-r-lg">
+
+              <button class="itbkk-status-setting" @click="showLimitTaskModal = true">
+                <svg class="w-5 h-5 mr-7 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 20 20">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7.75 4H19M7.75 4a2.25 2.25 0 0 1-4.5 0m4.5 0a2.25 2.25 0 0 0-4.5 0M1 4h2.25m13.5 6H19m-2.25 0a2.25 2.25 0 0 1-4.5 0m4.5 0a2.25 2.25 0 0 0-4.5 0M1 10h11.25m-4.5 6H19M7.75 16a2.25 2.25 0 0 1-4.5 0m4.5 0a2.25 2.25 0 0 0-4.5 0M1 16h2.25" />
+                </svg>
+              </button>
+            </th>
           </tr>
         </thead>
+
+        <LimitTaskModal 
+    :show="showLimitTaskModal" 
+    :maxTaskLimit="maxTasksPerStatus"
+    @close="showLimitTaskModal = false"
+    @save="updateMaxTasksPerStatus"
+  />
 
 
         <tbody>

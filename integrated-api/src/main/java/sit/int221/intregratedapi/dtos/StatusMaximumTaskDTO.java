@@ -11,5 +11,6 @@ public class StatusMaximumTaskDTO {
     private Integer id;
     private String name;
     private boolean limitMaximumTask;
+    private Integer maximumTaskLimit;
     private int noOfTasks;
 }
