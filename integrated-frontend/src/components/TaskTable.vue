@@ -205,14 +205,16 @@ const sortedAndFilteredTasks = computed(() => {
 
   return result
 })
-
+const displayLimit = ref(5)
+const showAllStatuses = ref(false)
 const filteredStatuses = computed(() => {
-  if (searchKeyword.value) {
-    return statusStore.statuses.filter((status) =>
-      status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    )
+  const results = statusStore.statuses.filter((status) =>
+    status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+  )
+  if (showAllStatuses.value) {
+    return results
   }
-  return statusStore.statuses
+  return results.slice(0, displayLimit.value)
 })
 </script>
 
@@ -324,7 +326,7 @@ const filteredStatuses = computed(() => {
                           type="text"
                           v-model="searchKeyword"
                           placeholder="Search keywords..."
-                          class="w-full text-gray-700  px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 "
+                          class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         />
                       </div>
                       <div class="px-4 py-2">
@@ -332,7 +334,7 @@ const filteredStatuses = computed(() => {
                           >Status</span
                         >
                         <label
-                          v-for="status in filteredStatuses"
+                          v-for="(status, index) in filteredStatuses"
                           :key="status.name"
                           class="flex items-center text-sm text-gray-700 mt-1"
                         >
@@ -345,8 +347,16 @@ const filteredStatuses = computed(() => {
                           {{ status.name }}
                         </label>
                       </div>
-
+                      <!-- Show More Button -->
+                      
                       <div class="px-4 py-2 flex justify-between">
+                        <button
+                        v-if="statusStore.statuses.length > displayLimit"
+                        @click="showAllStatuses = !showAllStatuses"
+                        class="text-lg text-sm  text-gray-700"
+                      >
+                        {{ showAllStatuses ? "Show Less" : "Show More" }}
+                      </button>
                         <button
                           @click="clearStatusFilter"
                           class="text-sm text-gray-600 hover:text-gray-800"
