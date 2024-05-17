@@ -95,32 +95,36 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
-        if (id.equals(1)) {
-            throw new IllegalArgumentException("Status with ID 1 cannot be deleted!");
-        }
-
         Status status = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+
+        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
+            throw new IllegalArgumentException("Status with name \"" + status.getName() + "\" cannot be deleted!");
+        }
+
         statusRepository.delete(status);
-        StatusDDTO statusDDTO = modelMapper.map(status, StatusDDTO.class);
+        StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
         return ResponseEntity.ok(statusDDTO);
     }
-
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
-        if (id.equals(1)) {
-            throw new IllegalArgumentException("Status with ID 1 cannot be deleted or transferred!");
-        }
-
-        if (id.equals(newId)) {
-            throw new IllegalArgumentException("The status you are transferring to cannot be the status you are deleting!");
-        }
-
         Status statusToDelete = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
 
+        if (statusToDelete.getName().equalsIgnoreCase("No Status") || statusToDelete.getName().equalsIgnoreCase("Done")) {
+            throw new IllegalArgumentException("Status with name \"" + statusToDelete.getName() + "\" cannot be deleted or transferred!");
+        }
+
         Status newStatus = statusRepository.findById(newId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + newId + "that you are about to transfer does not exist!"));
+
+        int newStatusTaskCount = taskRepository.countByStatusId(newId);
+        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+
+        if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getMaximumTaskLimit()) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(new StatusTFDDTO(statusToDelete.getId(), statusToDelete.getName(), statusToDelete.getDescription()));
+        }
 
         List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
         for (Task task : tasksToUpdate) {
@@ -129,25 +133,25 @@ public class StatusService {
 
         statusRepository.delete(statusToDelete);
 
-        StatusTFDDTO statusTFDDTO = modelMapper.map(statusToDelete, StatusTFDDTO.class);
+        StatusTFDDTO statusTFDDTO = ListMapper.mapObject(statusToDelete, StatusTFDDTO.class);
         return ResponseEntity.ok(statusTFDDTO);
     }
 
     @Transactional
     public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
-        if (id.equals(1)) {
-            throw new IllegalArgumentException("Status with ID 1 cannot be updated!");
-        }
-
         Status existingStatus = statusRepository.findById(id).orElse(null);
         if (existingStatus != null) {
+            if (existingStatus.getName().equalsIgnoreCase("Done")) {
+                throw new IllegalArgumentException("Status with name \"Done\" cannot be updated!");
+            }
+            if (existingStatus.getName().equalsIgnoreCase("No Status")) {
+                throw new IllegalArgumentException("Status with name \"No Status\" cannot be updated!");
+            }
             existingStatus.setName(status.getName().trim());
             existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
-            
             if (status.getColorCode() != null) {
                 existingStatus.setColorCode(status.getColorCode());
             }
-
             Status savedStatus = statusRepository.save(existingStatus);
             StatusUDTO statusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
             return ResponseEntity.ok(statusUDTO);
@@ -175,6 +179,10 @@ public class StatusService {
         Status status = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status with id " + id + " does not exist!"));
 
+        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
+            throw new IllegalArgumentException("Status with name \"" + status.getName() + "\" cannot be updated!");
+        }
+
         String trimmedName = statusUpdateDTO.getName().trim().toLowerCase();
         boolean isDuplicate = statusRepository.findAll().stream()
                 .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedName) && !existingStatus.getId().equals(id));
@@ -189,9 +197,14 @@ public class StatusService {
 
         status.setName(statusUpdateDTO.getName().trim());
         status.setLimitMaximumTask(statusUpdateDTO.isLimitMaximumTask());
-        status.setMaximumTaskLimit(statusUpdateDTO.getMaximumTaskLimit());
-        status.setUpdatedOn(LocalDateTime.now());
 
+        if (statusUpdateDTO.getMaximumTaskLimit() != null) {
+            status.setMaximumTaskLimit(statusUpdateDTO.getMaximumTaskLimit());
+        } else {
+            status.setMaximumTaskLimit(null);
+        }
+
+        status.setUpdatedOn(LocalDateTime.now());
         Status updatedStatus = statusRepository.save(status);
         int noOfTasks = taskRepository.countByStatusId(id);
 
@@ -199,4 +212,5 @@ public class StatusService {
         responseDTO.setNoOfTasks(noOfTasks);
         return ResponseEntity.ok(responseDTO);
     }
+
 }
