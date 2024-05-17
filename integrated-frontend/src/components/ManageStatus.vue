@@ -30,7 +30,7 @@ const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
     params: { statusId: status.id },
-    state: { status }
+   
   })
 }
 
@@ -41,15 +41,15 @@ const closeCannotDeleteModal = () => {
 }
 
 const editStatus = (status) => {
-  if (status && status.id && status.id !== 1) {
-    router.push({ name: "EditStatus", params: { id: status.id } })
-  } else if (status.id === 1) {
-    showCannotEditDeleteModal.value = true
+  if ( status.id !== 1 && status.id !== 4) {
+    router.push({ name: "EditStatus", params: { id: status.id } });
+  } else {
+    showCannotEditDeleteModal.value = true;
     cannotDeleteEditTimeout.value = setTimeout(() => {
-      closeCannotDeleteModal()
-    }, 3000)
+      closeCannotDeleteModal();
+    }, 3000);
   }
-}
+};
 
 const saveStatus = (status) => {
   if (status.id) {
@@ -272,7 +272,7 @@ onMounted(async () => {
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                   @click="
-                    if (status.id === 1) {
+                    if (status.id === 1 || status.id === 4) {
                       showCannotEditDeleteModal = true;
                       selectedStatusToDelete = status;
                     } else {
