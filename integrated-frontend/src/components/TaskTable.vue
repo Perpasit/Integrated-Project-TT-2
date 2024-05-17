@@ -318,7 +318,7 @@ const filteredStatuses = computed(() => {
                   </button>
                   <div
                     v-if="isDropdownOpen"
-                    class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-black"
+                    class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
                       <div class="px-4 py-2">
