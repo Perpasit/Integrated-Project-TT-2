@@ -143,8 +143,7 @@ public class StatusService {
         if (existingStatus != null) {
             existingStatus.setName(status.getName().trim());
             existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
-
-            // Set the colorCode to the existing value if it is not provided in the request body
+            
             if (status.getColorCode() != null) {
                 existingStatus.setColorCode(status.getColorCode());
             }
@@ -173,50 +172,31 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusMaximumTaskDTO> updateStatusMaximumTask(Integer id, StatusUpdateDTO statusUpdateDTO) {
-        System.out.println("Entering updateStatusMaximumTask method");
-
         Status status = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status with id " + id + " does not exist!"));
-
-        System.out.println("Found status: " + status);
 
         String trimmedName = statusUpdateDTO.getName().trim().toLowerCase();
         boolean isDuplicate = statusRepository.findAll().stream()
                 .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedName) && !existingStatus.getId().equals(id));
 
         if (isDuplicate) {
-            System.out.println("Duplicate status name detected");
+            int noOfTasks = taskRepository.countByStatusId(id);
+            StatusMaximumTaskDTO responseDTO = ListMapper.mapObject(status, StatusMaximumTaskDTO.class);
+            responseDTO.setNoOfTasks(noOfTasks);
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(StatusMaximumTaskDTO.builder()
-                            .id(id)
-                            .name(status.getName())
-                            .limitMaximumTask(status.isLimitMaximumTask())
-                            .maximumTaskLimit(status.getMaximumTaskLimit())
-                            .noOfTasks(taskRepository.countByStatusId(id))
-                            .build());
+                    .body(responseDTO);
         }
 
         status.setName(statusUpdateDTO.getName().trim());
         status.setLimitMaximumTask(statusUpdateDTO.isLimitMaximumTask());
         status.setMaximumTaskLimit(statusUpdateDTO.getMaximumTaskLimit());
-
         status.setUpdatedOn(LocalDateTime.now());
-        System.out.println("Updated status: " + status);
 
         Status updatedStatus = statusRepository.save(status);
-        System.out.println("Saved updated status: " + updatedStatus);
-
         int noOfTasks = taskRepository.countByStatusId(id);
 
-        StatusMaximumTaskDTO responseDTO = StatusMaximumTaskDTO.builder()
-                .id(updatedStatus.getId())
-                .name(updatedStatus.getName())
-                .limitMaximumTask(updatedStatus.isLimitMaximumTask())
-                .maximumTaskLimit(updatedStatus.getMaximumTaskLimit())
-                .noOfTasks(noOfTasks)
-                .build();
-
-        System.out.println("Returning response DTO: " + responseDTO);
+        StatusMaximumTaskDTO responseDTO = ListMapper.mapObject(updatedStatus, StatusMaximumTaskDTO.class);
+        responseDTO.setNoOfTasks(noOfTasks);
         return ResponseEntity.ok(responseDTO);
     }
 }
