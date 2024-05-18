@@ -47,7 +47,7 @@ export const useTaskStore = defineStore("task", {
           title: updatedTask.title.trim(),
           description: updatedTask.description.trim(),
           assignees: updatedTask.assignees.trim(),
-          status: updatedTask.status
+          status: updatedTask.status.id
         }
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,

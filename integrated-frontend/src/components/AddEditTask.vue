@@ -70,7 +70,7 @@ watch(
           editedTask.value = null
         } else {
           const data = await response.json()
-          console.log(data)
+          // console.log(data)
           const statusId = statusStore.getStatusByName(data.status)?.id
           editedTask.value = { ...data, status: statusId || 1 }
           originalTask.value = { ...data, status: statusId || 1}
