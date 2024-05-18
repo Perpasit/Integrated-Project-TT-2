@@ -20,10 +20,7 @@ import sit.int221.intregratedapi.repositories.TaskRepository;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @NoArgsConstructor
 @Service
@@ -82,6 +79,13 @@ public class TaskService {
         if (taskCDTO.getStatus() != null) {
             Status status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+
+
+            if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+            }
+
             task.setStatus(status);
         }
 
@@ -102,13 +106,30 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<TaskUDTO> updateTask(Integer taskId, Task task) {
+    public ResponseEntity<Object> updateTask(Integer taskId, TaskUDTO updatedTaskDTO) {
         Task existingTask = getTaskById(taskId);
-        setDefaultValuesForTask(task);
-        updateTaskFromDTO(existingTask, task);
+        setDefaultValuesForTask(existingTask);
+
+        if (updatedTaskDTO.getStatus() != null) {
+            Status status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
+
+            if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+            }
+
+            existingTask.setStatus(status);
+        }
+
+        existingTask.setTitle(updatedTaskDTO.getTitle());
+        existingTask.setDescription(updatedTaskDTO.getDescription());
+        existingTask.setAssignees(updatedTaskDTO.getAssignees());
+        existingTask.setUpdatedOn(LocalDateTime.now());
+
         Task updatedTask = taskRepository.save(existingTask);
-        TaskUDTO taskUDTO = modelMapper.map(updatedTask, TaskUDTO.class);
-        return ResponseEntity.ok(taskUDTO);
+        TaskUDTO updatedTaskCDTO = modelMapper.map(updatedTask, TaskUDTO.class);
+        return ResponseEntity.ok(updatedTaskCDTO);
     }
 
     public TaskRDTO getTaskDetailsById(Integer id) {

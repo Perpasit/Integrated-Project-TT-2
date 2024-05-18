@@ -3,13 +3,11 @@ package sit.int221.intregratedapi.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.intregratedapi.dtos.*;
-import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
 import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/v2/tasks")
@@ -57,7 +55,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskUDTO> updateTask(@RequestBody Task task, @PathVariable Integer id) {
-        return taskService.updateTask(id, task);
+    public ResponseEntity<Object> updateTask(@RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
+        return taskService.updateTask(id, updatedTaskDTO);
     }
 }
