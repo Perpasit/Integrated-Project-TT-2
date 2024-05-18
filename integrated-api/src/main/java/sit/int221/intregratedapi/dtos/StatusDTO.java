@@ -15,5 +15,5 @@ public class StatusDTO {
     private String name;
     private String description;
     private String colorCode;
-  
+    private int noOfTasks;
 }

@@ -17,6 +17,7 @@ import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,10 +33,17 @@ public class StatusService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public List<Status> getAllStatuses() {
+    public List<StatusDTO> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();
-        return statuses;
+        List<StatusDTO> statusDTOs = new ArrayList<>();
+        for (Status status : statuses) {
+            StatusDTO statusDTO = modelMapper.map(status, StatusDTO.class);
+            statusDTO.setNoOfTasks(getNoOfTasksByStatusId(status.getId()));
+            statusDTOs.add(statusDTO);
+        }
+        return statusDTOs;
     }
+
 
     public int getNoOfTasksByStatusId(Integer statusId) {
         return taskRepository.countByStatusId(statusId);
