@@ -169,78 +169,17 @@ const togglesortBy = () => {
 const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
 }
+
+
+
+
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex justify-end mb-10"></div>
 
-    <!-- <div class="flex items-center mb-4 justify-end ">
-      <div class="relative">
-        <button
-          @click="toggleDropdown"
-          class=" hover:scale-110 transition-all duration-200 ease-in-out text-white px-4 py-2 rounded-md flex items-center justify-between w-36 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent hover:border-blue-500" 
-        >
-          Filter Status
-          <svg
-            :class="{ 'transform rotate-180': isDropdownOpen }"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            class="w-4 h-4 ml-2"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-        <div
-          v-if="isDropdownOpen"
-          class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10"
-        >
-          <div class="py-1">
-            <div class="px-4 py-2">
-              <input
-                type="text"
-                v-model="searchKeyword"
-                placeholder="Search keywords..."
-                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div class="px-4 py-2">
-              <span class="block font-medium text-sm text-gray-700"
-                >Status</span
-              >
-              <label
-                v-for="status in filteredStatuses"
-                :key="status.name"
-                class="flex items-center text-sm text-gray-700 mt-1"
-              >
-                <input
-                  type="checkbox"
-                  v-model="selectedStatuses"
-                  :value="status.name"
-                  class="mr-2"
-                />
-                {{ status.name }}
-              </label>
-            </div>
-
-            <div class="px-4 py-2 flex justify-between">
-              <button
-                @click="clearStatusFilter"
-                class="text-sm text-gray-600 hover:text-gray-800"
-              >
-                Clear all
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
-
+    
     <div class="overflow-visible">
       <table
         class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
@@ -306,7 +245,7 @@ const updateMaxTasksPerStatus = (limit) => {
                         <button
                         v-if="statusStore.statuses.length > displayStatusLimit"
                         @click="showAllStatuses = !showAllStatuses"
-                        class="text-lg text-sm  text-gray-700"
+                        class=" text-sm  text-gray-700"
                       >
                         {{ showAllStatuses ? "Show Less" : "Show More" }}
                       </button>
@@ -628,4 +567,6 @@ const updateMaxTasksPerStatus = (limit) => {
       </div>
     </div>
   </div>
+
+
 </template>
