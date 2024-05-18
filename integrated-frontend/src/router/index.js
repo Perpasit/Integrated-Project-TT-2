@@ -20,6 +20,7 @@ const router = createRouter({
       path: "/task",
       name: "home",
       component: Home,
+      
       children: [
         {
           path: "/task/:taskId",
@@ -55,10 +56,6 @@ const router = createRouter({
             }
           },
         },
-        
-
-
-        
       ],
     },
     {
