@@ -3,6 +3,7 @@ package sit.int221.intregratedapi.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sit.int221.intregratedapi.dtos.GlobalSettingDTO;
 import sit.int221.intregratedapi.entities.GlobalSetting;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.repositories.GlobalSettingRepository;
@@ -30,12 +31,21 @@ public class GlobalSettingService {
     }
 
     @Transactional
-    public GlobalSetting updateGlobalSetting(String name, Integer maximumTaskLimit, boolean limitMaximumTask) {
+    public GlobalSetting updateGlobalSetting(String name, GlobalSettingDTO updatedGlobalSettingDTO) {
+        if (name.equalsIgnoreCase("Default")) {
+            throw new IllegalArgumentException("Updating the 'Default' global setting is not allowed.");
+        }
+
         GlobalSetting globalSetting = globalSettingRepository.findByName(name)
                 .orElseThrow(() -> new ItemNotFoundException("Global Setting with name " + name + " does not exist!"));
 
-        globalSetting.setMaximumTaskLimit(maximumTaskLimit);
-        globalSetting.setLimitMaximumTask(limitMaximumTask);
+        if (updatedGlobalSettingDTO.getMaximumTaskLimit() != null) {
+            globalSetting.setMaximumTaskLimit(updatedGlobalSettingDTO.getMaximumTaskLimit());
+        }
+
+        if (updatedGlobalSettingDTO.isLimitMaximumTask() != globalSetting.isLimitMaximumTask()) {
+            globalSetting.setLimitMaximumTask(updatedGlobalSettingDTO.isLimitMaximumTask());
+        }
 
         return globalSettingRepository.save(globalSetting);
     }
