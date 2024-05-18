@@ -3,18 +3,19 @@ import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
-    tasks: []
+    tasks: [],
+    sortBy: "normal",
+    filterStatuses: []
   }),
   getters: {
     getTasks: (state) => state.tasks,
-    getTaskById: (state) => (taskId) =>
-      state.tasks.find((task) => task.id === taskId)
+    getTaskById: (state) => (taskId) => state.tasks.find((task) => task.id === taskId)
   },
   actions: {
     async fetchAllTasks() {
       try {
         const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks`
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
         )
         this.tasks = data || []
       } catch (error) {
@@ -28,9 +29,8 @@ export const useTaskStore = defineStore("task", {
           title: newTask.title.trim(),
           description: newTask.description.trim(),
           assignees: newTask.assignees.trim(),
-          status:  newTask.status 
+          status: newTask.status
         }
-
         const createdTask = await postItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
           formattedTask
@@ -47,14 +47,12 @@ export const useTaskStore = defineStore("task", {
           title: updatedTask.title.trim(),
           description: updatedTask.description.trim(),
           assignees: updatedTask.assignees.trim(),
-          status: updatedTask.status 
+          status: updatedTask.status
         }
-
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
           formattedTask
         )
-
         const index = this.tasks.findIndex((task) => task.id === id)
         if (index !== -1) {
           this.tasks.splice(index, 1, updatedData)
@@ -74,6 +72,14 @@ export const useTaskStore = defineStore("task", {
       } catch (error) {
         console.error("Error deleting task:", error)
       }
+    },
+    setSortBy(sortBy) {
+      this.sortBy = sortBy
+      this.fetchAllTasks()
+    },
+    setFilterStatuses(filterStatuses) {
+      this.filterStatuses = filterStatuses
+      this.fetchAllTasks()
     }
   }
 })

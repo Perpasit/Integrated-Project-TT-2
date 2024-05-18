@@ -4,15 +4,15 @@ import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import AddEditTask from "./AddEditTask.vue"
-import { useRouter } from "vue-router"
+import { useRouter , useRoute } from "vue-router"
 import LimitTaskModal from "./LimitTaskModal.vue"
 
 const router = useRouter()
+const route = useRoute()
 const taskStore = useTaskStore()
 const statusStore = useStatusStore()
 const tasks = computed(() => taskStore.getTasks)
 const selectedTask = ref(null)
-const sortOrder = ref("asc")
 
 const showDeleteConfirmation = ref(false)
 let selectedTaskToDelete = null
@@ -48,7 +48,6 @@ const formattedStatus = computed(() => {
       return (
         status.name
           .toUpperCase()
-          // .replace(/_/g, " ")
           .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
       )
     } else {
@@ -101,119 +100,75 @@ onMounted(async () => {
   await taskStore.fetchAllTasks()
   await statusStore.fetchAllStatuses()
   await fetchTasks()
-})
 
-const sortedTasksByStatus = computed(() => {
-  return [...tasks.value].sort((a, b) => {
-    const statusA = statusStore.getStatusByName(a.status).name.toLowerCase()
-    const statusB = statusStore.getStatusByName(b.status).name.toLowerCase()
-    if (sortOrder.value === "asc") {
-      return statusA.localeCompare(statusB)
-    } else {
-      return statusB.localeCompare(statusA)
-    }
-  })
-})
-
-const sortCriterion = ref("createdOn")
-
-const sortedTasks = computed(() => {
-  return [...tasks.value].sort((a, b) => {
-    if (sortCriterion.value === "status") {
-      const statusA = statusStore.getStatusByName(a.status).name.toLowerCase()
-      const statusB = statusStore.getStatusByName(b.status).name.toLowerCase()
-      if (sortOrder.value === "asc") {
-        return statusA.localeCompare(statusB)
-      } else {
-        return statusB.localeCompare(statusA)
-      }
-    } else {
-      if (sortOrder.value === "asc") {
-        return new Date(a.createdOn) - new Date(b.createdOn)
-      } else {
-        return new Date(b.createdOn) - new Date(a.createdOn)
-      }
-    }
-  })
-})
-
-const toggleSortOrder = () => {
-  if (sortCriterion.value === "status") {
-    if (sortOrder.value === "asc") {
-      sortOrder.value = "desc"
-    } else {
-      sortCriterion.value = "createdOn"
-      sortOrder.value = "asc"
-    }
-  } else {
-    sortCriterion.value = "status"
-    sortOrder.value = "asc"
+  const sortByFromUrl = route.query.sortBy
+  if (sortByFromUrl === 'asc' || sortByFromUrl === 'desc' || sortByFromUrl === 'normal') {
+    sortBy.value = sortByFromUrl
+    await fetchTasks()
   }
-}
+
+  // Check the filterStatus query parameter from the URL
+  const filterStatusFromUrl = route.query.filterStatus
+  if (filterStatusFromUrl) {
+    const statusArray = filterStatusFromUrl.split(',')
+    selectedStatuses.value = statusArray
+    await fetchTasks()
+  } else {
+    // If filterStatus is not provided, clear the selectedStatuses
+    selectedStatuses.value = []
+    await fetchTasks()
+  }
+})
 
 const isDropdownOpen = ref(false)
-const selectedStatuses = ref([])
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const toggleStatus = (status) => {
-  if (selectedStatuses.value.includes(status)) {
-    selectedStatuses.value = selectedStatuses.value.filter((s) => s !== status)
-  } else {
-    selectedStatuses.value.push(status)
-  }
-}
+const selectedStatuses = computed({
+  get: () => taskStore.filterStatuses,
+  set: (value) => taskStore.setFilterStatuses(value),
+})
 
 const clearStatusFilter = () => {
-  selectedStatuses.value = []
+  taskStore.setFilterStatuses([])
   searchKeyword.value = ""
 }
 
 const searchKeyword = ref("")
-const sortedAndFilteredTasks = computed(() => {
-  let result = [...tasks.value]
-
-  // Apply filtering based on selected statuses
-  if (selectedStatuses.value.length > 0) {
-    result = result.filter((task) =>
-      selectedStatuses.value.includes(task.status)
-    )
-  }
-
-  // Apply sorting based on the selected sort criterion and order
-  if (sortCriterion.value === "status") {
-    result.sort((a, b) => {
-      const statusA = statusStore.getStatusByName(a.status).name.toLowerCase()
-      const statusB = statusStore.getStatusByName(b.status).name.toLowerCase()
-      if (sortOrder.value === "asc") {
-        return statusA.localeCompare(statusB)
-      } else {
-        return statusB.localeCompare(statusA)
-      }
-    })
-  } else {
-    result.sort((a, b) => {
-      if (sortOrder.value === "asc") {
-        return new Date(a.createdOn) - new Date(b.createdOn)
-      } else {
-        return new Date(b.createdOn) - new Date(a.createdOn)
-      }
-    })
-  }
-
-  return result
-})
+const displayStatusLimit = ref(5)
+const showAllStatuses = ref(false)
 
 const filteredStatuses = computed(() => {
-  if (searchKeyword.value) {
-    return statusStore.statuses.filter((status) =>
-      status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    )
+  const results = statusStore.statuses.filter((status) =>
+    status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+  )
+  if (showAllStatuses.value) {
+    return results
   }
-  return statusStore.statuses
+  return results.slice(0, displayStatusLimit.value)
 })
+
+const sortBy = computed({
+  get: () => taskStore.sortBy,
+  set: (value) => taskStore.setSortBy(value),
+})
+
+const togglesortBy = () => {
+  if (sortBy.value === "normal") {
+    sortBy.value = "asc"
+  } else if (sortBy.value === "asc") {
+    sortBy.value = "desc"
+  } else {
+    sortBy.value = "normal"
+  }
+  taskStore.setSortBy(sortBy.value)
+}
+
+const updateMaxTasksPerStatus = (limit) => {
+  maxTasksPerStatus.value = limit
+}
 </script>
 
 <template>
@@ -316,7 +271,7 @@ const filteredStatuses = computed(() => {
                   </button>
                   <div
                     v-if="isDropdownOpen"
-                    class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-black"
+                    class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
                       <div class="px-4 py-2">
@@ -324,7 +279,7 @@ const filteredStatuses = computed(() => {
                           type="text"
                           v-model="searchKeyword"
                           placeholder="Search keywords..."
-                          class="w-full text-gray-700  px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 "
+                          class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         />
                       </div>
                       <div class="px-4 py-2">
@@ -332,7 +287,7 @@ const filteredStatuses = computed(() => {
                           >Status</span
                         >
                         <label
-                          v-for="status in filteredStatuses"
+                          v-for="(status, index) in filteredStatuses"
                           :key="status.name"
                           class="flex items-center text-sm text-gray-700 mt-1"
                         >
@@ -345,8 +300,16 @@ const filteredStatuses = computed(() => {
                           {{ status.name }}
                         </label>
                       </div>
-
+                      <!-- Show More Button -->
+                      
                       <div class="px-4 py-2 flex justify-between">
+                        <button
+                        v-if="statusStore.statuses.length > displayStatusLimit"
+                        @click="showAllStatuses = !showAllStatuses"
+                        class="text-lg text-sm  text-gray-700"
+                      >
+                        {{ showAllStatuses ? "Show Less" : "Show More" }}
+                      </button>
                         <button
                           @click="clearStatusFilter"
                           class="text-sm text-gray-600 hover:text-gray-800"
@@ -362,47 +325,47 @@ const filteredStatuses = computed(() => {
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Title</th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
 
-            <th
-              class="w-1/6 px-4 py-2 text-xl font-medium cursor-pointer"
-              @click="toggleSortOrder"
-            >
-              Status
-              <button class="ml-2 itbkk-status-sort">
-                <svg
-                  v-if="sortCriterion === 'status' && sortOrder === 'asc'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 448 512"
-                  class="w-5 h-5"
-                >
-                  <path
-                    fill="#7D2DFF"
-                    d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
-                  ></path>
-                </svg>
-                <svg
-                  v-else-if="sortCriterion === 'status' && sortOrder === 'desc'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 448 512"
-                  class="w-5 h-5"
-                >
-                  <path
-                    fill="#7D2DFF"
-                    d="M16 160h48v304a16 16 0 0 0 16 16h32a16 16 0 0 0 16-16V160h48c14.2 0 21.4-17.2 11.3-27.3l-80-96a16 16 0 0 0 -22.6 0l-80 96C-5.4 142.7 1.8 160 16 160zm400 128H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
-                  ></path>
-                </svg>
-                <svg
-                  v-else
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 448 512"
-                  class="w-5 h-5"
-                >
-                  <path
-                    fill="#ffffff"
-                    d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
-                  ></path>
-                </svg>
-              </button>
-            </th>
+           <th
+        class="w-1/6 px-4 py-2 text-xl font-medium cursor-pointer"
+        @click="togglesortBy"
+      >
+        Status
+        <button class="ml-2 itbkk-status-sort">
+          <svg
+            v-if="sortBy === 'asc'"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+            class="w-5 h-5"
+          >
+            <path
+              fill="#7D2DFF"
+              d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
+            ></path>
+          </svg>
+          <svg
+            v-else-if="sortBy === 'desc'"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+            class="w-5 h-5"
+          >
+            <path
+              fill="#7D2DFF"
+              d="M16 160h48v304a16 16 0 0 0 16 16h32a16 16 0 0 0 16-16V160h48c14.2 0 21.4-17.2 11.3-27.3l-80-96a16 16 0 0 0 -22.6 0l-80 96C-5.4 142.7 1.8 160 16 160zm400 128H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
+            ></path>
+          </svg>
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+            class="w-5 h-5"
+          >
+            <path
+              fill="#ffffff"
+              d="M176 352h-48V48a16 16 0 0 0 -16-16H80a16 16 0 0 0 -16 16v304H16c-14.2 0-21.4 17.2-11.3 27.3l80 96a16 16 0 0 0 22.6 0l80-96C197.4 369.3 190.2 352 176 352zm240-64H288a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h56l-61.3 70.5A32 32 0 0 0 272 446.4V464a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16h-56l61.3-70.5A32 32 0 0 0 432 321.6V304a16 16 0 0 0 -16-16zm31.1-85.4l-59.3-160A16 16 0 0 0 372.7 32h-41.4a16 16 0 0 0 -15.1 10.6l-59.3 160A16 16 0 0 0 272 224h24.8a16 16 0 0 0 15.2-11.1l4.4-12.9h71l4.4 12.9A16 16 0 0 0 407.2 224H432a16 16 0 0 0 15.1-21.4zM335.6 144L352 96l16.4 48z"
+            ></path>
+          </svg>
+        </button>
+      </th>
 
             <th class="w-1/8 px-4 py-2 rounded-r-lg">
               <button
@@ -438,7 +401,7 @@ const filteredStatuses = computed(() => {
 
         <tbody>
           <tr
-            v-for="(task, index) in sortedAndFilteredTasks"
+            v-for="(task, index) in tasks"
             :key="index"
             class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
           >
