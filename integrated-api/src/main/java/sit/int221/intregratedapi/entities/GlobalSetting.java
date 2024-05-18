@@ -18,9 +18,9 @@ public class GlobalSetting {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @Column(name = "maximum_task_limit", nullable = false)
+    @Column(name = "maximumTaskLimit", nullable = false)
     private Integer maximumTaskLimit;
 
-    @Column(name = "limit_maximum_task", nullable = false)
+    @Column(name = "limitMaximumTask", nullable = false)
     private boolean limitMaximumTask;
 }
