@@ -10,6 +10,7 @@ import sit.int221.intregratedapi.utils.ListMapper;
 
 @RestController
 @RequestMapping("/v2/global-settings")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class GlobalSettingController {
     @Autowired
     private GlobalSettingService globalSettingService;
