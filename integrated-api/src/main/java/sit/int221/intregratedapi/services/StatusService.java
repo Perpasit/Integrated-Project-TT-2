@@ -37,6 +37,10 @@ public class StatusService {
         return statuses;
     }
 
+    public int getNoOfTasksByStatusId(Integer statusId) {
+        return taskRepository.countByStatusId(statusId);
+    }
+
     public List<TaskDTO> getTasksByStatusId(Integer statusId) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist!"));
@@ -50,6 +54,7 @@ public class StatusService {
         if (status != null) {
             StatusRDTO statusRDTO = modelMapper.map(status, StatusRDTO.class);
             statusRDTO.setGlobalSettingId(status.getGlobalSetting().getId());
+            statusRDTO.setNoOfTasks(getNoOfTasksByStatusId(id));
             return statusRDTO;
         }
         throw new ItemNotFoundException("Status " + id + " does not exist!");
