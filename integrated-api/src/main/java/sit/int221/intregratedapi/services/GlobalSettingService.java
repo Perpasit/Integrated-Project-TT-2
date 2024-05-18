@@ -16,6 +16,9 @@ public class GlobalSettingService {
     @Autowired
     private GlobalSettingRepository globalSettingRepository;
 
+
+
+
     public GlobalSetting getGlobalSettingById(Integer id) {
         return globalSettingRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Global Setting with id " + id + " does not exist!"));

@@ -8,6 +8,8 @@ import sit.int221.intregratedapi.entities.GlobalSetting;
 import sit.int221.intregratedapi.services.GlobalSettingService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/v2/global-settings")
 @CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
@@ -17,6 +19,13 @@ public class GlobalSettingController {
 
     @Autowired
     private ListMapper listMapper;
+
+    @GetMapping("")
+    public ResponseEntity<List<GlobalSettingDTO>> getAllGlobalSettings() {
+        List<GlobalSetting> globalSettings = globalSettingService.getAllGlobalSettings();
+        List<GlobalSettingDTO> globalSettingDTOs = listMapper.mapList(globalSettings, GlobalSettingDTO.class);
+        return ResponseEntity.ok(globalSettingDTOs);
+    }
 
     @GetMapping("/{name}")
     public ResponseEntity<GlobalSettingDTO> getGlobalSettingByName(@PathVariable String name) {

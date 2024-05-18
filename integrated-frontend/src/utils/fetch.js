@@ -54,11 +54,12 @@ export const patchItem = async (url, item) => {
     return await fetch(url, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(item)
-    })
+      body: JSON.stringify(item),
+    });
   } catch (error) {
-    console.error("Error:", error)
+    console.error("Error:", error);
+    throw error;
   }
-}
+};
