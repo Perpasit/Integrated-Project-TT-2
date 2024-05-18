@@ -24,8 +24,7 @@ public class StatusController {
 
     @GetMapping("")
     public ResponseEntity<List<StatusDTO>> getStatuses() {
-        List<Status> statuses = statusService.getAllStatuses();
-        List<StatusDTO> statusDTOs = listMapper.mapList(statuses, StatusDTO.class);
+        List<StatusDTO> statusDTOs = statusService.getAllStatuses();
         return ResponseEntity.ok(statusDTOs);
     }
 
