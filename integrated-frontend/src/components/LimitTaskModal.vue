@@ -26,12 +26,27 @@ const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
 )
 
-const maxTasks = ref(generalSetting.value?.maximumTaskLimit || 10)
-const isLimitEnabled = ref(false)
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit);
+const isLimitEnabled = ref(
+  generalSetting.value?.limitMaximumTask 
+);
 
 const isMaxTasksValid = computed(() => {
-  return maxTasks.value >= 1 && maxTasks.value <= 100
-})
+  return (
+    isLimitEnabled.value !== globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
+    maxTasks.value !== globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
+  );
+});
+
+watch(
+  () => [maxTasks.value, isLimitEnabled.value],
+  () => {
+    emit("save", {
+      maxTasks: maxTasks.value,
+      isLimitEnabled: isLimitEnabled.value
+    });
+  }
+);
 
 onMounted(async () => {
   try {
@@ -63,20 +78,19 @@ function closeModal() {
   emit("close")
 }
 
-
 async function saveMaxTasks() {
   if (isMaxTasksValid.value) {
     const updatedSetting = {
       maximumTaskLimit: maxTasks.value,
       limitMaximumTask: isLimitEnabled.value
-    }
-    await globalSettingStore.updateGlobalSetting("General", updatedSetting)
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value) // Save to Local Storage
+    };
+    await globalSettingStore.updateGlobalSetting("General", updatedSetting);
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value); // Save to Local Storage
     emit("save", {
       maxTasks: maxTasks.value,
       isLimitEnabled: isLimitEnabled.value
-    })
-    closeModal()
+    });
+    closeModal();
   }
 }
 
@@ -87,6 +101,7 @@ function toggleLimitEnabled() {
   emit("toggle", isLimitEnabled.value)
 }
 </script>
+
 
 <template>
   <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
@@ -110,7 +125,6 @@ function toggleLimitEnabled() {
                   <label
                     class="tbkk-limit-task inline-flex items-center cursor-pointer"
                   >
-                  
                     <input
                       type="checkbox"
                       class="sr-only peer"
@@ -119,7 +133,6 @@ function toggleLimitEnabled() {
                     />
                     <div
                       class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-200 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"
-
                     ></div>
                   </label>
 
@@ -135,7 +148,11 @@ function toggleLimitEnabled() {
                     min="1"
                     max="100"
                   />
-                  <p class="text-gray-500 text-sm mt-1">Users can limit the task in a status by setting maximum tasks in each status (except "No Status" and "Done" statuses).</p>
+                  <p class="text-gray-500 text-sm mt-1">
+                    Users can limit the task in a status by setting maximum
+                    tasks in each status (except "No Status" and "Done"
+                    statuses).
+                  </p>
                   <!-- <p class="itbkk-limit-task text-lg">{{ maxTasks }}</p> -->
                 </div>
                 <p v-else class="text-sm text-gray-500">
@@ -146,14 +163,18 @@ function toggleLimitEnabled() {
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 sm:ml-3 sm:w-auto sm:text-sm"
-            :disabled="!isMaxTasksValid"
-            @click="saveMaxTasks"
-          >
-            Save
-          </button>
+            <button
+  type="button"
+  class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+  :class="{
+    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isMaxTasksValid,
+    'bg-gray-300 cursor-not-allowed': !isMaxTasksValid
+  }"
+  @click="saveMaxTasks"
+  :disabled="!isMaxTasksValid"
+>
+  Save
+</button>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

@@ -117,13 +117,13 @@ public class StatusService {
         Status newStatus = statusRepository.findById(newId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + newId + "that you are about to transfer does not exist!"));
 
-//        int newStatusTaskCount = taskRepository.countByStatusId(newId);
-//        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
-//
-//        if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getMaximumTaskLimit()) {
-//            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-//                    .body(new StatusTFDDTO(statusToDelete.getId(), statusToDelete.getName(), statusToDelete.getDescription()));
-//        }
+        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+        int newStatusTaskCount = taskRepository.countByStatusId(newId);
+
+        if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getGlobalSetting().getMaximumTaskLimit()) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(new StatusTFDDTO(statusToDelete.getId(), statusToDelete.getName(), statusToDelete.getDescription()));
+        }
 
         List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
         for (Task task : tasksToUpdate) {
