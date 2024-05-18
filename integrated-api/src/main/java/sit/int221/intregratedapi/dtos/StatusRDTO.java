@@ -17,4 +17,5 @@ public class StatusRDTO {
     private String createdOn;
     private String updatedOn;
     private Integer globalSettingId;
+    private int noOfTasks;
 }
