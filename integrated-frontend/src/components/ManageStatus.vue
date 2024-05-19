@@ -39,7 +39,7 @@ const closeCannotDeleteModal = () => {
 }
 
 const editStatus = (status) => {
-  if (status.id !== 1 && status.id !== 4) {
+  if (status.name !== "No Status" && status.name !== "Done") {
     router.push({ name: "EditStatus", params: { id: status.id } })
   } else {
     showCannotEditDeleteModal.value = true
@@ -273,7 +273,7 @@ onMounted(async () => {
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                   @click="
-                    if (status.id === 1 || status.id === 4) {
+                    if (status.name === 'Done' || status.name === 'No Status') {
                       showCannotEditDeleteModal = true;
                       selectedStatusToDelete = status;
                     } else {
@@ -328,9 +328,10 @@ onMounted(async () => {
               <div class="text-lg leading-6 font-medium text-red-600">
                 {{
                   selectedStatusToDelete
-                    ? 'Cannot Delete "NO_STATUS"'
-                    : 'Cannot Edit "NO_STATUS"'
+                    ? 'Cannot Delete  Default Status'
+                    : 'Cannot Edit Default Status'
                 }}
+              
               </div>
               <button
                 type="button"

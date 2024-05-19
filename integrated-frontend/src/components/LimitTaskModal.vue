@@ -128,7 +128,7 @@ const isTaskLimitReached = computed(() => {
 
   return limitReachedStatusesWithCounts.value.length > 0
 })
-console.log(limitReachedStatusesWithCounts.value)
+
 </script>
 
 <template>
