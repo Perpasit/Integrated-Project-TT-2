@@ -11,20 +11,21 @@ function getIsLimitEnabledFromLocalStorage() {
   return localStorage.getItem("isLimitEnabled") === "true"
 }
 
+
 const props = defineProps({
   show: {
     type: Boolean,
     required: true,
   },
-  currentTaskCount: {
-    type: Number,
+  currentTaskCounts: {
+    type: Object,
     required: true,
   },
-  currentStatus: {
-    type: String,
+  currentStatusNames: {
+    type: Array,
     required: true,
   },
-})
+});
 
 const emit = defineEmits(["close", "save", "toggle"])
 
@@ -108,10 +109,31 @@ function toggleLimitEnabled() {
   saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
   emit("toggle", isLimitEnabled.value)
 }
-
+const limitReachedStatusesWithCounts = computed(() => {
+  return props.currentStatusNames
+    .filter((statusName) => {
+      const taskCount = props.currentTaskCounts[statusName];
+      return (
+        taskCount >= maxTasks.value &&
+        statusName !== 'No Status' &&
+        statusName !== 'Done'
+      );
+    })
+    .map((statusName) => `"${statusName}"(${props.currentTaskCounts[statusName]}Task)`);
+});
 const isTaskLimitReached = computed(() => {
-  return isLimitEnabled.value && props.currentTaskCount >= maxTasks.value
-})
+  if (!isLimitEnabled.value) return false;
+
+  return limitReachedStatusesWithCounts.value.length > 0;
+});
+const limitReachedStatuses = computed(() => {
+  return props.currentStatusNames.filter((statusName, index) => {
+    const taskCount = props.currentTaskCounts[statusName];
+    return taskCount >= maxTasks.value && statusName !== 'No Status' && statusName !== 'Done';
+  });
+});
+
+
 </script>
 
 <template>
@@ -153,11 +175,11 @@ const isTaskLimitReached = computed(() => {
                 </label>
                 <div v-if="isLimitEnabled">
                   <input
-                    type="number"
-                    v-model.number="maxTasks"
-                    class="itbkk-max-task shadow-sm p-2 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    min="1"
-                    max="100"
+                  type="number"
+                v-model.number="maxTasks"
+                class="itbkk-max-task shadow-sm p-2 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                min="1"
+                max="100"
                   />
                   <p class="text-gray-500 text-sm mt-1">
                     Users can limit the task in a status by setting maximum
@@ -166,14 +188,13 @@ const isTaskLimitReached = computed(() => {
                   </p>
                   <!-- <p class="itbkk-limit-task text-lg">{{ maxTasks }}</p> -->
                 </div>
-                <div
-                  v-if="isTaskLimitReached"
-                  class="mt-2 bg-yellow-100 border-l-4 border-yellow-400 p-4"
-                >
-                  <p class="text-sm text-yellow-700">
-                    <span class="font-semibold">Caution:</span> The status "{{ props.currentStatus }}" has reached the task limit. No additional tasks can be added to this status.
-                  </p>
-                </div>
+                <div v-if="isTaskLimitReached" class="mt-2 bg-yellow-100 border-l-4 border-yellow-400 p-4">
+  <p class="text-sm text-yellow-700">
+    The status <br>
+    {{ limitReachedStatusesWithCounts.join(', ') }} <br>
+    These Status has reached the task limit ({{ maxTasks }}). No additional tasks can be added to this status.
+  </p>
+</div>
               </div>
             </div>
           </div>

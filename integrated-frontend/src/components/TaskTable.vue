@@ -181,18 +181,42 @@ const filteredTasksByStatus = computed(() => {
       task && task.status && selectedStatuses.value.includes(task.status)
   )
 })
-const currentStatusId = ref(null);
-const currentTaskCountForStatus = ref(0)
-const currentStatusName = computed(() => {
-  const status = statusStore.getStatusById(currentStatusId.value)
-  return status ? status.name : ""
-})
+const currentStatusId = ref(null)
+const currentTaskCountForStatus = ref({});
+const currentStatusNames = ref([]);
 
-const updateCurrentTaskCountAndStatus = (statusId) => {
-  currentStatusId.value = statusId
-  currentTaskCountForStatus.value = tasks.value.filter(
-    (task) => task.status === statusId
-  ).length
+const updateCurrentTaskCountAndStatus = (statusName) => {
+  if (statusName) {
+    const selectedStatus = statusStore.getStatusByName(statusName)
+    if (selectedStatus) {
+      currentStatusId.value = selectedStatus.id
+      currentTaskCountForStatus.value = tasks.value.filter(
+        (task) => task.status === selectedStatus.name
+      ).length
+      showLimitTaskModal.value = true
+    } else {
+      currentStatusId.value = null
+      currentTaskCountForStatus.value = 0
+    }
+  }
+}
+const openLimitTaskModal = () => {
+  currentTaskCountForStatus.value = statusStore.statuses.reduce((counts, status) => {
+    const taskCount = tasks.value.filter((task) => task.status === status.name).length;
+    counts[status.name] = taskCount;
+    return counts;
+  }, {});
+
+  currentStatusNames.value = statusStore.statuses.map((status) => status.name);
+  showLimitTaskModal.value = true;
+};
+
+const closeLimitTaskModal = () => {
+  showLimitTaskModal.value = false
+}
+const handleLimitTaskModalClick = (statuses) => {
+  selectedStatuses.value = statuses
+  showLimitTaskModal.value = true
 }
 </script>
 
@@ -330,13 +354,7 @@ const updateCurrentTaskCountAndStatus = (statusId) => {
             </th>
 
             <th class="w-1/8 px-4 py-2 rounded-r-lg">
-              <button
-                class="itbkk-status-setting"
-                @click="
-                  showLimitTaskModal = true ;
-                  status && updateCurrentTaskCountAndStatus(status.name)
-                "
-              >
+              <button class="itbkk-status-setting" @click="openLimitTaskModal">
                 <svg
                   class="w-5 h-5 mr-7 text-white dark:text-white"
                   aria-hidden="true"
@@ -357,13 +375,13 @@ const updateCurrentTaskCountAndStatus = (statusId) => {
           </tr>
         </thead>
 
-        <LimitTaskModal   
-          :show="showLimitTaskModal"
-          :currentTaskCount="currentTaskCountForStatus"
-          :currentStatus="currentStatusName"
-          @close="showLimitTaskModal = false"
-          @save="updateMaxTasksPerStatus"
-        />
+        <LimitTaskModal
+  :show="showLimitTaskModal"
+  :currentTaskCounts="currentTaskCountForStatus"
+  :currentStatusNames="currentStatusNames"
+  @close="closeLimitTaskModal"
+  @save="updateMaxTasksPerStatus"
+/>
         <tbody>
           <tr
             v-for="(task, index) in tasks"
