@@ -83,7 +83,8 @@ public class TaskService {
 
             if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+//                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+                        .body("The status has reached the limit.");
             }
 
             task.setStatus(status);
@@ -116,7 +117,8 @@ public class TaskService {
 
             if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+//                        .body("The status " + status.getName() + " has reached the maximum task limit.");
+                          .body("The status has reached the limit.");
             }
 
             existingTask.setStatus(status);
@@ -158,19 +160,19 @@ public class TaskService {
         task.setUpdatedOn(LocalDateTime.now());
     }
 
-    private void updateTaskFromDTO(Task existingTask, Task task) {
-        existingTask.setTitle(task.getTitle());
-        existingTask.setDescription(task.getDescription());
-        existingTask.setAssignees(task.getAssignees());
-
-        if (task.getStatus() != null && task.getStatus().getId() != null) {
-            Status status = statusRepository.findById(task.getStatus().getId())
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + task.getStatus().getId() + " does not exist!"));
-            existingTask.setStatus(status);
-        }
-
-        existingTask.setUpdatedOn(LocalDateTime.now());
-    }
+//    private void updateTaskFromDTO(Task existingTask, Task task) {
+//        existingTask.setTitle(task.getTitle());
+//        existingTask.setDescription(task.getDescription());
+//        existingTask.setAssignees(task.getAssignees());
+//
+//        if (task.getStatus() != null && task.getStatus().getId() != null) {
+//            Status status = statusRepository.findById(task.getStatus().getId())
+//                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + task.getStatus().getId() + " does not exist!"));
+//            existingTask.setStatus(status);
+//        }
+//
+//        existingTask.setUpdatedOn(LocalDateTime.now());
+//    }
 
 
 }
