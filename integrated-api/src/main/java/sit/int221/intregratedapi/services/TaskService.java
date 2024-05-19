@@ -106,7 +106,7 @@ public class TaskService {
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body("The status has reached the limit.");
+                    .body("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first.");
         }
 
         task.setStatus(status);
@@ -161,7 +161,7 @@ public class TaskService {
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body("The status has reached the limit.");
+                    .body("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first.");
         }
 
         setDefaultValuesForTask(existingTask);
