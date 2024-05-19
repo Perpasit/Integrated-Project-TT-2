@@ -218,11 +218,43 @@ const handleLimitTaskModalClick = (statuses) => {
   selectedStatuses.value = statuses
   showLimitTaskModal.value = true
 }
+const toggleStatusFilter = (statusName) => {
+  const isSelected = selectedStatuses.value.includes(statusName)
+  if (isSelected) {
+    selectedStatuses.value = selectedStatuses.value.filter(
+      (status) => status !== statusName
+    )
+  } else {
+    selectedStatuses.value.push(statusName)
+  }
+  fetchTasks()
+}
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex justify-end mb-10"></div>
+    <div class="flex mb-10 ">
+      <thead class="absolute mt-4 ">
+        <th class="w-full text-xl font-medium">
+          <div class="flex items-center">
+            <span v-if="selectedStatuses.length > 0" class="mr-2"
+              >Filter :
+            </span>
+            <div class="flex">
+              <button
+                v-for="(status, index) in selectedStatuses"
+                :key="index"
+                class="flex items-center text-sm mr-2 px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300"
+                @click="toggleStatusFilter(status)"
+              >
+                {{ status }}
+                <span class="ml-2 text-gray-500">x</span>
+              </button>
+            </div>
+          </div>
+        </th>
+      </thead>
+    </div>
 
     <div class="overflow-visible">
       <table

@@ -115,8 +115,8 @@ const limitReachedStatusesWithCounts = computed(() => {
       const taskCount = props.currentTaskCounts[statusName];
       return (
         taskCount >= maxTasks.value &&
-        statusName !== 'No Status' &&
-        statusName !== 'Done'
+        statusName !== 'NO STATUS' &&
+        statusName !== 'DONE'
       );
     })
     .map((statusName) => `"${statusName}"(${props.currentTaskCounts[statusName]}Task)`);
