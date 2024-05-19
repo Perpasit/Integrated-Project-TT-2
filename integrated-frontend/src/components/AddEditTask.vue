@@ -4,6 +4,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useTaskStore } from "../stores/task";
 import { useStatusStore } from "../stores/status";
 import { useModalStore } from "../stores/useModalStore";
+import { useGlobalSettingStore } from "../stores/global_setting"
 import { useRouter } from "vue-router";
 
 
@@ -11,7 +12,11 @@ const router = useRouter();
 const taskStore = useTaskStore();
 const statusStore = useStatusStore();
 const modalStore = useModalStore();
-
+const globalSettingStore = useGlobalSettingStore()
+const generalSetting = computed(
+  () => globalSettingStore.getCurrentGlobalSetting
+)
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
 const props = defineProps({
   show: {
     type: Boolean,
@@ -43,6 +48,9 @@ const editedTask = ref({
 });
 
 const titleError = ref("");
+
+
+
 
 const isTitleValid = computed(() => {
   return (
@@ -189,7 +197,7 @@ function closeModal() {
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find(s => s.id === statusId);
   if (status) {
-    return `${status.noOfTasks}/${statusStore.totalTasks} tasks`;
+    return `${status.noOfTasks}/${maxTasks.value} tasks`;
   }
   return '0/0 tasks';
 }
