@@ -234,9 +234,9 @@ const toggleStatusFilter = (statusName) => {
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex mb-10 ">
-      <thead class="absolute mt-4 ">
+      <thead class="absolute mt-2 ">
         <th class="w-full text-xl font-medium">
-          <div class="flex items-center">
+          <div class="flex items-center text-white">
             <span v-if="selectedStatuses.length > 0" class="mr-2"
               >Filter :
             </span>
@@ -244,11 +244,15 @@ const toggleStatusFilter = (statusName) => {
               <button
                 v-for="(status, index) in selectedStatuses"
                 :key="index"
-                class="flex items-center text-sm mr-2 px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300"
+                class=" transition-all duration-200 ease-in-out ml-4  text-white font-semibold text-sm  py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100  rounded"
                 @click="toggleStatusFilter(status)"
+
+
               >
+              
                 {{ status }}
-                <span class="ml-2 text-gray-500">x</span>
+                
+                <span class="ml-2 text-white">x</span>
               </button>
             </div>
           </div>
