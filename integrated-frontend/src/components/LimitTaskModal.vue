@@ -59,34 +59,33 @@ watch(
 
 onMounted(async () => {
   try {
-    await globalSettingStore.fetchGlobalSetting("General")
-    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting
-    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask
-    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit
+    await globalSettingStore.fetchGlobalSetting("General");
+    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting;
+    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask;
+    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit;
 
-    isLimitEnabled.value =
-      limitMaximumTask || getIsLimitEnabledFromLocalStorage()
-    maxTasks.value = maximumTaskLimit || 10
-    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value)
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
+    isLimitEnabled.value = limitMaximumTask;
+    maxTasks.value = maximumTaskLimit || 10;
+    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value);
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value);
 
- 
-    
     watch(
       () => currentGlobalSetting?.limitMaximumTask,
       (newValue) => {
-        isLimitEnabled.value = newValue
-        globalSettingStore.setIsLimitEnabled(newValue)
-        saveIsLimitEnabledToLocalStorage(newValue)
+        isLimitEnabled.value = newValue;
+        globalSettingStore.setIsLimitEnabled(newValue);
+        saveIsLimitEnabledToLocalStorage(newValue);
       }
-    )
+    );
   } catch (error) {
-    console.error("Error fetching global setting:", error)
+    console.error("Error fetching global setting:", error);
   }
-})
+});
 
 function closeModal() {
-  emit("close")
+  isLimitEnabled.value = globalSettingStore.getCurrentGlobalSetting?.limitMaximumTask;
+  maxTasks.value = globalSettingStore.getCurrentGlobalSetting?.maximumTaskLimit || 10;
+  emit("close");
 }
 
 const confirmationMessage = ref("");
