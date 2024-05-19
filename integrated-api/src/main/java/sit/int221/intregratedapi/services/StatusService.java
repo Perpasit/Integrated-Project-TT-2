@@ -10,10 +10,12 @@ import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.GlobalSetting;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
+import sit.int221.intregratedapi.exceptions.StatusLimitReachedException;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.repositories.TaskRepository;
 import sit.int221.intregratedapi.utils.ListMapper;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
+import sit.int221.intregratedapi.exceptions.DuplicateStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -87,7 +89,7 @@ public class StatusService {
                     .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedStatusName));
 
             if (isDuplicate) {
-                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body("Duplicate status name: " + statusCDTO.getName());
+                throw new DuplicateStatusException("Duplicate status name: " + statusCDTO.getName());
             }
 
             Status status = modelMapper.map(statusCDTO, Status.class);
@@ -98,6 +100,12 @@ public class StatusService {
 
             setDefaultValuesForStatus(status, "General");
             Status createdStatus = statusRepository.save(status);
+
+            // Check if the status has reached the limit
+            GlobalSetting globalSetting = status.getGlobalSetting();
+            if (globalSetting.isLimitMaximumTask() && getNoOfTasksByStatusId(createdStatus.getId()) > globalSetting.getMaximumTaskLimit()) {
+                throw new StatusLimitReachedException("the status has reached the limit");
+            }
 
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
@@ -135,7 +143,8 @@ public class StatusService {
             int newStatusTaskCount = taskRepository.countByStatusId(newId);
 
             if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getGlobalSetting().getMaximumTaskLimit()) {
-                throw new IllegalArgumentException("The \"" + newStatus.getName() + "\" status that you are about to transfer has reached its maximum task limit.");
+//                throw new IllegalArgumentException("The \"" + newStatus.getName() + "\" status that you are about to transfer has reached its maximum task limit.");
+                throw new IllegalArgumentException("The destination status cannot be over the limit after transfer");
             }
         }
 
