@@ -172,7 +172,7 @@ async function saveTask() {
 
       closeModal();
     }
-
+    router.push("/");
     await taskStore.fetchAllTasks();
   } catch (error) {
     // console.error("Error saving task:", error);
