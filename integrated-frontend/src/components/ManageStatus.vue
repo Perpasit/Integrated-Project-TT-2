@@ -302,6 +302,9 @@ onMounted(async () => {
           </tbody>
         </table>
       </div>
+      <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
+        No Status
+      </div>
 
       <AddEditStatus
         v-if="selectedStatus"
@@ -478,10 +481,7 @@ onMounted(async () => {
       >
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div
-              class="text-lg leading-6 font-medium text-red-600"
-              
-            >
+            <div class="text-lg leading-6 font-medium text-red-600">
               {{
                 deleteResult?.status === 500
                   ? "Status Limit Reached"
@@ -509,10 +509,7 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p
-              class="text-sm leading-5 itbkk-message text-red-600"
-              
-            >
+            <p class="text-sm leading-5 itbkk-message text-red-600">
               {{
                 deleteResult?.status === 500
                   ? "The status that you are about to transfer has reached its maximum task limit."

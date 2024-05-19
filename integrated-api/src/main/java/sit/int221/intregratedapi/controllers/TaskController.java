@@ -29,14 +29,19 @@ public class TaskController {
 //    }
 
     @GetMapping("")
-    public ResponseEntity<List<TaskDTO>> getTasks(
+    public ResponseEntity<Object> getTasks(
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses
     ) {
+        if (sortBy != null && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc")) {
+            return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc' and 'desc' are allowed.");
+        }
+
         List<Task> tasks = taskService.getAllTasks(sortBy, filterStatuses);
         List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
         return ResponseEntity.ok(taskDTOs);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
