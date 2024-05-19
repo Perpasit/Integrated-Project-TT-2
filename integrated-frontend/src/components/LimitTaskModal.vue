@@ -14,8 +14,16 @@ function getIsLimitEnabledFromLocalStorage() {
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true
-  }
+    required: true,
+  },
+  currentTaskCount: {
+    type: Number,
+    required: true,
+  },
+  currentStatus: {
+    type: String,
+    required: true,
+  },
 })
 
 const emit = defineEmits(["close", "save", "toggle"])
@@ -26,27 +34,27 @@ const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
 )
 
-const maxTasks = ref(generalSetting.value?.maximumTaskLimit);
-const isLimitEnabled = ref(
-  generalSetting.value?.limitMaximumTask 
-);
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
 
 const isMaxTasksValid = computed(() => {
   return (
-    isLimitEnabled.value !== globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
-    maxTasks.value !== globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
-  );
-});
+    isLimitEnabled.value !==
+      globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
+    maxTasks.value !==
+      globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
+  )
+})
 
 watch(
   () => [maxTasks.value, isLimitEnabled.value],
   () => {
     emit("save", {
       maxTasks: maxTasks.value,
-      isLimitEnabled: isLimitEnabled.value
-    });
+      isLimitEnabled: isLimitEnabled.value,
+    })
   }
-);
+)
 
 onMounted(async () => {
   try {
@@ -82,15 +90,15 @@ async function saveMaxTasks() {
   if (isMaxTasksValid.value) {
     const updatedSetting = {
       maximumTaskLimit: maxTasks.value,
-      limitMaximumTask: isLimitEnabled.value
-    };
-    await globalSettingStore.updateGlobalSetting("General", updatedSetting);
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value); // Save to Local Storage
+      limitMaximumTask: isLimitEnabled.value,
+    }
+    await globalSettingStore.updateGlobalSetting("General", updatedSetting)
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value) // Save to Local Storage
     emit("save", {
       maxTasks: maxTasks.value,
-      isLimitEnabled: isLimitEnabled.value
-    });
-    closeModal();
+      isLimitEnabled: isLimitEnabled.value,
+    })
+    closeModal()
   }
 }
 
@@ -100,8 +108,11 @@ function toggleLimitEnabled() {
   saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
   emit("toggle", isLimitEnabled.value)
 }
-</script>
 
+const isTaskLimitReached = computed(() => {
+  return isLimitEnabled.value && props.currentTaskCount >= maxTasks.value
+})
+</script>
 
 <template>
   <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
@@ -155,26 +166,32 @@ function toggleLimitEnabled() {
                   </p>
                   <!-- <p class="itbkk-limit-task text-lg">{{ maxTasks }}</p> -->
                 </div>
-                <p v-else class="text-sm text-gray-500">
-                  Task limit is disabled for this status.
-                </p>
+                <div
+                  v-if="isTaskLimitReached"
+                  class="mt-2 bg-yellow-100 border-l-4 border-yellow-400 p-4"
+                >
+                  <p class="text-sm text-yellow-700">
+                    <span class="font-semibold">Caution:</span> The status "{{ props.currentStatus }}" has reached the task limit. No additional tasks can be added to this status.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-  type="button"
-  class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-  :class="{
-    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isMaxTasksValid,
-    'bg-gray-300 cursor-not-allowed': !isMaxTasksValid
-  }"
-  @click="saveMaxTasks"
-  :disabled="!isMaxTasksValid"
->
-  Save
-</button>
+          <button
+            type="button"
+            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+            :class="{
+              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                isMaxTasksValid,
+              'bg-gray-300 cursor-not-allowed': !isMaxTasksValid,
+            }"
+            @click="saveMaxTasks"
+            :disabled="!isMaxTasksValid"
+          >
+            Save
+          </button>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

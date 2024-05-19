@@ -1,15 +1,15 @@
 <!-- AddEdiTask.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue"
-import { useTaskStore } from "../stores/task"
-import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore"
-import { useRouter } from "vue-router"
+import { ref, computed, watch, onMounted } from "vue";
+import { useTaskStore } from "../stores/task";
+import { useStatusStore } from "../stores/status";
+import { useModalStore } from "../stores/useModalStore";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
-const taskStore = useTaskStore()
-const statusStore = useStatusStore()
-const modalStore = useModalStore()
+const router = useRouter();
+const taskStore = useTaskStore();
+const statusStore = useStatusStore();
+const modalStore = useModalStore();
 
 const props = defineProps({
   show: {
@@ -30,18 +30,18 @@ const props = defineProps({
     type: String,
     default: "add",
   },
-})
+});
 
-const emit = defineEmits(["close", "taskSaved"])
+const emit = defineEmits(["close", "taskSaved"]);
 const editedTask = ref({
   id: "",
   title: "",
   description: "",
   assignees: "",
   status: 1,
-})
+});
 
-const titleError = ref("")
+const titleError = ref("");
 
 const isTitleValid = computed(() => {
   return (
@@ -53,10 +53,10 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  )
-})
+  );
+});
 
-const originalTask = ref(null)
+const originalTask = ref(null);
 
 watch(
   () => router.currentRoute.value.params.id,
@@ -65,31 +65,30 @@ watch(
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-        )
+        );
         if (response.status === 404) {
-          editedTask.value = null
+          editedTask.value = null;
         } else {
-          const data = await response.json()
-          // console.log(data)
-          const statusId = statusStore.getStatusByName(data.status)?.id
-          editedTask.value = { ...data, status: statusId || 1 }
-          originalTask.value = { ...data, status: statusId || 1}
-          titleError.value = ""
+          const data = await response.json();
+          const statusId = statusStore.getStatusByName(data.status)?.id;
+          editedTask.value = { ...data, status: statusId || 1 };
+          originalTask.value = { ...data, status: statusId || 1 };
+          titleError.value = "";
         }
       } catch (error) {
-        console.error("Error fetching task:", error)
-        editedTask.value = null
+        console.error("Error fetching task:", error);
+        editedTask.value = null;
       }
     } else {
       // existing code
     }
   },
   { immediate: true }
-)
+);
 
 onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-})
+  await statusStore.fetchAllStatuses();
+});
 
 function resetForm() {
   editedTask.value = {
@@ -97,7 +96,7 @@ function resetForm() {
     description: "",
     assignees: "",
     status: 1,
-  }
+  };
 }
 
 async function saveTask() {
@@ -107,11 +106,13 @@ async function saveTask() {
   }
 
   try {
+    errorMessage.value = ""; // Reset the error message
+
     const updatedTask = {
       title: editedTask.value.title.trim(),
       description: editedTask.value.description ? editedTask.value.description.trim() : "",
       assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
-      status: { id: editedTask.value.status }
+      status: { id: editedTask.value.status },
     };
 
     if (props.mode === "edit") {
@@ -129,30 +130,51 @@ async function saveTask() {
         title: editedTask.value.title.trim(),
         description: editedTask.value.description ? editedTask.value.description.trim() : "",
         assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
-        status: editedTask.value.status
+        status: editedTask.value.status,
       };
       await taskStore.addTask(newTask);
       await taskStore.fetchAllTasks();
+      router.push("/"); 
       modalStore.openSuccessModal(newTask.title, props.mode);
     }
-    router.push("/");
   } catch (error) {
+    // console.error("Error saving task:", error);
+    errorMessage.value = error.message; 
+  }
+}
+const errorMessage = ref("");
+async function handleErrorResponse(error) {
+  if (error.status === 422) {
+    try {
+      const response = await error.json();
+      errorMessage.value = response.message; // Set the error message from the JSON response
+    } catch (jsonError) {
+      console.error("Error parsing JSON response:", jsonError);
+      errorMessage.value = "An error occurred while saving the task.";
+    }
+  } else {
+    // Handle other error cases
     console.error("Error saving task:", error);
   }
+}
+async function parseErrorResponse(error) {
+  return await error.json();
 }
 
 const formatStatus = (status) => {
   return (
     status
       .toUpperCase()
-      // .replace(/_/g, " ")
       .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-  )
-}
+  );
+};
+
 function closeModal() {
-  router.push("/")
-  resetForm()
+  router.push("/");
+  resetForm();
 }
+
+
 </script>
 
 <template>
@@ -292,6 +314,38 @@ function closeModal() {
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
             @click="closeModal"
           >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ 
+  <div v-if="errorMessage" class="fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+      </div>
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-red-500">
+                Error
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm leading-5 text-gray-500">
+                  {{ errorMessage }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            @click="errorMessage = ''; emit('close')">
             OK
           </button>
         </div>
