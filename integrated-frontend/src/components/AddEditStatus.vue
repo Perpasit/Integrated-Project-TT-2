@@ -169,11 +169,6 @@ async function saveStatus() {
   }
 }
 
-function formatStatus(status) {
-  return status
-    .toUpperCase()
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-}
 
 function closeModal() {
   router.push("/status/manage")

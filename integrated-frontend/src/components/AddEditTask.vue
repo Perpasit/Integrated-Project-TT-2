@@ -209,8 +209,8 @@ async function parseErrorResponse(error) {
 
 const formatStatus = (status) => {
   return status
-    .toUpperCase()
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    // .toUpperCase()
+    // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
 function closeModal() {
