@@ -36,7 +36,7 @@ const editedStatus = ref({
   name: "",
   description: "",
   colorCode: "#000000",
-});
+})
 
 const nameError = ref("")
 
@@ -47,12 +47,18 @@ const isDuplicateName = computed(() => {
       status.id !== editedStatus.value.id
   )
 })
+const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
+const isDescriptionTooLong = computed(
+  () => editedStatus.value.description.length > 200
+)
 
 const isNameValid = computed(() => {
   return (
     editedStatus.value &&
     editedStatus.value.name &&
     editedStatus.value.name.trim() !== "" &&
+    !isNameTooLong.value &&
+    !isDescriptionTooLong.value &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
         originalStatus.value &&
@@ -69,34 +75,36 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
+        )
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
           }, 3000)
-          throw new Error("Status not found");
+          throw new Error("Status not found")
         } else {
-          const data = await response.json();
+          const data = await response.json()
           editedStatus.value = {
             ...data,
             name: data.name || "",
             description: data.description || "",
             colorCode: data.colorCode,
-          };
-          // console.log("Fetched status data:", editedStatus.value); 
-          originalStatus.value = { ...data };
-          nameError.value = "";
+          }
+          // console.log("Fetched status data:", editedStatus.value);
+          originalStatus.value = { ...data }
+          nameError.value = ""
         }
       } catch (error) {
-        editedStatus.value = null;
+        editedStatus.value = null
       }
     } else {
-      resetForm();
-      nameError.value = "Name is required.";
+      resetForm()
+      nameError.value = "Name is required."
     }
   },
   { immediate: true }
-);
+)
 function resetForm() {
   editedStatus.value = {
     name: "",
@@ -196,16 +204,22 @@ function closeModal() {
                   rows="2"
                   v-model="editedStatus.name"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  :maxlength="50"
                 ></textarea>
                 <p v-if="!editedStatus.name" class="text-red-500 text-sm mt-1">
-  Name is required.
-</p>
-<p v-else-if="isDuplicateName" class="text-red-500 text-sm mt-1">
-  Status name must be unique, please choose another name.
-</p>
-                <p class="text-gray-500 text-sm mt-1">
-                  {{ editedStatus.name ? editedStatus.name.length : 0 }}/50 characters
+                  Name is required.
+                </p>
+                <p
+                  v-else-if="isDuplicateName"
+                  class="text-red-500 text-sm mt-1"
+                >
+                  Status name must be unique, please choose another name.
+                </p>
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isNameTooLong }"
+                >
+                  {{ editedStatus.name ? editedStatus.name.length : 0 }}/50
+                  characters
                 </p>
               </div>
 
@@ -216,9 +230,11 @@ function closeModal() {
                   v-model="editedStatus.description"
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
-                  :maxlength="200"
                 ></textarea>
-                <p class="text-gray-500 text-sm mt-1">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
+                >
                   {{
                     editedStatus.description
                       ? editedStatus.description.length
@@ -241,17 +257,19 @@ function closeModal() {
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
-  type="button"
-  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-  :class="{
-    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isNameValid && !isDuplicateName,
-    'bg-gray-300 cursor-not-allowed': !isNameValid || isDuplicateName,
-  }"
-  @click="saveStatus"
-  :disabled="!isNameValid || isDuplicateName"
->
-  {{ mode === "add" ? "Add" : "Save" }}
-</button>
+            type="button"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+            :class="{
+              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+              isNameValid && !isDuplicateName && !isNameTooLong && !isDescriptionTooLong,
+
+              'bg-gray-300 cursor-not-allowed': !isNameValid || isDuplicateName || isNameTooLong || isDescriptionTooLong,
+            }"
+            @click="saveStatus"
+            :disabled="!isNameValid || isDuplicateName || isNameTooLong || isDescriptionTooLong"
+          >
+            {{ mode === "add" ? "Add" : "Save" }}
+          </button>
           <button
             type="button"
             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

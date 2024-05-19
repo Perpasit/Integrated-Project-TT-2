@@ -1,17 +1,16 @@
 <!-- AddEdiTask.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useTaskStore } from "../stores/task";
-import { useStatusStore } from "../stores/status";
-import { useModalStore } from "../stores/useModalStore";
+import { ref, computed, watch, onMounted } from "vue"
+import { useTaskStore } from "../stores/task"
+import { useStatusStore } from "../stores/status"
+import { useModalStore } from "../stores/useModalStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
-import { useRouter } from "vue-router";
+import { useRouter } from "vue-router"
 
-
-const router = useRouter();
-const taskStore = useTaskStore();
-const statusStore = useStatusStore();
-const modalStore = useModalStore();
+const router = useRouter()
+const taskStore = useTaskStore()
+const statusStore = useStatusStore()
+const modalStore = useModalStore()
 const globalSettingStore = useGlobalSettingStore()
 const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
@@ -21,9 +20,9 @@ const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
 const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
 
 watch(generalSetting, (newValue) => {
-  isLimitEnabled.value = newValue?.limitMaximumTask;
-  maxTasks.value = newValue?.maximumTaskLimit;
-});
+  isLimitEnabled.value = newValue?.limitMaximumTask
+  maxTasks.value = newValue?.maximumTaskLimit
+})
 
 const isMaxTasksValid = computed(() => {
   return (
@@ -53,25 +52,28 @@ const props = defineProps({
     type: String,
     default: "add",
   },
-});
+})
 
-const emit = defineEmits(["close", "taskSaved"]);
+const emit = defineEmits(["close", "taskSaved"])
 const editedTask = ref({
   id: "",
   title: "",
   description: "",
   assignees: "",
   status: 1,
-});
+})
 
-const titleError = ref("");
-
-
-
+const titleError = ref("")
+const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100);
+const isDescriptionTooLong = computed(() => editedTask.value?.description?.length > 500);
+const areAssigneesTooLong = computed(() => editedTask.value?.assignees?.length > 30);
 
 const isTitleValid = computed(() => {
   return (
     editedTask.value.title.trim() !== "" &&
+    !isTitleTooLong.value &&
+    !isDescriptionTooLong.value &&
+    !areAssigneesTooLong.value &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedTask.value &&
@@ -82,7 +84,7 @@ const isTitleValid = computed(() => {
   );
 });
 
-const originalTask = ref(null);
+const originalTask = ref(null)
 
 watch(
   () => router.currentRoute.value.params.id,
@@ -91,9 +93,9 @@ watch(
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-        );
+        )
         if (response.status === 404) {
-          editedTask.value = null;
+          editedTask.value = null
         } else {
           const data = await response.json()
           // console.log(data)
@@ -101,22 +103,21 @@ watch(
           editedTask.value = { ...data, status: statusId || 1 }
           originalTask.value = { ...data, status: statusId || 1 }
           titleError.value = ""
-
         }
       } catch (error) {
-        console.error("Error fetching task:", error);
-        editedTask.value = null;
+        console.error("Error fetching task:", error)
+        editedTask.value = null
       }
     } else {
       // existing code
     }
   },
   { immediate: true }
-);
+)
 
 onMounted(async () => {
-  await statusStore.fetchAllStatuses();
-});
+  await statusStore.fetchAllStatuses()
+})
 
 function resetForm() {
   editedTask.value = {
@@ -124,106 +125,112 @@ function resetForm() {
     description: "",
     assignees: "",
     status: 1,
-  };
+  }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required.";
-    return;
+    titleError.value = "Title is required."
+    return
   }
 
   try {
-    errorMessage.value = ""; // Reset the error message
+    errorMessage.value = "" // Reset the error message
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
-      description: editedTask.value.description ? editedTask.value.description.trim() : "",
-      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+      description: editedTask.value.description
+        ? editedTask.value.description.trim()
+        : "",
+      assignees: editedTask.value.assignees
+        ? editedTask.value.assignees.trim()
+        : "",
       status: { id: editedTask.value.status },
-    };
+    }
 
     if (props.mode === "edit") {
-      const taskId = router.currentRoute.value.params.id;
+      const taskId = router.currentRoute.value.params.id
       if (taskId) {
-        await taskStore.updateTask(taskId, updatedTask);
-        await taskStore.fetchAllTasks();
-        emit("taskSaved");
-        modalStore.openSuccessModal(updatedTask.title, props.mode);
+        await taskStore.updateTask(taskId, updatedTask)
+        await taskStore.fetchAllTasks()
+        emit("taskSaved")
+        modalStore.openSuccessModal(updatedTask.title, props.mode)
       } else {
-        console.error("The task does not exist.");
+        console.error("The task does not exist.")
       }
     } else {
       const newTask = {
         title: editedTask.value.title.trim(),
-        description: editedTask.value.description ? editedTask.value.description.trim() : "",
-        assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
+        description: editedTask.value.description
+          ? editedTask.value.description.trim()
+          : "",
+        assignees: editedTask.value.assignees
+          ? editedTask.value.assignees.trim()
+          : "",
         status: editedTask.value.status,
-      };
-      await taskStore.addTask(newTask);
-      await taskStore.fetchAllTasks();
-      router.push("/");
-      modalStore.openSuccessModal(newTask.title, props.mode);
+      }
+      await taskStore.addTask(newTask)
+      await taskStore.fetchAllTasks()
+      router.push("/")
+      modalStore.openSuccessModal(newTask.title, props.mode)
 
-      const status = statusStore.statuses.find(s => s.id === newTask.status);
+      const status = statusStore.statuses.find((s) => s.id === newTask.status)
       if (status) {
-        status.noOfTasks++;
+        status.noOfTasks++
       }
 
-      closeModal();
+      closeModal()
     }
-    router.push("/");
-    await taskStore.fetchAllTasks();
+    router.push("/")
+    await taskStore.fetchAllTasks()
   } catch (error) {
     // console.error("Error saving task:", error);
-    errorMessage.value = error.message;
+    errorMessage.value = error.message
   }
 }
-const errorMessage = ref("");
+const errorMessage = ref("")
 async function handleErrorResponse(error) {
   if (error.status === 422) {
     try {
-      const response = await error.json();
-      errorMessage.value = response.message; // Set the error message from the JSON response
+      const response = await error.json()
+      errorMessage.value = response.message // Set the error message from the JSON response
     } catch (jsonError) {
-      console.error("Error parsing JSON response:", jsonError);
-      errorMessage.value = "An error occurred while saving the task.";
+      console.error("Error parsing JSON response:", jsonError)
+      errorMessage.value = "An error occurred while saving the task."
     }
   } else {
     // Handle other error cases
-    console.error("Error saving task:", error);
+    console.error("Error saving task:", error)
   }
 }
 async function parseErrorResponse(error) {
-  return await error.json();
+  return await error.json()
 }
 
 const formatStatus = (status) => {
-  return (
-    status
-      .toUpperCase()
-      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-  );
-};
+  return status
+    .toUpperCase()
+    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+}
 
 function closeModal() {
-  router.push("/");
-  resetForm();
+  router.push("/")
+  resetForm()
 }
 
 const getStatusUsage = (statusId) => {
-  const status = statusStore.statuses.find(s => s.id === statusId);
+  const status = statusStore.statuses.find((s) => s.id === statusId)
   if (status) {
-    if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
-      return '';
+    if (
+      status.name.toLowerCase() === "no status" ||
+      status.name.toLowerCase() === "done"
+    ) {
+      return ""
     }
-    return `${status.noOfTasks}/${maxTasks.value} tasks`;
+    return `${status.noOfTasks}/${maxTasks.value} tasks`
   }
-  return '0/0 tasks';
+  return "0/0 tasks"
 }
-
-
-
 </script>
 
 <template>
@@ -234,9 +241,12 @@ const getStatusUsage = (statusId) => {
       </div>
 
       <div
-        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto">
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          <div class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4">
+          <div
+            class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4"
+          >
             {{ mode === "add" ? "New Task" : "Edit Task" }}
           </div>
 
@@ -244,13 +254,16 @@ const getStatusUsage = (statusId) => {
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6">
               <div>
                 <label class="block text-sm font-bold mb-1">Title:</label>
-                <textarea rows="2" v-model="editedTask.title"
+                <textarea
+                  rows="2"
+                  v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  :maxlength="100"></textarea>
+                ></textarea>
                 <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
                   {{ titleError }}
                 </p>
-                <p class="text-gray-500 text-sm mt-1">
+                <p class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isTitleTooLong }">
                   {{ editedTask.title ? editedTask.title.length : 0 }}/100
                   characters
                 </p>
@@ -258,13 +271,17 @@ const getStatusUsage = (statusId) => {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea rows="10" v-model="editedTask.description"
+                <textarea
+                  rows="10"
+                  v-model="editedTask.description"
                   class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="No Description Provided" :maxlength="500"></textarea>
-                <p class="text-gray-500 text-sm mt-1">
+                  placeholder="No Description Provided"
+                ></textarea>
+                <p class="text-gray-500 text-sm mt-1"
+                :class="{ 'text-red-500': isDescriptionTooLong }">
                   {{
-    editedTask.description ? editedTask.description.length : 0
-  }}/500 characters
+                    editedTask.description ? editedTask.description.length : 0
+                  }}/500 characters
                 </p>
               </div>
             </div>
@@ -272,56 +289,73 @@ const getStatusUsage = (statusId) => {
             <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Assignees:</label>
-                <textarea rows="6" v-model="editedTask.assignees"
+                <textarea
+                  rows="6"
+                  v-model="editedTask.assignees"
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="Unassigned" :maxlength="30"></textarea>
-                <p class="text-gray-500 text-sm mt-1">
+                  placeholder="Unassigned"
+                ></textarea>
+                <p class="text-gray-500 text-sm mt-1"
+                :class="{ 'text-red-500': areAssigneesTooLong }">
                   {{
-    editedTask.assignees ? editedTask.assignees.length : 0
-  }}/30 characters
+                    editedTask.assignees ? editedTask.assignees.length : 0
+                  }}/30 characters
                 </p>
               </div>
 
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
-                <select v-model="editedTask.status"
-                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">
-                  <option v-for="status in statusStore.statuses" :key="status.id" :value="status.id">
+                <select
+                  v-model="editedTask.status"
+                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                >
+                  <option
+                    v-for="status in statusStore.statuses"
+                    :key="status.id"
+                    :value="status.id"
+                  >
                     {{ formatStatus(status.name) }}
                   </option>
                 </select>
               </div>
 
-              <div v-if="mode === 'add' || mode === 'edit'" class="text-sm text-gray-500 mb-4">
-  <template v-if="isLimitEnabled">
-    <p class="text-green-500">(Limit is enabled)</p>
-    <template v-if="getStatusUsage(editedTask.status) !== ''">
-      <p>Status usage: {{ getStatusUsage(editedTask.status) }}</p>
-    </template>
-  </template>
-  <template v-else>
-    <p class="text-red-500">(Limit is disabled)</p>
-  </template>
-</div>
-              
+              <div
+                v-if="mode === 'add' || mode === 'edit'"
+                class="text-sm text-gray-500 mb-4"
+              >
+                <template v-if="isLimitEnabled">
+                  <p class="text-green-500">(Limit is enabled)</p>
+                  <template v-if="getStatusUsage(editedTask.status) !== ''">
+                    <p>Status usage: {{ getStatusUsage(editedTask.status) }}</p>
+                  </template>
+                </template>
+                <template v-else>
+                  <p class="text-red-500">(Limit is disabled)</p>
+                </template>
+              </div>
             </div>
-
           </div>
         </div>
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
             :class="{
-    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-      isTitleValid,
-    'bg-gray-300 cursor-not-allowed': !isTitleValid,
-  }" @click="saveTask" :disabled="!isTitleValid">
+              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                isTitleValid,
+              'bg-gray-300 cursor-not-allowed': !isTitleValid,
+            }"
+            @click="saveTask"
+            :disabled="!isTitleValid || isTitleTooLong || isDescriptionTooLong || areAssigneesTooLong"
+>
             {{ mode === "add" ? "Add" : "Save" }}
           </button>
-          <button type="button"
+          <button
+            type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="closeModal">
+            @click="closeModal"
+          >
             Cancel
           </button>
         </div>
@@ -333,7 +367,9 @@ const getStatusUsage = (statusId) => {
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -344,9 +380,11 @@ const getStatusUsage = (statusId) => {
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="closeModal">
+            @click="closeModal"
+          >
             OK
           </button>
         </div>
@@ -354,31 +392,36 @@ const getStatusUsage = (statusId) => {
     </div>
   </div>
 
-
   <div v-if="errorMessage" class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-red-500">
-                Error
-              </h3>
+              <h3 class="text-lg leading-6 font-medium text-red-500">Error</h3>
               <div class="mt-2">
                 <p class="text-sm leading-5 text-red-500">
-                  These statuses that have reached the task limit.  No additional tasks can be added to these statuses at this time.
+                  These statuses that have reached the task limit. No additional
+                  tasks can be added to these statuses at this time.
                 </p>
               </div>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="errorMessage = ''; emit('close')">
+            @click="
+              errorMessage = '';
+              emit('close')
+            "
+          >
             OK
           </button>
         </div>
