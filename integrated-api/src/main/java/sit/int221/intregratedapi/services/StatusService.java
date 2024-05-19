@@ -10,6 +10,7 @@ import sit.int221.intregratedapi.dtos.*;
 import sit.int221.intregratedapi.entities.GlobalSetting;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
+import sit.int221.intregratedapi.exceptions.CustomErrorResponse;
 import sit.int221.intregratedapi.exceptions.StatusLimitReachedException;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.repositories.TaskRepository;
@@ -18,7 +19,6 @@ import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.exceptions.DuplicateStatusException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +35,9 @@ public class StatusService {
     @Autowired
     private ModelMapper modelMapper;
 
+    private static final int MAX_STATUS_NAME_LENGTH = 50;
+    private static final int MAX_STATUS_DESCRIPTION_LENGTH = 200;
+
     public List<StatusDTO> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();
         List<StatusDTO> statusDTOs = new ArrayList<>();
@@ -45,7 +48,6 @@ public class StatusService {
         }
         return statusDTOs;
     }
-
 
     public int getNoOfTasksByStatusId(Integer statusId) {
         return taskRepository.countByStatusId(statusId);
@@ -77,6 +79,9 @@ public class StatusService {
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
 
+            validateStatusName(statusCDTO.getName());
+            validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
+
             existingStatus.setName(statusCDTO.getName().trim());
             existingStatus.setDescription(statusCDTO.getDescription() != null ? statusCDTO.getDescription().trim() : null);
             Status updatedStatus = statusRepository.save(existingStatus);
@@ -84,13 +89,8 @@ public class StatusService {
             return ResponseEntity.ok(updatedStatusCDTO);
         } else {
             // Create a new status
-            String trimmedStatusName = statusCDTO.getName().trim().toLowerCase();
-            boolean isDuplicate = statusRepository.findAll().stream()
-                    .anyMatch(existingStatus -> existingStatus.getName().trim().toLowerCase().equals(trimmedStatusName));
-
-            if (isDuplicate) {
-                throw new DuplicateStatusException("Duplicate status name: " + statusCDTO.getName());
-            }
+            validateStatusName(statusCDTO.getName());
+            validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
 
             Status status = modelMapper.map(statusCDTO, Status.class);
             status.setName(status.getName().trim());
@@ -100,12 +100,6 @@ public class StatusService {
 
             setDefaultValuesForStatus(status, "General");
             Status createdStatus = statusRepository.save(status);
-
-            // Check if the status has reached the limit
-            GlobalSetting globalSetting = status.getGlobalSetting();
-            if (globalSetting.isLimitMaximumTask() && getNoOfTasksByStatusId(createdStatus.getId()) > globalSetting.getMaximumTaskLimit()) {
-                throw new StatusLimitReachedException("the status has reached the limit");
-            }
 
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
@@ -117,8 +111,10 @@ public class StatusService {
         Status status = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
 
-        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
-            throw new IllegalArgumentException("Status with name \"" + status.getName() + "\" cannot be deleted!");
+        validateStatusNotDeletable(status);
+
+        if (taskRepository.countByStatusId(id) > 0) {
+            throw new IllegalArgumentException("Cannot delete a status that still has tasks");
         }
 
         statusRepository.delete(status);
@@ -131,22 +127,17 @@ public class StatusService {
         Status statusToDelete = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
 
-        if (statusToDelete.getName().equalsIgnoreCase("No Status") || statusToDelete.getName().equalsIgnoreCase("Done")) {
-            throw new IllegalArgumentException("Status with name \"" + statusToDelete.getName() + "\" cannot be deleted or transferred!");
-        }
+        validateStatusNotDeletable(statusToDelete);
 
         Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + "that you are about to transfer does not exist!"));
+                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " that you are about to transfer does not exist!"));
 
-        if (newStatus.getGlobalSetting().isLimitMaximumTask()) {
-            int deletingStatusTaskCount = taskRepository.countByStatusId(id);
-            int newStatusTaskCount = taskRepository.countByStatusId(newId);
-
-            if (newStatusTaskCount + deletingStatusTaskCount > newStatus.getGlobalSetting().getMaximumTaskLimit()) {
-//                throw new IllegalArgumentException("The \"" + newStatus.getName() + "\" status that you are about to transfer has reached its maximum task limit.");
-                throw new IllegalArgumentException("The destination status cannot be over the limit after transfer");
-            }
+        if (id.equals(newId)) {
+            throw new IllegalArgumentException("Source and destination status cannot be the same");
         }
+
+        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+        validateStatusNotTransferrable(newStatus, deletingStatusTaskCount + taskRepository.countByStatusId(newId));
 
         List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
         for (Task task : tasksToUpdate) {
@@ -163,12 +154,11 @@ public class StatusService {
     public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
         Status existingStatus = statusRepository.findById(id).orElse(null);
         if (existingStatus != null) {
-            if (existingStatus.getName().equalsIgnoreCase("Done")) {
-                throw new IllegalArgumentException("Status with name \"Done\" cannot be updated!");
-            }
-            if (existingStatus.getName().equalsIgnoreCase("No Status")) {
-                throw new IllegalArgumentException("Status with name \"No Status\" cannot be updated!");
-            }
+            validateStatusNotDeletable(existingStatus);
+
+            validateStatusName(status.getName());
+            validateStatusDescription(status.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
+
             existingStatus.setName(status.getName().trim());
             existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
             if (status.getColorCode() != null) {
@@ -195,8 +185,52 @@ public class StatusService {
             status.setDescription(null);
         }
 
-        GlobalSetting globalSetting = globalSettingService.getGlobalSettingByName("General");
+        GlobalSetting globalSetting = globalSettingService.getGlobalSettingByName(globalSettingName);
         status.setGlobalSetting(globalSetting);
     }
 
+    private void validateStatusName(String statusName) {
+        if (statusName == null || statusName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Status name cannot be null or empty");
+        }
+
+        if (statusName.length() > MAX_STATUS_NAME_LENGTH) {
+            throw new IllegalArgumentException("Status name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+        }
+
+        if (statusRepository.existsByNameIgnoreCase(statusName.trim())) {
+            throw new DuplicateStatusException("Status name '" + statusName.trim() + "' already exists");
+        }
+    }
+
+    private void validateStatusDescription(String description, int maxLength) {
+        if (description != null && description.length() > maxLength) {
+            throw new IllegalArgumentException("Status description must be between 0 and " + maxLength + " characters");
+        }
+    }
+
+    private void validateStatusNotDeletable(Status status) {
+        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
+            throw new IllegalArgumentException("Status with name '" + status.getName() + "' cannot be deleted or transferred");
+        }
+    }
+
+    private void validateStatusNotTransferrable(Status status, int taskCount) {
+        if (status.getGlobalSetting().isLimitMaximumTask() && taskCount > status.getGlobalSetting().getMaximumTaskLimit()) {
+            throw new StatusLimitReachedException("The destination status cannot be over the limit after transfer");
+        }
+    }
+
+    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
+        if (value != null && value.length() > maxSize) {
+            return new CustomErrorResponse(
+                    LocalDateTime.now(),
+                    HttpStatus.BAD_REQUEST.value(),
+                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                    "The field '" + field + "' must be between 0 and " + maxSize + " characters",
+                    path
+            );
+        }
+        return null;
+    }
 }
