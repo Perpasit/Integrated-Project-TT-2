@@ -40,6 +40,14 @@ const editedStatus = ref({
 
 const nameError = ref("")
 
+const isDuplicateName = computed(() => {
+  return statusStore.statuses.some(
+    (status) =>
+      status.name.toLowerCase() === editedStatus.value.name.toLowerCase() &&
+      status.id !== editedStatus.value.id
+  )
+})
+
 const isNameValid = computed(() => {
   return (
     editedStatus.value &&
@@ -103,10 +111,17 @@ const closeSuccessModal = () => {
 }
 
 async function saveStatus() {
-  if (!isNameValid.value) {
+  if (!editedStatus.value.name) {
     nameError.value = "Name is required."
     return
   }
+
+  if (isDuplicateName.value) {
+    nameError.value = "Status name must be unique, please choose another name."
+    return
+  }
+
+  nameError.value = ""
 
   try {
     const updatedStatus = {
@@ -183,9 +198,12 @@ function closeModal() {
                   class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   :maxlength="50"
                 ></textarea>
-                <p v-if="!isNameValid" class="text-red-500 text-sm mt-1">
-                  {{ nameError }}
-                </p>
+                <p v-if="!editedStatus.name" class="text-red-500 text-sm mt-1">
+  Name is required.
+</p>
+<p v-else-if="isDuplicateName" class="text-red-500 text-sm mt-1">
+  Status name must be unique, please choose another name.
+</p>
                 <p class="text-gray-500 text-sm mt-1">
                   {{ editedStatus.name ? editedStatus.name.length : 0 }}/50 characters
                 </p>
@@ -223,18 +241,17 @@ function closeModal() {
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
-            type="button"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                isNameValid,
-              'bg-gray-300 cursor-not-allowed': !isNameValid,
-            }"
-            @click="saveStatus"
-            :disabled="!isNameValid"
-          >
-            {{ mode === "add" ? "Add" : "Save" }}
-          </button>
+  type="button"
+  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+  :class="{
+    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isNameValid && !isDuplicateName,
+    'bg-gray-300 cursor-not-allowed': !isNameValid || isDuplicateName,
+  }"
+  @click="saveStatus"
+  :disabled="!isNameValid || isDuplicateName"
+>
+  {{ mode === "add" ? "Add" : "Save" }}
+</button>
           <button
             type="button"
             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
