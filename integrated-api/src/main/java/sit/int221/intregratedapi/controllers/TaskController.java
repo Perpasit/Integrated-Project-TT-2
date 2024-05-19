@@ -33,12 +33,13 @@ public class TaskController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses
     ) {
-        if (sortBy != null && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc")) {
-            return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc' and 'desc' are allowed.");
+        if (sortBy != null && !sortBy.isEmpty() && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc") && !sortBy.equalsIgnoreCase("createOn")) {
+            return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc', 'desc', and 'createOn' are allowed.");
         }
 
         List<Task> tasks = taskService.getAllTasks(sortBy, filterStatuses);
         List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+
         return ResponseEntity.ok(taskDTOs);
     }
 

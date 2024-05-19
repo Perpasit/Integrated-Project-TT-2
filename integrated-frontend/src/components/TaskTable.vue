@@ -103,7 +103,7 @@ onMounted(async () => {
   if (
     sortByFromUrl === "asc" ||
     sortByFromUrl === "desc" ||
-    sortByFromUrl === "normal"
+    sortByFromUrl === "createOn"
   ) {
     sortBy.value = sortByFromUrl
     await fetchTasks()
@@ -158,12 +158,12 @@ const sortBy = computed({
 })
 
 const togglesortBy = () => {
-  if (sortBy.value === "normal") {
+  if (sortBy.value === "createOn") {
     sortBy.value = "asc"
   } else if (sortBy.value === "asc") {
     sortBy.value = "desc"
   } else {
-    sortBy.value = "normal"
+    sortBy.value = "createOn"
   }
   taskStore.setSortBy(sortBy.value)
 }

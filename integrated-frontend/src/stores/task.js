@@ -4,7 +4,7 @@ import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 export const useTaskStore = defineStore("task", {
   state: () => ({
     tasks: [],
-    sortBy: "normal",
+    sortBy: "createOn",
     filterStatuses: []
   }),
   getters: {
