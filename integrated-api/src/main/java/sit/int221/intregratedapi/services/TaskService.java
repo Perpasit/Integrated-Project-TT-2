@@ -14,6 +14,7 @@ import sit.int221.intregratedapi.dtos.TaskRDTO;
 import sit.int221.intregratedapi.dtos.TaskUDTO;
 import sit.int221.intregratedapi.entities.Status;
 import sit.int221.intregratedapi.entities.Task;
+import sit.int221.intregratedapi.exceptions.CustomErrorResponse;
 import sit.int221.intregratedapi.exceptions.ItemNotFoundException;
 import sit.int221.intregratedapi.repositories.StatusRepository;
 import sit.int221.intregratedapi.repositories.TaskRepository;
@@ -21,6 +22,7 @@ import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @NoArgsConstructor
 @Service
@@ -48,11 +50,6 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-//    public List<Task> getAllTasks() {
-//        List<Task> tasks = taskRepository.findAll();
-//        return tasks;
-//    }
-
     public List<Task> getAllTasks(String sortBy, List<String> filterStatuses) {
         Sort sort;
         if (sortBy != null && sortBy.equalsIgnoreCase("asc")) {
@@ -70,25 +67,49 @@ public class TaskService {
         }
     }
 
-
-
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
+        // Validate task title
+        if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("{\"field\": \"title\", \"message\": \"is required\"}");
+        }
+
+        // Validate field sizes
+        CustomErrorResponse response = validateFieldSize("title", taskCDTO.getTitle(), 100, null);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
+        }
+
+        response = validateFieldSize("description", taskCDTO.getDescription(), 500, null);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
+        }
+
+        response = validateFieldSize("assignees", taskCDTO.getAssignees(), 30, null);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
+        }
+
+        // Validate status
+        Status status;
+        try {
+            status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.badRequest().body("{\"field\": \"status\", \"message\": \"does not exist\"}");
+        }
+
         Task task = modelMapper.map(taskCDTO, Task.class);
 
-        if (taskCDTO.getStatus() != null) {
-            Status status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
-
-
-            if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-//                        .body("The status " + status.getName() + " has reached the maximum task limit.");
-                        .body("The status has reached the limit.");
-            }
-
-            task.setStatus(status);
+        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("The status has reached the limit.");
         }
+
+        task.setStatus(status);
 
         setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
@@ -109,21 +130,42 @@ public class TaskService {
     @Transactional
     public ResponseEntity<Object> updateTask(Integer taskId, TaskUDTO updatedTaskDTO) {
         Task existingTask = getTaskById(taskId);
-        setDefaultValuesForTask(existingTask);
 
-        if (updatedTaskDTO.getStatus() != null) {
-            Status status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
-
-            if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-//                        .body("The status " + status.getName() + " has reached the maximum task limit.");
-                          .body("The status has reached the limit.");
-            }
-
-            existingTask.setStatus(status);
+        // Validate field sizes
+        CustomErrorResponse response = validateFieldSize("title", updatedTaskDTO.getTitle(), 100, "/v2/tasks/" + taskId);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
         }
 
+        response = validateFieldSize("description", updatedTaskDTO.getDescription(), 500, "/v2/tasks/" + taskId);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
+        }
+
+        response = validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30, "/v2/tasks/" + taskId);
+        if (response != null) {
+            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
+                    .body(response);
+        }
+
+        // Validate status
+        Status status;
+        try {
+            status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.badRequest().body("{\"field\": \"status\", \"message\": \"does not exist\"}");
+        }
+
+        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("The status has reached the limit.");
+        }
+
+        setDefaultValuesForTask(existingTask);
+        existingTask.setStatus(status);
         existingTask.setTitle(updatedTaskDTO.getTitle());
         existingTask.setDescription(updatedTaskDTO.getDescription());
         existingTask.setAssignees(updatedTaskDTO.getAssignees());
@@ -140,8 +182,6 @@ public class TaskService {
     }
 
     private void setDefaultValuesForTask(Task task) {
-
-
         if (task.getTitle() == null) {
             throw new IllegalArgumentException("Task title is required");
         } else {
@@ -152,7 +192,6 @@ public class TaskService {
 
         task.setAssignees((task.getAssignees() == null || task.getAssignees().trim().isEmpty()) ? null : task.getAssignees().trim());
 
-
         if (task.getCreatedOn() == null) {
             task.setCreatedOn(LocalDateTime.now());
         }
@@ -160,19 +199,16 @@ public class TaskService {
         task.setUpdatedOn(LocalDateTime.now());
     }
 
-//    private void updateTaskFromDTO(Task existingTask, Task task) {
-//        existingTask.setTitle(task.getTitle());
-//        existingTask.setDescription(task.getDescription());
-//        existingTask.setAssignees(task.getAssignees());
-//
-//        if (task.getStatus() != null && task.getStatus().getId() != null) {
-//            Status status = statusRepository.findById(task.getStatus().getId())
-//                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + task.getStatus().getId() + " does not exist!"));
-//            existingTask.setStatus(status);
-//        }
-//
-//        existingTask.setUpdatedOn(LocalDateTime.now());
-//    }
-
-
+    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
+        if (value != null && value.length() > maxSize) {
+            return new CustomErrorResponse(
+                    LocalDateTime.now(),
+                    HttpStatus.BAD_REQUEST.value(),
+                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                    "size must be between 0 and " + maxSize,
+                    path
+            );
+        }
+        return null;
+    }
 }
