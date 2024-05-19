@@ -8,6 +8,7 @@ import sit.int221.intregratedapi.services.TaskService;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v2/tasks")
@@ -31,16 +32,28 @@ public class TaskController {
     @GetMapping("")
     public ResponseEntity<Object> getTasks(
             @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) List<String> filterStatuses
-    ) {
+            @RequestParam(required = false) List<String> filterStatuses,
+            @RequestParam Map<String, String> allParams) {
         if (sortBy != null && !sortBy.isEmpty() && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc") && !sortBy.equalsIgnoreCase("createOn")) {
             return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc', 'desc', and 'createOn' are allowed.");
         }
 
-        List<Task> tasks = taskService.getAllTasks(sortBy, filterStatuses);
-        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+        // Remove the expected parameters from the allParams map
+        allParams.remove("sortBy");
+        allParams.remove("filterStatuses");
 
-        return ResponseEntity.ok(taskDTOs);
+        if (!allParams.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid filter parameter. Only filtering by status names is allowed.");
+        }
+
+        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            List<Task> tasks = (List<Task>) response.getBody();
+            List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+            return ResponseEntity.ok(taskDTOs);
+        } else {
+            return response;
+        }
     }
 
 

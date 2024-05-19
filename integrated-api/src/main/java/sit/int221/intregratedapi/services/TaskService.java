@@ -21,6 +21,7 @@ import sit.int221.intregratedapi.repositories.TaskRepository;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -51,7 +52,7 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public List<Task> getAllTasks(String sortBy, List<String> filterStatuses) {
+    public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses) {
         Sort sort;
         if (sortBy != null && sortBy.equalsIgnoreCase("asc")) {
             sort = Sort.by(Sort.Direction.ASC, "status.name");
@@ -61,11 +62,39 @@ public class TaskService {
             sort = Sort.by("createdOn").ascending();
         }
 
+        List<Task> tasks;
         if (filterStatuses != null && !filterStatuses.isEmpty()) {
-            return taskRepository.findByStatusNameIn(filterStatuses, sort);
+            List<Integer> statusIds = extractStatusIds(filterStatuses);
+            List<String> statusNames = extractStatusNames(filterStatuses);
+            tasks = taskRepository.findByStatusIdInOrStatusNameIn(statusIds, statusNames, sort);
         } else {
-            return taskRepository.findAll(sort);
+            tasks = taskRepository.findAll(sort);
         }
+
+        return ResponseEntity.ok(tasks);
+    }
+
+    private List<Integer> extractStatusIds(List<String> filterStatuses) {
+        List<Integer> statusIds = new ArrayList<>();
+        for (String status : filterStatuses) {
+            try {
+                int statusId = Integer.parseInt(status);
+                statusIds.add(statusId);
+            } catch (NumberFormatException e) {
+                // Ignore non-numeric status values
+            }
+        }
+        return statusIds;
+    }
+
+    private List<String> extractStatusNames(List<String> filterStatuses) {
+        List<String> statusNames = new ArrayList<>();
+        for (String status : filterStatuses) {
+            if (!status.matches("\\d+")) {
+                statusNames.add(status);
+            }
+        }
+        return statusNames;
     }
 
     @Transactional
