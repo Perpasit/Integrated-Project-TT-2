@@ -197,6 +197,9 @@ function closeModal() {
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find(s => s.id === statusId);
   if (status) {
+    if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
+      return '';
+    }
     return `${status.noOfTasks}/${maxTasks.value} tasks`;
   }
   return '0/0 tasks';
@@ -273,9 +276,10 @@ const getStatusUsage = (statusId) => {
               </div>
 
               <div v-if="mode === 'add' || mode === 'edit'" class="text-sm text-gray-500 mb-4">
-                Status usage: {{ getStatusUsage(editedTask.status) }}
-              </div>
-
+  <template v-if="getStatusUsage(editedTask.status) !== ''">
+    Status usage: {{ getStatusUsage(editedTask.status) }}
+  </template>
+</div>
             </div>
 
           </div>
