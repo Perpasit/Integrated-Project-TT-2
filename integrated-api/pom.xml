@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>sit.int221</groupId>
-    <artifactId>intregrated-api</artifactId>
+    <artifactId>integrated-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>intregrated-api</name>
     <description>intregrated-api</description>
