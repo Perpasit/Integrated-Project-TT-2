@@ -12,7 +12,7 @@ const modalStore = useModalStore()
 const statusStore = useStatusStore()
 const router = useRouter()
 const statuses = computed(() => statusStore.getStatuses)
-
+const deleteResult = ref(null)
 const selectedStatus = ref(null)
 const showDeleteConfirmation = ref(false)
 
@@ -25,12 +25,10 @@ const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
 
-
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
-    params: { statusId: status.id },
-   
+    params: { statusId: status.id }
   })
 }
 
@@ -41,15 +39,15 @@ const closeCannotDeleteModal = () => {
 }
 
 const editStatus = (status) => {
-  if ( status.id !== 1 && status.id !== 4) {
-    router.push({ name: "EditStatus", params: { id: status.id } });
+  if (status.id !== 1 && status.id !== 4) {
+    router.push({ name: "EditStatus", params: { id: status.id } })
   } else {
-    showCannotEditDeleteModal.value = true;
+    showCannotEditDeleteModal.value = true
     cannotDeleteEditTimeout.value = setTimeout(() => {
-      closeCannotDeleteModal();
-    }, 3000);
+      closeCannotDeleteModal()
+    }, 3000)
   }
-};
+}
 
 const saveStatus = (status) => {
   if (status.id) {
@@ -124,6 +122,7 @@ const deleteAndTransfer = async (newStatusId) => {
         selectedStatusToDelete.id,
         newStatusId
       )
+      deleteResult.value = result
       selectedStatusToDelete = null
       showDeleteTransferModal.value = false
       statusStore.fetchAllStatuses()
@@ -132,11 +131,14 @@ const deleteAndTransfer = async (newStatusId) => {
         showNotFoundModal.value = true
       } else if (result.status === 404) {
         showNotFoundModal.value = true
+      } else if (result.status === 500) {
+        showNotFoundModal.value = true
       } else {
         showSuccessModal.value = true
       }
     } catch (error) {
       console.error("Error deleting and transferring status:", error)
+      deleteResult.value = { status: 500 }
       showSuccessModal.value = false
       showNotFoundModal.value = true
     }
@@ -145,7 +147,6 @@ const deleteAndTransfer = async (newStatusId) => {
     }, 3000)
   }
 }
-
 function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
@@ -477,8 +478,15 @@ onMounted(async () => {
       >
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-red-600">
-              Status Not Found
+            <div
+              class="text-lg leading-6 font-medium text-red-600"
+              
+            >
+              {{
+                deleteResult?.status === 500
+                  ? "Status Limit Reached"
+                  : "Status Not Found"
+              }}
             </div>
             <button
               type="button"
@@ -501,8 +509,15 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-red-600 itbkk-message">
-              An error has occurred, the status does not exist.
+            <p
+              class="text-sm leading-5 itbkk-message text-red-600"
+              
+            >
+              {{
+                deleteResult?.status === 500
+                  ? "The status that you are about to transfer has reached its maximum task limit."
+                  : "An error has occurred, the status does not exist."
+              }}
             </p>
           </div>
         </div>
