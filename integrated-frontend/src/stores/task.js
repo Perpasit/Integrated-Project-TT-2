@@ -19,7 +19,7 @@ export const useTaskStore = defineStore("task", {
         )
         this.tasks = data || []
       } catch (error) {
-        console.error("Error fetching tasks:", error)
+        // console.error("Error fetching tasks:", error)
         throw error
       }
     },
@@ -37,7 +37,7 @@ export const useTaskStore = defineStore("task", {
         )
         this.tasks.push(createdTask)
       } catch (error) {
-        console.error("Error adding task:", error)
+        // console.error("Error adding task:", error)
         throw error
       }
     },
