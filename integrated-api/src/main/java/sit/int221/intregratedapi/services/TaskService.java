@@ -70,7 +70,6 @@ public class TaskService {
 
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
-
         // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("field", "title", "message", "is required"));
@@ -120,7 +119,6 @@ public class TaskService {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
 
-
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
         Task task = taskRepository.findById(taskId)
@@ -133,6 +131,11 @@ public class TaskService {
     @Transactional
     public ResponseEntity<Object> updateTask(Integer taskId, TaskUDTO updatedTaskDTO) {
         Task existingTask = getTaskById(taskId);
+
+        // Check if the title is null or empty
+        if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", "is required"));
+        }
 
         // Validate field sizes
         CustomErrorResponse response = validateFieldSize("title", updatedTaskDTO.getTitle(), 100, "/v2/tasks/" + taskId);
@@ -159,7 +162,7 @@ public class TaskService {
             status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body("{\"field\": \"status\", \"message\": \"does not exist\"}");
+            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", "does not exist"));
         }
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
@@ -214,5 +217,4 @@ public class TaskService {
         }
         return null;
     }
-
 }
