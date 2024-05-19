@@ -11,7 +11,6 @@ function getIsLimitEnabledFromLocalStorage() {
   return localStorage.getItem("isLimitEnabled") === "true"
 }
 
-
 const props = defineProps({
   show: {
     type: Boolean,
@@ -25,7 +24,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-});
+})
 
 const emit = defineEmits(["close", "save", "toggle"])
 
@@ -40,12 +39,10 @@ const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
 
 const isMaxTasksValid = computed(() => {
   return (
-    isLimitEnabled.value !==
-      globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
-    maxTasks.value !==
-      globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
-  )
-})
+    isLimitEnabled.value !== globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
+    maxTasks.value !== globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
+  ) && maxTasks.value >= 1 && maxTasks.value <= 100;
+});
 
 watch(
   () => [maxTasks.value, isLimitEnabled.value],
@@ -70,6 +67,8 @@ onMounted(async () => {
     globalSettingStore.setIsLimitEnabled(isLimitEnabled.value)
     saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
 
+ 
+    
     watch(
       () => currentGlobalSetting?.limitMaximumTask,
       (newValue) => {
@@ -112,28 +111,24 @@ function toggleLimitEnabled() {
 const limitReachedStatusesWithCounts = computed(() => {
   return props.currentStatusNames
     .filter((statusName) => {
-      const taskCount = props.currentTaskCounts[statusName];
+      const taskCount = props.currentTaskCounts[statusName]
       return (
         taskCount >= maxTasks.value &&
-        statusName !== 'NO STATUS' &&
-        statusName !== 'DONE'
-      );
+        statusName !== "NO STATUS" &&
+        statusName !== "DONE"
+      )
     })
-    .map((statusName) => `"${statusName}"(${props.currentTaskCounts[statusName]}Task)`);
-});
+    .map(
+      (statusName) =>
+        `"${statusName}"(${props.currentTaskCounts[statusName]}Task)`
+    )
+})
 const isTaskLimitReached = computed(() => {
-  if (!isLimitEnabled.value) return false;
+  if (!isLimitEnabled.value) return false
 
-  return limitReachedStatusesWithCounts.value.length > 0;
-});
-const limitReachedStatuses = computed(() => {
-  return props.currentStatusNames.filter((statusName, index) => {
-    const taskCount = props.currentTaskCounts[statusName];
-    return taskCount >= maxTasks.value && statusName !== 'No Status' && statusName !== 'Done';
-  });
-});
-
-
+  return limitReachedStatusesWithCounts.value.length > 0
+})
+console.log(limitReachedStatusesWithCounts.value)
 </script>
 
 <template>
@@ -175,11 +170,11 @@ const limitReachedStatuses = computed(() => {
                 </label>
                 <div v-if="isLimitEnabled">
                   <input
-                  type="number"
-                v-model.number="maxTasks"
-                class="itbkk-max-task shadow-sm p-2 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                min="1"
-                max="100"
+                    type="number"
+                    v-model.number="maxTasks"
+                    class="itbkk-max-task shadow-sm p-2 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    min="1"
+                    max="100"
                   />
                   <p class="text-gray-500 text-sm mt-1">
                     Users can limit the task in a status by setting maximum
@@ -188,31 +183,34 @@ const limitReachedStatuses = computed(() => {
                   </p>
                   <!-- <p class="itbkk-limit-task text-lg">{{ maxTasks }}</p> -->
                 </div>
-                <div v-if="isTaskLimitReached" class="mt-2 bg-yellow-100 border-l-4 border-yellow-400 p-4">
-  <p class="text-sm text-yellow-700">
-    The status <br>
-    {{ limitReachedStatusesWithCounts.join(', ') }} <br>
-    These Status has reached the task limit ({{ maxTasks }}). No additional tasks can be added to this status.
-  </p>
-</div>
+                <div
+                  v-if="isTaskLimitReached"
+                  class="mt-2 bg-yellow-100 border-l-4 border-yellow-400 p-4"
+                >
+                  <p class="text-sm text-yellow-700">
+                    The status <br />
+                    {{ limitReachedStatusesWithCounts.join(", ") }} <br />
+                    These Status has reached the task limit ({{ maxTasks }}). No
+                    additional tasks can be added to this status.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                isMaxTasksValid,
-              'bg-gray-300 cursor-not-allowed': !isMaxTasksValid,
-            }"
-            @click="saveMaxTasks"
-            :disabled="!isMaxTasksValid"
-          >
-            Save
-          </button>
+            <button
+  type="button"
+  class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+  :class="{
+    'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500': isMaxTasksValid,
+    'bg-gray-300 cursor-not-allowed': !isMaxTasksValid
+  }"
+  @click="saveMaxTasks"
+  :disabled="!isMaxTasksValid"
+>
+  Save
+</button>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

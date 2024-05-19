@@ -181,35 +181,41 @@ const filteredTasksByStatus = computed(() => {
       task && task.status && selectedStatuses.value.includes(task.status)
   )
 })
-const currentStatusId = ref(null)
+
 const currentTaskCountForStatus = ref({});
 const currentStatusNames = ref([]);
+const currentStatusesWithTaskCounts = ref([]);
+const maxTasks = ref();
+const openLimitTaskModal = async () => {
+  try {
+    // Fetch the latest status data
+    await statusStore.fetchAllStatuses();
+    currentStatusesWithTaskCounts.value = statusStore.statuses.map((status) => ({
+      name: status.name,
+      noOfTasks: status.noOfTasks || 0,
+    }));
 
-const updateCurrentTaskCountAndStatus = (statusName) => {
-  if (statusName) {
-    const selectedStatus = statusStore.getStatusByName(statusName)
-    if (selectedStatus) {
-      currentStatusId.value = selectedStatus.id
-      currentTaskCountForStatus.value = tasks.value.filter(
-        (task) => task.status === selectedStatus.name
-      ).length
-      showLimitTaskModal.value = true
-    } else {
-      currentStatusId.value = null
-      currentTaskCountForStatus.value = 0
-    }
+    // Update the maxTasks value based on the first status
+    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10;
+
+    currentTaskCountForStatus.value = currentStatusesWithTaskCounts.value.reduce(
+      (counts, status) => {
+        counts[status.name] = status.noOfTasks;
+        return counts;
+      },
+      {}
+    );
+
+    currentStatusNames.value = currentStatusesWithTaskCounts.value.map(
+      (status) => status.name
+    );
+
+    showLimitTaskModal.value = true;
+  } catch (error) {
+    console.error("Error fetching status data:", error);
   }
-}
-const openLimitTaskModal = () => {
-  currentTaskCountForStatus.value = statusStore.statuses.reduce((counts, status) => {
-    const taskCount = tasks.value.filter((task) => task.status === status.name).length;
-    counts[status.name] = taskCount;
-    return counts;
-  }, {});
-
-  currentStatusNames.value = statusStore.statuses.map((status) => status.name);
-  showLimitTaskModal.value = true;
 };
+
 
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false

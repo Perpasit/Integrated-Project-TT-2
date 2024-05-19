@@ -17,6 +17,7 @@ const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
 )
 const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+
 const props = defineProps({
   show: {
     type: Boolean,
