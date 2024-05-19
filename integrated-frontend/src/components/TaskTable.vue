@@ -504,7 +504,7 @@ const toggleStatusFilter = (statusName) => {
     </div>
 
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
-      No task
+      No Task
     </div>
 
     <AddEditTask
