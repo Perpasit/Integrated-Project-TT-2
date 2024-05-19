@@ -6,6 +6,7 @@ import { useStatusStore } from "../stores/status";
 import { useModalStore } from "../stores/useModalStore";
 import { useRouter } from "vue-router";
 
+
 const router = useRouter();
 const taskStore = useTaskStore();
 const statusStore = useStatusStore();
@@ -136,7 +137,7 @@ async function saveTask() {
       };
       await taskStore.addTask(newTask);
       await taskStore.fetchAllTasks();
-      router.push("/"); 
+      router.push("/");
       modalStore.openSuccessModal(newTask.title, props.mode);
 
       const status = statusStore.statuses.find(s => s.id === newTask.status);
@@ -150,7 +151,7 @@ async function saveTask() {
     await taskStore.fetchAllTasks();
   } catch (error) {
     // console.error("Error saving task:", error);
-    errorMessage.value = error.message; 
+    errorMessage.value = error.message;
   }
 }
 const errorMessage = ref("");
@@ -184,6 +185,15 @@ function closeModal() {
   router.push("/");
   resetForm();
 }
+
+const getStatusUsage = (statusId) => {
+  const status = statusStore.statuses.find(s => s.id === statusId);
+  if (status) {
+    return `${status.noOfTasks}/${statusStore.totalTasks} tasks`;
+  }
+  return '0/0 tasks';
+}
+
 
 
 </script>
@@ -253,7 +263,13 @@ function closeModal() {
                   </option>
                 </select>
               </div>
+
+              <div v-if="mode === 'add' || mode === 'edit'" class="text-sm text-gray-500 mb-4">
+                Status usage: {{ getStatusUsage(editedTask.status) }}
+              </div>
+
             </div>
+
           </div>
         </div>
 
@@ -302,7 +318,7 @@ function closeModal() {
     </div>
   </div>
 
- 
+
   <div v-if="errorMessage" class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
