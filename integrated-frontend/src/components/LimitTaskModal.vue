@@ -3,6 +3,9 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { useGlobalSettingStore } from "../stores/global_setting"
 
+const showConfirmationModal = ref(false);
+
+
 function saveIsLimitEnabledToLocalStorage(value) {
   localStorage.setItem("isLimitEnabled", value)
 }
@@ -86,6 +89,21 @@ function closeModal() {
   emit("close")
 }
 
+const confirmationMessage = ref("");
+
+function showConfirmation(isLimitEnabled) {
+  showConfirmationModal.value = true;
+  if (isLimitEnabled) {
+    confirmationMessage.value = `The Kanban board now limits ${maxTasks.value} tasks in each status.`;
+  } else {
+    confirmationMessage.value = "The Kanban board has disabled the task limit in each status.";
+  }
+  setTimeout(() => {
+    showConfirmationModal.value = false;
+  }, 2000);
+}
+
+
 async function saveMaxTasks() {
   if (isMaxTasksValid.value) {
     const updatedSetting = {
@@ -93,12 +111,13 @@ async function saveMaxTasks() {
       limitMaximumTask: isLimitEnabled.value,
     }
     await globalSettingStore.updateGlobalSetting("General", updatedSetting)
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value) // Save to Local Storage
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
     emit("save", {
       maxTasks: maxTasks.value,
       isLimitEnabled: isLimitEnabled.value,
     })
-    closeModal()
+    closeModal();
+    showConfirmation(isLimitEnabled.value); // Pass isLimitEnabled value
   }
 }
 
@@ -181,7 +200,8 @@ const isTaskLimitReached = computed(() => {
                     tasks in each status (except "No Status" and "Done"
                     statuses).
                   </p>
-                  <!-- <p class="itbkk-limit-task text-lg">{{ maxTasks }}</p> -->
+                  <br>
+                  <p class="itbkk-limit-task text-sm">The Kanban board will limit the number of tasks in each status to {{ maxTasks }}</p>
                 </div>
                 <div
                   v-if="isTaskLimitReached"
@@ -222,6 +242,38 @@ const isTaskLimitReached = computed(() => {
       </div>
     </div>
   </div>
+
+ 
+  <div v-if="showConfirmationModal" class="fixed z-50 inset-0 overflow-y-auto">
+  <div class="flex items-start justify-center min-h-screen">
+    <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+        <div class="flex justify-between items-center">
+          <div class="text-lg leading-6 font-medium text-gray-900">
+            Limit Updated
+          </div>
+          <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150" @click="showConfirmation = false">
+            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div>
+          <p class="text-sm leading-5 text-gray-500">
+            {{ confirmationMessage }}
+          </p>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+          <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3" @click="showConfirmation = false">
+            OK
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
 </template>
 
 <style scoped></style>
