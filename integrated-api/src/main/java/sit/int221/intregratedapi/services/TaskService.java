@@ -72,7 +72,6 @@ public class TaskService {
 
 
 
-
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         Task task = modelMapper.map(taskCDTO, Task.class);
