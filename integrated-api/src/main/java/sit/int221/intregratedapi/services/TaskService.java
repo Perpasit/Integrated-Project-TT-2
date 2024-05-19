@@ -22,6 +22,7 @@ import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @NoArgsConstructor
@@ -69,9 +70,10 @@ public class TaskService {
 
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
-        // Validate task title
+
+        // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("{\"field\": \"title\", \"message\": \"is required\"}");
+            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", "is required"));
         }
 
         // Validate field sizes
@@ -99,24 +101,25 @@ public class TaskService {
             status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body("{\"field\": \"status\", \"message\": \"does not exist\"}");
+            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", "does not exist"));
         }
 
         Task task = modelMapper.map(taskCDTO, Task.class);
 
+        // Check status task limit
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first.");
+                    .body("The status " + status.getName() + " will have too many tasks. Please make progress and update status of existing tasks first.");
         }
 
         task.setStatus(status);
-
         setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
 
         TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
+
 
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
@@ -211,4 +214,5 @@ public class TaskService {
         }
         return null;
     }
+
 }
