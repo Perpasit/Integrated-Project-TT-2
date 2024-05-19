@@ -406,8 +406,7 @@ const getStatusUsage = (statusId) => {
               <h3 class="text-lg leading-6 font-medium text-red-500">Error</h3>
               <div class="mt-2">
                 <p class="text-sm leading-5 text-red-500">
-                  These statuses that have reached the task limit. No additional
-                  tasks can be added to these statuses at this time.
+                  {{ errorMessage}}
                 </p>
               </div>
             </div>
