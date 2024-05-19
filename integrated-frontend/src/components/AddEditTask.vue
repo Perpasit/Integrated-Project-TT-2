@@ -17,6 +17,21 @@ const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
 )
 const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
+
+watch(generalSetting, (newValue) => {
+  isLimitEnabled.value = newValue?.limitMaximumTask;
+  maxTasks.value = newValue?.maximumTaskLimit;
+});
+
+const isMaxTasksValid = computed(() => {
+  return (
+    isLimitEnabled.value !==
+      globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
+    maxTasks.value !==
+      globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
+  )
+})
 const props = defineProps({
   show: {
     type: Boolean,
@@ -276,10 +291,17 @@ const getStatusUsage = (statusId) => {
               </div>
 
               <div v-if="mode === 'add' || mode === 'edit'" class="text-sm text-gray-500 mb-4">
-  <template v-if="getStatusUsage(editedTask.status) !== ''">
-    Status usage: {{ getStatusUsage(editedTask.status) }}
+  <template v-if="isLimitEnabled">
+    <p class="text-green-500">(Limit is enabled)</p>
+    <template v-if="getStatusUsage(editedTask.status) !== ''">
+      <p>Status usage: {{ getStatusUsage(editedTask.status) }}</p>
+    </template>
+  </template>
+  <template v-else>
+    <p class="text-red-500">(Limit is disabled)</p>
   </template>
 </div>
+              
             </div>
 
           </div>
