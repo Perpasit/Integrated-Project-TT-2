@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,12 +55,13 @@ public class Status {
 
     @PrePersist
     protected void onCreate() {
-        createdOn = ZonedDateTime.now();
-        updatedOn = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Bangkok"));
+        createdOn = now;
+        updatedOn = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedOn = ZonedDateTime.now();
+        updatedOn = ZonedDateTime.now(ZoneId.of("Asia/Bangkok"));
     }
 }
