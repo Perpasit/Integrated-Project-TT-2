@@ -100,6 +100,9 @@ watch(
         )
         if (response.status === 404) {
           editedTask.value = null
+          setTimeout(() => {
+            closeModal()
+          }, 3000)
         } else {
           const data = await response.json()
           // console.log(data)
@@ -229,6 +232,7 @@ const formatStatus = (status) => {
 function closeModal() {
   router.push("/")
   resetForm()
+  taskStore.fetchAllTasks()
 }
 
 const getStatusUsage = (statusId) => {
