@@ -78,7 +78,7 @@ public class StatusService {
         if (statusCDTO.getId() != null) {
             // Update an existing status
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
+                    .orElseThrow(() -> new CustomErrorResponse("Status with id " + statusCDTO.getId() + " does not exist!"));
 
             validateStatusName(statusCDTO.getName(), existingStatus.getId());
             validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
@@ -110,15 +110,16 @@ public class StatusService {
         }
     }
 
+
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
         Status status = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+                .orElseThrow(() -> new CustomErrorResponse("Status " + id + " does not exist!"));
 
         validateStatusNotDeletable(status);
 
         if (taskRepository.countByStatusId(id) > 0) {
-            throw new IllegalArgumentException("Cannot delete a status that still has tasks");
+            throw new CustomErrorResponse("Cannot delete a status that still has tasks");
         }
 
         statusRepository.delete(status);
@@ -126,18 +127,19 @@ public class StatusService {
         return ResponseEntity.ok(statusDDTO);
     }
 
+
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
         Status statusToDelete = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
+                .orElseThrow(() -> new CustomErrorResponse("Status " + id + " that you are about to delete does not exist!"));
 
         validateStatusNotDeletable(statusToDelete);
 
         Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " that you are about to transfer does not exist!"));
+                .orElseThrow(() -> new CustomErrorResponse("Status " + newId + " that you are about to transfer does not exist!"));
 
         if (id.equals(newId)) {
-            throw new IllegalArgumentException("Source and destination status cannot be the same");
+            throw new CustomErrorResponse("Source and destination status cannot be the same");
         }
 
         int deletingStatusTaskCount = taskRepository.countByStatusId(id);
@@ -156,23 +158,22 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
-        Status existingStatus = statusRepository.findById(id).orElse(null);
-        if (existingStatus != null) {
-            validateStatusNotDeletable(existingStatus);
+        Status existingStatus = statusRepository.findById(id)
+                .orElseThrow(() -> new CustomErrorResponse("Status " + id + " does not exist!"));
 
-            validateStatusName(status.getName(), id);
-            validateStatusDescription(status.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
+        validateStatusNotDeletable(existingStatus);
 
-            existingStatus.setName(status.getName().trim());
-            existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
-            if (status.getColorCode() != null) {
-                existingStatus.setColorCode(status.getColorCode());
-            }
-            Status savedStatus = statusRepository.save(existingStatus);
-            StatusUDTO statusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
-            return ResponseEntity.ok(statusUDTO);
+        validateStatusName(status.getName(), id);
+        validateStatusDescription(status.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
+
+        existingStatus.setName(status.getName().trim());
+        existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
+        if (status.getColorCode() != null) {
+            existingStatus.setColorCode(status.getColorCode());
         }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
+        Status savedStatus = statusRepository.save(existingStatus);
+        StatusUDTO statusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
+        return ResponseEntity.ok(statusUDTO);
     }
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
@@ -194,47 +195,33 @@ public class StatusService {
 
     private void validateStatusName(String statusName, Integer id) {
         if (statusName == null || statusName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Status name cannot be null or empty");
+            throw new CustomErrorResponse("Status name cannot be null or empty");
         }
 
         if (statusName.length() > MAX_STATUS_NAME_LENGTH) {
-            throw new IllegalArgumentException("Status name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+            throw new CustomErrorResponse("Status name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         }
 
         Status existingStatus = statusRepository.findByNameIgnoreCase(statusName.trim()).orElse(null);
         if (existingStatus != null && !existingStatus.getId().equals(id)) {
-            throw new DuplicateStatusException("Status name '" + statusName.trim() + "' already exists");
+            throw new CustomErrorResponse("Status name '" + statusName.trim() + "' already exists");
         }
     }
-
     private void validateStatusDescription(String description, int maxLength) {
         if (description != null && description.length() > maxLength) {
-            throw new IllegalArgumentException("Status description must be between 0 and " + maxLength + " characters");
+            throw new CustomErrorResponse("Status description must be between 0 and " + maxLength + " characters");
         }
     }
 
     private void validateStatusNotDeletable(Status status) {
         if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
-            throw new IllegalArgumentException("Status with name '" + status.getName() + "' cannot be deleted or transferred");
+            throw new CustomErrorResponse("Status with name '" + status.getName() + "' cannot be deleted or transferred");
         }
     }
 
     private void validateStatusNotTransferrable(Status status, int taskCount) {
         if (status.getGlobalSetting().isLimitMaximumTask() && taskCount > status.getGlobalSetting().getMaximumTaskLimit()) {
-            throw new StatusLimitReachedException("The destination status cannot be over the limit after transfer");
+            throw new CustomErrorResponse("The destination status cannot be over the limit after transfer");
         }
-    }
-
-    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
-        if (value != null && value.length() > maxSize) {
-            return new CustomErrorResponse(
-                    LocalDateTime.now(),
-                    HttpStatus.BAD_REQUEST.value(),
-                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                    "The field '" + field + "' must be between 0 and " + maxSize + " characters",
-                    path
-            );
-        }
-        return null;
     }
 }

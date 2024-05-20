@@ -50,7 +50,7 @@ public class TaskService {
 
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
+                .orElseThrow(() -> new CustomErrorResponse("Task " + id + " does not exist !!!!"));
     }
 
     public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses) {
@@ -102,35 +102,21 @@ public class TaskService {
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", "is required"));
+            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", new CustomErrorResponse("must not be null")));
         }
 
         // Validate field sizes
-        CustomErrorResponse response = validateFieldSize("title", taskCDTO.getTitle(), 100, null);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
-
-        response = validateFieldSize("description", taskCDTO.getDescription(), 500, null);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
-
-        response = validateFieldSize("assignees", taskCDTO.getAssignees(), 30, null);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
+        validateFieldSize("title", taskCDTO.getTitle(), 100);
+        validateFieldSize("description", taskCDTO.getDescription(), 500);
+        validateFieldSize("assignees", taskCDTO.getAssignees(), 30);
 
         // Validate status
         Status status;
         try {
             status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+                    .orElseThrow(() -> new CustomErrorResponse("Status with id " + taskCDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", "does not exist"));
+            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", new CustomErrorResponse("does not exist")));
         }
 
         Task task = modelMapper.map(taskCDTO, Task.class);
@@ -138,7 +124,7 @@ public class TaskService {
         // Check status task limit
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body("The status " + status.getName() + " will have too many tasks. Please make progress and update status of existing tasks first.");
+                    .body(new CustomErrorResponse("The status " + status.getName() + " will have too many tasks. Please make progress and update status of existing tasks first."));
         }
 
         task.setStatus(status);
@@ -152,7 +138,7 @@ public class TaskService {
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
+                .orElseThrow(() -> new CustomErrorResponse("Task " + taskId + " does not exist !!!!"));
         taskRepository.delete(task);
         TaskDDTO taskDDTO = modelMapper.map(task, TaskDDTO.class);
         return ResponseEntity.ok(taskDDTO);
@@ -164,40 +150,26 @@ public class TaskService {
 
         // Check if the title is null or empty
         if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", "is required"));
+            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", new CustomErrorResponse("must not be null")));
         }
 
         // Validate field sizes
-        CustomErrorResponse response = validateFieldSize("title", updatedTaskDTO.getTitle(), 100, "/v2/tasks/" + taskId);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
-
-        response = validateFieldSize("description", updatedTaskDTO.getDescription(), 500, "/v2/tasks/" + taskId);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
-
-        response = validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30, "/v2/tasks/" + taskId);
-        if (response != null) {
-            return ResponseEntity.status(HttpStatus.valueOf(response.getStatus()))
-                    .body(response);
-        }
+        validateFieldSize("title", updatedTaskDTO.getTitle(), 100);
+        validateFieldSize("description", updatedTaskDTO.getDescription(), 500);
+        validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30);
 
         // Validate status
         Status status;
         try {
             status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
+                    .orElseThrow(() -> new CustomErrorResponse("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", "does not exist"));
+            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", new CustomErrorResponse("does not exist")));
         }
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first.");
+                    .body(new CustomErrorResponse("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first."));
         }
 
         setDefaultValuesForTask(existingTask);
@@ -235,16 +207,9 @@ public class TaskService {
         task.setUpdatedOn(ZonedDateTime.now());
     }
 
-    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
+    private void validateFieldSize(String field, String value, int maxSize) {
         if (value != null && value.length() > maxSize) {
-            return new CustomErrorResponse(
-                    LocalDateTime.now(),
-                    HttpStatus.BAD_REQUEST.value(),
-                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                    "size must be between 0 and " + maxSize,
-                    path
-            );
+            throw new CustomErrorResponse(field + " size must be between 0 and " + maxSize);
         }
-        return null;
     }
 }
