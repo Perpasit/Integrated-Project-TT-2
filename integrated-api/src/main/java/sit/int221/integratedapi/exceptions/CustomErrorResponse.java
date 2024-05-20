@@ -1,8 +1,11 @@
 package sit.int221.integratedapi.exceptions;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import java.time.LocalDateTime;
 
-public class CustomErrorResponse {
+@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+public class CustomErrorResponse extends RuntimeException {
     private LocalDateTime timestamp;
     private int status;
     private String error;
@@ -10,6 +13,7 @@ public class CustomErrorResponse {
     private String path;
 
     public CustomErrorResponse(LocalDateTime timestamp, int status, String error, String message, String path) {
+        super(message);
         this.timestamp = timestamp;
         this.status = status;
         this.error = error;
