@@ -55,13 +55,12 @@ public class Status {
 
     @PrePersist
     protected void onCreate() {
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Bangkok"));
-        createdOn = now;
-        updatedOn = now;
+        createdOn = ZonedDateTime.now();
+        updatedOn = createdOn;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedOn = ZonedDateTime.now(ZoneId.of("Asia/Bangkok"));
+        updatedOn = ZonedDateTime.now();
     }
 }
