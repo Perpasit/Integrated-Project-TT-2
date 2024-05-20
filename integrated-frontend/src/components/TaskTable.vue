@@ -20,7 +20,6 @@ const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 const showLimitTaskModal = ref(false)
 const maxTasksPerStatus = ref(10)
-
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
@@ -61,29 +60,19 @@ const confirmDelete = (task) => {
 
 const deleteTask = async () => {
   showDeleteConfirmation.value = false
-  try {
-    await taskStore.deleteTask(selectedTaskToDelete.id)
+  const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
+  if (selectedTask.status === 404) {
+    showNotFoundModal.value = true
+  } else {
     showSuccessModal.value = true
-    selectedTaskToDelete = null
-    await fetchTasks()
-
-    setTimeout(() => {
-      closeDeleteModal()
-    }, 3000)
-  } catch (error) {
-    if (error.message.includes('does not exist')) {
-      showNotFoundModal.value = true
-      await fetchTasks()
-      setTimeout(() => {
-      closeDeleteModal()
-    }, 3000)
-    } else {
-      console.error('Error deleting task:', error)
-
-    }
   }
-}
+  selectedTaskToDelete = null
+  await fetchTasks()
 
+  setTimeout(() => {
+    closeDeleteModal()
+  }, 3000)
+}
 const fetchTasks = async () => {
   await taskStore.fetchAllTasks()
 }
@@ -92,7 +81,6 @@ function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
 }
-
 const cancelDelete = () => {
   selectedTaskToDelete = null
   showDeleteConfirmation.value = false
@@ -103,7 +91,6 @@ const editTask = (task) => {
     router.push({ name: "EditTask", params: { id: task.id } })
   }
 }
-
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   await statusStore.fetchAllStatuses()
@@ -131,7 +118,6 @@ onMounted(async () => {
     await fetchTasks()
   }
 })
-
 const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
@@ -151,7 +137,6 @@ const clearStatusFilter = () => {
 const searchKeyword = ref("")
 const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
-
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
@@ -177,7 +162,6 @@ const togglesortBy = () => {
   }
   taskStore.setSortBy(sortBy.value)
 }
-
 const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
 }
@@ -225,8 +209,6 @@ const openLimitTaskModal = async () => {
     console.error("Error fetching status data:", error);
   }
 };
-
-
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false
 }
@@ -273,7 +255,6 @@ const toggleStatusFilter = (statusName) => {
         </th>
       </thead>
     </div>
-
     <div class="overflow-visible">
       <table
         class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
@@ -360,7 +341,6 @@ const toggleStatusFilter = (statusName) => {
             </th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Title</th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
-
             <th
               class="w-1/6 px-4 py-2 text-xl font-medium cursor-pointer"
               @click="togglesortBy"
@@ -402,7 +382,6 @@ const toggleStatusFilter = (statusName) => {
                 </svg>
               </button>
             </th>
-
             <th class="w-1/8 px-4 py-2 rounded-r-lg">
               <button class="itbkk-status-setting" @click="openLimitTaskModal">
                 <svg
@@ -424,7 +403,6 @@ const toggleStatusFilter = (statusName) => {
             </th>
           </tr>
         </thead>
-
         <LimitTaskModal
   :show="showLimitTaskModal"
   :currentTaskCounts="currentTaskCountForStatus"
@@ -447,7 +425,6 @@ const toggleStatusFilter = (statusName) => {
                 {{ task?.title || "" }}
               </p>
             </td>
-
             <td class="truncate px-4 py-5 text-center itbkk-assignees">
               <span v-if="task && task.assignees">
                 {{
@@ -470,8 +447,7 @@ const toggleStatusFilter = (statusName) => {
                 {{ formattedStatus(task) }}
               </span>
             </td>
-
-            <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
+            <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                 @click="editTask(task)"
@@ -491,7 +467,6 @@ const toggleStatusFilter = (statusName) => {
                   />
                 </svg>
               </button>
-
               <button
                 class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                 @click="confirmDelete(task)"
@@ -516,7 +491,6 @@ const toggleStatusFilter = (statusName) => {
         </tbody>
       </table>
     </div>
-
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No Task
     </div>
@@ -539,19 +513,19 @@ const toggleStatusFilter = (statusName) => {
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div class="bg-white p-8 rounded-lg">
-      <p class="text-lg mb-4">
+      <p class="itbkk-message text-lg mb-4">
         Are you sure you want to delete
         <span class="text-red-500">{{ selectedTaskToDelete.title }}</span> task?
       </p>
       <div class="flex justify-end">
         <button
-          class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+        class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
           @click="cancelDelete"
         >
           Cancel
         </button>
         <button
-          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+        class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
         >
           Delete
@@ -575,7 +549,7 @@ const toggleStatusFilter = (statusName) => {
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
               @click="closeDeleteModal"
             >
-              <svg
+            <svg
                 class="h-6 w-6"
                 stroke="currentColor"
                 fill="none"
@@ -591,7 +565,7 @@ const toggleStatusFilter = (statusName) => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+            <p class="itbkk-message text-sm leading-5 text-gray-500">
               The Task is deleted successfully.
             </p>
           </div>
@@ -610,55 +584,54 @@ const toggleStatusFilter = (statusName) => {
       </div>
     </div>
   </div>
-
   <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div
-      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-    >
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="text-lg leading-6 font-medium text-red-600">
-            Task Not Found
-          </div>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-            @click="closeDeleteModal"
-          >
-            <svg
-              class="h-6 w-6"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 24 24"
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-red-600">
+              Task Not Found
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeDeleteModal"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            </svg>
-          </button>
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="itbkk-message text-sm leading-5 text-red-600">
+              The Task is not found.
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="text-sm leading-5 text-red-600 itbkk-message">
-            An error has occurred, the task does not exist.
-          </p>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeDeleteModal"
+            >
+              OK
+            </button>
+          </span>
         </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button
-            type="button"
-            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-            @click="closeDeleteModal"
-          >
-            OK
-          </button>
-        </span>
       </div>
     </div>
   </div>
-</div>
 </template>

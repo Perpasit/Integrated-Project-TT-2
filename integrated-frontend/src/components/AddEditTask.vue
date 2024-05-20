@@ -36,7 +36,7 @@ const isMaxTasksValid = computed(() => {
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true,
+    required: true
   },
   task: {
     type: Object,
@@ -45,13 +45,13 @@ const props = defineProps({
       title: "",
       description: "",
       assignees: "",
-      status: 1,
-    }),
+      status: 1
+    })
   },
   mode: {
     type: String,
-    default: "add",
-  },
+    default: "add"
+  }
 })
 
 const emit = defineEmits(["close", "taskSaved"])
@@ -60,13 +60,17 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: 1,
+  status: 1
 })
 
 const titleError = ref("")
-const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100);
-const isDescriptionTooLong = computed(() => editedTask.value?.description?.length > 500);
-const areAssigneesTooLong = computed(() => editedTask.value?.assignees?.length > 30);
+const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
+const isDescriptionTooLong = computed(
+  () => editedTask.value?.description?.length > 500
+)
+const areAssigneesTooLong = computed(
+  () => editedTask.value?.assignees?.length > 30
+)
 
 const isTitleValid = computed(() => {
   return (
@@ -81,8 +85,8 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  );
-});
+          )
+})
 
 const originalTask = ref(null)
 
@@ -124,7 +128,7 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: 1,
+    status: 1
   }
 }
 
@@ -145,7 +149,7 @@ async function saveTask() {
       assignees: editedTask.value.assignees
         ? editedTask.value.assignees.trim()
         : "",
-      status: { id: editedTask.value.status },
+        status: { id: editedTask.value.status }
     }
 
     if (props.mode === "edit") {
@@ -154,7 +158,7 @@ async function saveTask() {
         await taskStore.updateTask(taskId, updatedTask)
         await taskStore.fetchAllTasks()
         emit("taskSaved")
-        modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
+        modalStore.openSuccessModal(updatedTask.title, props.mode)
       } else {
         console.error("The task does not exist.")
       }
@@ -167,12 +171,12 @@ async function saveTask() {
         assignees: editedTask.value.assignees
           ? editedTask.value.assignees.trim()
           : "",
-        status: editedTask.value.status,
+          status: editedTask.value.status
       }
       await taskStore.addTask(newTask)
       await taskStore.fetchAllTasks()
       router.push("/")
-      modalStore.openTaskSuccessModal(newTask.title, props.mode)
+      modalStore.openSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
       if (status) {
@@ -207,10 +211,19 @@ async function parseErrorResponse(error) {
   return await error.json()
 }
 
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const parseAndFormatDate = (dateString) => {
+  const date = new Date(dateString)
+  if (isNaN(date)) {
+    return "Invalid Date"
+  }
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
+}
+
 const formatStatus = (status) => {
   return status
-    // .toUpperCase()
-    // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+  // .toUpperCase()
+  // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
 function closeModal() {
@@ -245,7 +258,7 @@ const getStatusUsage = (statusId) => {
       >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div
-            class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4"
+            class="itbkk-title text-lg leading-6 font-medium text-gray-900 mb-4"
           >
             {{ mode === "add" ? "New Task" : "Edit Task" }}
           </div>
@@ -262,8 +275,10 @@ const getStatusUsage = (statusId) => {
                 <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
                   {{ titleError }}
                 </p>
-                <p class="text-gray-500 text-sm mt-1"
-                  :class="{ 'text-red-500': isTitleTooLong }">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isTitleTooLong }"
+                >
                   {{ editedTask.title ? editedTask.title.length : 0 }}/100
                   characters
                 </p>
@@ -272,13 +287,15 @@ const getStatusUsage = (statusId) => {
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
                 <textarea
-                  rows="10"
+                  rows="14"
                   v-model="editedTask.description"
                   class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
                 ></textarea>
-                <p class="text-gray-500 text-sm mt-1"
-                :class="{ 'text-red-500': isDescriptionTooLong }">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
+                >
                   {{
                     editedTask.description ? editedTask.description.length : 0
                   }}/500 characters
@@ -295,8 +312,10 @@ const getStatusUsage = (statusId) => {
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="Unassigned"
                 ></textarea>
-                <p class="text-gray-500 text-sm mt-1"
-                :class="{ 'text-red-500': areAssigneesTooLong }">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': areAssigneesTooLong }"
+                >
                   {{
                     editedTask.assignees ? editedTask.assignees.length : 0
                   }}/30 characters
@@ -333,6 +352,27 @@ const getStatusUsage = (statusId) => {
                   <p class="text-red-500">(Limit is disabled)</p>
                 </template>
               </div>
+
+              <div v-if="mode === 'edit'">
+                <div class="mt-4">
+                  <label class="itbkk-timezone block text-sm font-bold mb-1"
+                    >TimeZone : {{ localTimeZone }}</label
+                  >
+                </div>
+                <div class="mt-4">
+                  <label class="itbkk-created-on block text-sm font-bold mb-1"
+                    >Created On :
+                    {{ parseAndFormatDate(editedTask.createdOn) }}</label
+                  >
+                </div>
+                <div class="mt-4">
+                  <label class="itbkk-updated-on block text-sm font-bold mb-1"
+                    >Updated On :
+                    {{ parseAndFormatDate(editedTask.updatedOn) }}</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900"></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -344,11 +384,16 @@ const getStatusUsage = (statusId) => {
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                 isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid,
+              'bg-gray-300 cursor-not-allowed': !isTitleValid
             }"
             @click="saveTask"
-            :disabled="!isTitleValid || isTitleTooLong || isDescriptionTooLong || areAssigneesTooLong"
->
+            :disabled="
+              !isTitleValid ||
+              isTitleTooLong ||
+              isDescriptionTooLong ||
+              areAssigneesTooLong
+            "
+          >
             {{ mode === "add" ? "Add" : "Save" }}
           </button>
           <button
@@ -373,7 +418,9 @@ const getStatusUsage = (statusId) => {
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-red-500">
+              <h3
+                class="itbkk-message text-lg leading-6 font-medium text-red-500"
+              >
                 The task does not exist.
               </h3>
             </div>
@@ -405,8 +452,8 @@ const getStatusUsage = (statusId) => {
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
               <h3 class="text-lg leading-6 font-medium text-red-500">Error</h3>
               <div class="mt-2">
-                <p class="text-sm leading-5 text-red-500">
-                  {{ errorMessage}}
+                <p class="itbkk-message text-sm leading-5 text-red-500">
+                  {{ errorMessage }}
                 </p>
               </div>
             </div>
@@ -416,10 +463,7 @@ const getStatusUsage = (statusId) => {
           <button
             type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="
-              errorMessage = '';
-              emit('close')
-            "
+            @click=";(errorMessage = ''), emit('close')"
           >
             OK
           </button>

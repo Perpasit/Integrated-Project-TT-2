@@ -33,8 +33,6 @@ onMounted(async () => {
   loading.value = false
 })
 
-
-
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString)
@@ -87,7 +85,6 @@ const formatStatus = (status) => {
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 ></textarea>
               </div>
-
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1"
                   >Description :</label
@@ -96,7 +93,7 @@ const formatStatus = (status) => {
                   v-if="editedTask.description"
                   rows="12"
                   v-model="editedTask.description"
-                  class="w-full border itbkk-description text-sm text-gray-600 mt-2 shadow-sm p-1 block sm:text-sm border-gray-300 rounded-md"
+                  class="itbkk-description w-full border text-sm text-gray-600 mt-2 shadow-sm p-1 block sm:text-sm border-gray-300 rounded-md"
                   readonly
                 >
  {{ editedTask.description }}</textarea
@@ -105,7 +102,7 @@ const formatStatus = (status) => {
                   v-else
                   rows="12"
                   v-model="editedTask.description"
-                  class="w-full border itbkk-description text-sm text-gray-400 italic mt-2 shadow-sm p-1 block sm:text-sm border-gray-300 rounded-md"
+                  class="itbkk-description w-full border text-sm text-gray-400 italic mt-2 shadow-sm p-1 block sm:text-sm border-gray-300 rounded-md"
                   placeholder="No Description Provided"
                   readonly
                 >
@@ -132,7 +129,7 @@ No Description Provided</textarea
                   type="text"
                   :value="formatStatus(status.name)"
                   readonly
-                  class="shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  class="itbkk-status shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 />
               </div>
 
@@ -158,14 +155,14 @@ No Description Provided</textarea
         </div>
         <div
           v-else
-          class="bg-white px-2 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl"
+          class="itbkk-message bg-white px-2 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl"
         >
           The task does not exist.
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
             type="button"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            class="itbkk-button w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
             @click="goBack()"
           >
             OK

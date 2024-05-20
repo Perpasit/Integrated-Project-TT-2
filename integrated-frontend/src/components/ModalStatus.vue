@@ -24,7 +24,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
 const closeModal = () => {
   router.push("/status/manage")
 }
@@ -50,7 +49,7 @@ const formatStatusName = (statusName) => {
 <template>
   <div
     v-if="!loading"
-    class="itbkk-modal-status fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
+    class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div
       class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
@@ -86,7 +85,7 @@ const formatStatusName = (statusName) => {
               placeholder="No Description Provided"
               readonly
             >
-No Description Provided</textarea
+            No Description Provided</textarea
             >
           </div>
           <div class="flex justify-between mb-4">

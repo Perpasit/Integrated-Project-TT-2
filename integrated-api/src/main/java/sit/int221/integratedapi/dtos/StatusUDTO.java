@@ -11,10 +11,8 @@ import lombok.NoArgsConstructor;
 
 public class StatusUDTO {
     private Integer id;
-
-
     private String name;
-
-
     private String description;
+    private String createdOn;
+    private String updatedOn;
 }
