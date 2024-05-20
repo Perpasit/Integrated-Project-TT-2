@@ -19,6 +19,7 @@ import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.DuplicateStatusException;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -178,10 +179,10 @@ public class StatusService {
             status.setColorCode("#000000");
         }
         if (status.getCreatedOn() == null) {
-            status.setCreatedOn(LocalDateTime.now());
+            status.setCreatedOn(ZonedDateTime.now());
         }
         if (status.getUpdatedOn() == null) {
-            status.setUpdatedOn(LocalDateTime.now());
+            status.setUpdatedOn(ZonedDateTime.now());
         }
         if (status.getDescription() == null || status.getDescription().isEmpty()) {
             status.setDescription(null);

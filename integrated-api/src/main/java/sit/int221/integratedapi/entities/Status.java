@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Entity
 @Table(name = "statuses")
@@ -33,10 +35,10 @@ public class Status {
     private String colorCode;
 
     @Column(name = "createdOn", nullable = false)
-    private LocalDateTime createdOn;
+    private ZonedDateTime createdOn;
 
     @Column(name = "updatedOn", nullable = false)
-    private LocalDateTime updatedOn;
+    private ZonedDateTime updatedOn;
 
     @ManyToOne
     @JoinColumn(name = "global_settings_id", nullable = false)
@@ -52,12 +54,12 @@ public class Status {
 
     @PrePersist
     protected void onCreate() {
-        createdOn = LocalDateTime.now();
-        updatedOn = LocalDateTime.now();
+        createdOn = ZonedDateTime.now();
+        updatedOn = ZonedDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedOn = LocalDateTime.now();
+        updatedOn = ZonedDateTime.now();
     }
 }
