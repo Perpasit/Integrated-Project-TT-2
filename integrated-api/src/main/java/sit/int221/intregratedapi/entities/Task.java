@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import java.time.ZonedDateTime;
 @Entity
 @Table(name = "tasks")
 @Getter
@@ -34,19 +35,19 @@ public class Task {
     private Status status;
 
     @Column(name = "createdOn", nullable = false)
-    private LocalDateTime createdOn;
+    private ZonedDateTime createdOn;
 
     @Column(name = "updatedOn", nullable = false)
-    private LocalDateTime updatedOn;
+    private ZonedDateTime updatedOn;
 
     @PrePersist
     protected void onCreate() {
-        createdOn = LocalDateTime.now();
-        updatedOn = LocalDateTime.now();
+        createdOn = ZonedDateTime.now();
+        updatedOn = ZonedDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedOn = LocalDateTime.now();
+        updatedOn = ZonedDateTime.now();
     }
 }

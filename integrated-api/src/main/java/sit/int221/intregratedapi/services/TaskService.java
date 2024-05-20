@@ -21,6 +21,7 @@ import sit.int221.intregratedapi.repositories.TaskRepository;
 import sit.int221.intregratedapi.utils.ListMapper;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -169,7 +170,7 @@ public class TaskService {
         existingTask.setTitle(updatedTaskDTO.getTitle());
         existingTask.setDescription(updatedTaskDTO.getDescription());
         existingTask.setAssignees(updatedTaskDTO.getAssignees());
-        existingTask.setUpdatedOn(LocalDateTime.now());
+        existingTask.setUpdatedOn(ZonedDateTime.now());
 
         Task updatedTask = taskRepository.save(existingTask);
         TaskUDTO updatedTaskCDTO = modelMapper.map(updatedTask, TaskUDTO.class);
@@ -193,10 +194,10 @@ public class TaskService {
         task.setAssignees((task.getAssignees() == null || task.getAssignees().trim().isEmpty()) ? null : task.getAssignees().trim());
 
         if (task.getCreatedOn() == null) {
-            task.setCreatedOn(LocalDateTime.now());
+            task.setCreatedOn(ZonedDateTime.now());
         }
 
-        task.setUpdatedOn(LocalDateTime.now());
+        task.setUpdatedOn(ZonedDateTime.now());
     }
 
     private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
