@@ -59,34 +59,33 @@ watch(
 
 onMounted(async () => {
   try {
-    await globalSettingStore.fetchGlobalSetting("General")
-    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting
-    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask
-    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit
+    await globalSettingStore.fetchGlobalSetting("General");
+    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting;
+    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask;
+    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit;
 
-    isLimitEnabled.value =
-      limitMaximumTask || getIsLimitEnabledFromLocalStorage()
-    maxTasks.value = maximumTaskLimit || 10
-    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value)
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
+    isLimitEnabled.value = limitMaximumTask;
+    maxTasks.value = maximumTaskLimit || 10;
+    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value);
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value);
 
- 
-    
     watch(
       () => currentGlobalSetting?.limitMaximumTask,
       (newValue) => {
-        isLimitEnabled.value = newValue
-        globalSettingStore.setIsLimitEnabled(newValue)
-        saveIsLimitEnabledToLocalStorage(newValue)
+        isLimitEnabled.value = newValue;
+        globalSettingStore.setIsLimitEnabled(newValue);
+        saveIsLimitEnabledToLocalStorage(newValue);
       }
-    )
+    );
   } catch (error) {
-    console.error("Error fetching global setting:", error)
+    console.error("Error fetching global setting:", error);
   }
-})
+});
 
 function closeModal() {
-  emit("close")
+  isLimitEnabled.value = globalSettingStore.getCurrentGlobalSetting?.limitMaximumTask;
+  maxTasks.value = globalSettingStore.getCurrentGlobalSetting?.maximumTaskLimit || 10;
+  emit("close");
 }
 
 const confirmationMessage = ref("");
@@ -147,6 +146,10 @@ const isTaskLimitReached = computed(() => {
 
   return limitReachedStatusesWithCounts.value.length > 0
 })
+
+const closeConfirmationModal=() => {
+    showConfirmationModal.value = false
+}
 
 </script>
 
@@ -252,7 +255,7 @@ const isTaskLimitReached = computed(() => {
           <div class="text-lg leading-6 font-medium text-gray-900">
             Limit Updated
           </div>
-          <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150" @click="showConfirmation = false">
+          <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150" @click="closeConfirmationModal()">
             <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -266,7 +269,7 @@ const isTaskLimitReached = computed(() => {
       </div>
       <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
         <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3" @click="showConfirmation = false">
+          <button type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3" @click="closeConfirmationModal()">
             OK
           </button>
         </span>

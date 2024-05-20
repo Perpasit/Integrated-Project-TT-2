@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>sit.int221</groupId>
-    <artifactId>intregrated-api</artifactId>
+    <artifactId>integrated-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>intregrated-api</name>
-    <description>intregrated-api</description>
+    <name>integrated-api</name>
+    <description>integrated-api</description>
     <properties>
         <java.version>17</java.version>
     </properties>

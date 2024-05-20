@@ -53,9 +53,9 @@ const goBack = () => {
 const formatStatus = (status) => {
   if (!status) return ''
   return status
-    .toUpperCase()
+    // .toUpperCase()
     // .replace(/_/g, " ")
-    .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+    // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 </script>
 

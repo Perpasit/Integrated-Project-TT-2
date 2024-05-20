@@ -164,9 +164,9 @@ const cancelDeleteTransfer = () => {
 const formatStatus = (status) => {
   return (
     status
-      .toUpperCase()
+      // .toUpperCase()
       // .replace(/_/g, " ")
-      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+      // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
   )
 }
 
