@@ -1,4 +1,4 @@
-//package sit.int221.intregratedapi.entities;
+//package sit.int221.integratedapi.entities;
 //
 //import com.fasterxml.jackson.annotation.JsonCreator;
 //import com.fasterxml.jackson.annotation.JsonValue;

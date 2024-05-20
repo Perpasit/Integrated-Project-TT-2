@@ -243,7 +243,7 @@ const toggleStatusFilter = (statusName) => {
       <thead class="absolute mt-2 ">
         <th class="w-full text-xl font-medium">
           <div class="flex items-center text-white">
-            <span v-if="selectedStatuses.length > 0" class="mr-2"
+            <span v-if="selectedStatuses.length > 0" class="mr-2 ml-36"
               >Filter :
             </span>
             <div class="flex">
@@ -252,8 +252,6 @@ const toggleStatusFilter = (statusName) => {
                 :key="index"
                 class=" transition-all duration-200 ease-in-out ml-4  text-white font-semibold text-sm  py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100  rounded"
                 @click="toggleStatusFilter(status)"
-
-
               >
               
                 {{ status }}

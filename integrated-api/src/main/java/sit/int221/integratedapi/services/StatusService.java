@@ -79,17 +79,21 @@ public class StatusService {
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
 
-            validateStatusName(statusCDTO.getName());
+            validateStatusName(statusCDTO.getName(), existingStatus.getId());
             validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
 
             existingStatus.setName(statusCDTO.getName().trim());
             existingStatus.setDescription(statusCDTO.getDescription() != null ? statusCDTO.getDescription().trim() : null);
+            if (statusCDTO.getColorCode() != null) {
+                existingStatus.setColorCode(statusCDTO.getColorCode());
+            }
+
             Status updatedStatus = statusRepository.save(existingStatus);
             StatusCDTO updatedStatusCDTO = modelMapper.map(updatedStatus, StatusCDTO.class);
             return ResponseEntity.ok(updatedStatusCDTO);
         } else {
             // Create a new status
-            validateStatusName(statusCDTO.getName());
+            validateStatusName(statusCDTO.getName(), null);
             validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
 
             Status status = modelMapper.map(statusCDTO, Status.class);
@@ -100,7 +104,6 @@ public class StatusService {
 
             setDefaultValuesForStatus(status, "General");
             Status createdStatus = statusRepository.save(status);
-
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
         }
@@ -156,7 +159,7 @@ public class StatusService {
         if (existingStatus != null) {
             validateStatusNotDeletable(existingStatus);
 
-            validateStatusName(status.getName());
+            validateStatusName(status.getName(), id);
             validateStatusDescription(status.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
 
             existingStatus.setName(status.getName().trim());
@@ -170,7 +173,6 @@ public class StatusService {
         }
         throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
-
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
             status.setColorCode("#000000");
@@ -189,7 +191,7 @@ public class StatusService {
         status.setGlobalSetting(globalSetting);
     }
 
-    private void validateStatusName(String statusName) {
+    private void validateStatusName(String statusName, Integer id) {
         if (statusName == null || statusName.trim().isEmpty()) {
             throw new IllegalArgumentException("Status name cannot be null or empty");
         }
@@ -198,7 +200,8 @@ public class StatusService {
             throw new IllegalArgumentException("Status name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         }
 
-        if (statusRepository.existsByNameIgnoreCase(statusName.trim())) {
+        Status existingStatus = statusRepository.findByNameIgnoreCase(statusName.trim()).orElse(null);
+        if (existingStatus != null && !existingStatus.getId().equals(id)) {
             throw new DuplicateStatusException("Status name '" + statusName.trim() + "' already exists");
         }
     }
