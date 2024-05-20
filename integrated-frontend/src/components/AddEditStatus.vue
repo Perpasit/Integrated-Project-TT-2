@@ -144,11 +144,11 @@ async function saveStatus() {
         await statusStore.updateStatus(statusId, updatedStatus)
         await statusStore.fetchAllStatuses()
         emit("statusSaved")
-        modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
+        modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
         // Set a timeout to close the success modal after 3 seconds
         successModalTimeout.value = setTimeout(() => {
-          modalStore.closeSuccessModal()
+          modalStore.closeStatusSuccessModal()
         }, 3000)
       } else {
         console.error("The status does not exist.")
@@ -156,11 +156,11 @@ async function saveStatus() {
     } else {
       await statusStore.createStatus(updatedStatus)
       await statusStore.fetchAllStatuses()
-      modalStore.openSuccessModal(updatedStatus.name, props.mode, "status")
+      modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
       successModalTimeout.value = setTimeout(() => {
-        modalStore.closeSuccessModal()
+        modalStore.closeStatusSuccessModal()
       }, 3000)
     }
     router.push("/status/manage")
