@@ -154,7 +154,7 @@ const closeConfirmationModal=() => {
 </script>
 
 <template>
-  <div v-if="show" class="fixed z-10 inset-0 overflow-y-auto">
+  <div v-if="show" class="itbkk-modal-setting fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
@@ -166,7 +166,7 @@ const closeConfirmationModal=() => {
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
               <h3
-                class="itbkk-modal-setting text-lg leading-6 font-medium text-gray-900"
+                class="text-lg leading-6 font-medium text-gray-900"
               >
                 Status Settings
               </h3>
@@ -177,7 +177,7 @@ const closeConfirmationModal=() => {
                   >
                     <input
                       type="checkbox"
-                      class="sr-only peer"
+                      class="itbkk-limit-task sr-only peer"
                       :checked="isLimitEnabled"
                       @change="toggleLimitEnabled"
                     />
@@ -204,7 +204,7 @@ const closeConfirmationModal=() => {
                     statuses).
                   </p>
                   <br>
-                  <p class="itbkk-limit-task text-sm">The Kanban board will limit the number of tasks in each status to {{ maxTasks }}</p>
+                  <p class="text-sm">The Kanban board will limit the number of tasks in each status to {{ maxTasks }}</p>
                 </div>
                 <div
                   v-if="isTaskLimitReached"

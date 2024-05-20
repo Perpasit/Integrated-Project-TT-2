@@ -293,7 +293,7 @@ const toggleStatusFilter = (statusName) => {
                           type="text"
                           v-model="searchKeyword"
                           placeholder="Search keywords..."
-                          class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                          class="itbkk-status-filter w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         />
                       </div>
                       <div class="px-4 py-2">
@@ -309,7 +309,7 @@ const toggleStatusFilter = (statusName) => {
                             type="checkbox"
                             v-model="selectedStatuses"
                             :value="status.name"
-                            class="mr-2"
+                            class="itbkk-filter-item mr-2"
                           />
                           {{ status.name }} ({{ status.noOfTasks || 0 }})
                         </label>
@@ -329,7 +329,7 @@ const toggleStatusFilter = (statusName) => {
                         </button>
                         <button
                           @click="clearStatusFilter"
-                          class="text-sm text-gray-600 hover:text-gray-800"
+                          class="itbkk-filter-clear text-sm text-gray-600 hover:text-gray-800"
                         >
                           Clear all
                         </button>
@@ -346,7 +346,7 @@ const toggleStatusFilter = (statusName) => {
               @click="togglesortBy"
             >
               Status
-              <button class="ml-2 itbkk-status-sort">
+              <button class="itbkk-status-sort ml-2">
                 <svg
                   v-if="sortBy === 'asc'"
                   xmlns="http://www.w3.org/2000/svg"
@@ -414,18 +414,18 @@ const toggleStatusFilter = (statusName) => {
           <tr
             v-for="(task, index) in tasks"
             :key="index"
-            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
+            class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out"
           >
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
               <p
-                class="truncate cursor-pointer itbkk-title"
+                class="itbkk-title truncate cursor-pointer"
                 @click="showTaskDetail(task)"
               >
                 {{ task?.title || "" }}
               </p>
             </td>
-            <td class="truncate px-4 py-5 text-center itbkk-assignees">
+            <td class="itbkk-assignees truncate px-4 py-5 text-center">
               <span v-if="task && task.assignees">
                 {{
                   task.assignees
@@ -434,14 +434,14 @@ const toggleStatusFilter = (statusName) => {
                     .join(", ")
                 }}
               </span>
-              <span v-else class="text-gray-400 italic itbkk-assignees"
+              <span v-else class="itbkk-assignees text-gray-400 italic"
                 >Unassigned</span
               >
             </td>
 
             <td class="px-5 py-2 text-center">
               <span
-                class="truncate inline-block px-2 py-1 rounded-full text-center itbkk-status w-32 h-10"
+                class="itbkk-status truncate inline-block px-2 py-1 rounded-full text-center w-32 h-10"
                 :style="statusStore.getStatusClass(task.status)"
               >
                 {{ formattedStatus(task) }}
