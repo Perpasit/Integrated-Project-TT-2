@@ -64,13 +64,15 @@ export const useTaskStore = defineStore("task", {
     },
     async deleteTask(id) {
       try {
-        const deleteTask = await deleteItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-        )
+        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`)
+        if (response.status === 404) {
+          throw new Error()
+        }
         this.tasks = this.tasks.filter((task) => task.id !== id)
-        return deleteTask
+        return response
       } catch (error) {
         console.error("Error deleting task:", error)
+        throw error
       }
     },
     setSortBy(sortBy) {
