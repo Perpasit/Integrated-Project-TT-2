@@ -12,6 +12,7 @@ import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDDTO;
 import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
+import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.*;
@@ -19,7 +20,6 @@ import sit.int221.integratedapi.repositories.StatusRepository;
 import sit.int221.integratedapi.repositories.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,12 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses) {
+    public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses, List<String> allParams) {
+        // ตรวจสอบว่า filterStatuses มีค่าและมี # หรือไม่
+        if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
+            return ResponseEntity.ok(new ArrayList<>()); // ส่งคืน []
+        }
+
         Sort sort;
         if (sortBy != null && sortBy.equalsIgnoreCase("asc")) {
             sort = Sort.by(Sort.Direction.ASC, "status.name");
@@ -64,9 +69,8 @@ public class TaskService {
 
         List<Task> tasks;
         if (filterStatuses != null && !filterStatuses.isEmpty()) {
-            List<Integer> statusIds = extractStatusIds(filterStatuses);
             List<String> statusNames = extractStatusNames(filterStatuses);
-            tasks = taskRepository.findByStatusIdInOrStatusNameIn(statusIds, statusNames, sort);
+            tasks = taskRepository.findByStatusNameIn(statusNames, sort);
         } else {
             tasks = taskRepository.findAll(sort);
         }
@@ -99,27 +103,33 @@ public class TaskService {
 
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
+        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+
         // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-            ex.addError("title", "must not be null");
-            throw ex;
+            validationErrors.addError("title", "must not be null");
         }
 
         // Validate field sizes
-        validateFieldSize("title", taskCDTO.getTitle(), 100);
-        validateFieldSize("description", taskCDTO.getDescription(), 500);
-        validateFieldSize("assignees", taskCDTO.getAssignees(), 30);
+        validateFieldSize("title", taskCDTO.getTitle(), 100, validationErrors);
+        validateFieldSize("description", taskCDTO.getDescription(), 500, validationErrors);
+        validateFieldSize("assignees", taskCDTO.getAssignees(), 30, validationErrors);
+
+        // If there are any validation errors, throw the exception
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
+        }
 
         // Validate status
-        Status status;
-        try {
-            status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
-        } catch (NoSuchElementException e) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-            ex.addError("status", "does not exist");
-            throw ex;
+        Status status = getDefaultStatus();
+        if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
+            try {
+                status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
+                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+            } catch (NoSuchElementException e) {
+                validationErrors.addError("status", "does not exist");
+                throw validationErrors;
+            }
         }
 
         // Check if the status has reached its maximum task limit
@@ -128,29 +138,27 @@ public class TaskService {
         }
 
         Task task = new Task();
-        task.setTitle(taskCDTO.getTitle());
-        task.setDescription(taskCDTO.getDescription());
-        task.setAssignees(taskCDTO.getAssignees());
+        task.setTitle(taskCDTO.getTitle().trim());
+        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
+        task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
         task.setStatus(status);
-        task.setCreatedOn(ZonedDateTime.now());
-        task.setUpdatedOn(ZonedDateTime.now());
-
+        setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
 
 
-
-    private void validateFieldSize(String field, String value, int maxSize) {
+    private void validateFieldSize(String field, String value, int maxSize, ValidationErrorException validationErrors) {
         if (value != null && value.length() > maxSize) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-            ex.addError(field, "size must be between 0 and " + maxSize);
-            throw ex;
+            validationErrors.addError(field, "size must be between 0 and " + maxSize);
+        } else if (value != null && value.length() == 0) {
+            // Only add the "must not be null" error for the "title" field
+            if (field.equalsIgnoreCase("title")) {
+                validationErrors.addError(field, "must not be null");
+            }
         }
     }
-
-
 
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
@@ -165,16 +173,21 @@ public class TaskService {
     public ResponseEntity<Object> updateTask(Integer taskId, TaskUDTO updatedTaskDTO) {
         Task existingTask = getTaskById(taskId);
 
+        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+
         // Check if the title is null or empty
         if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-            ex.addError("title", "must not be null");
-            throw ex;
+            validationErrors.addError("title", "must not be null");
         }
 
-        validateFieldSize("title", updatedTaskDTO.getTitle(), 100);
-        validateFieldSize("description", updatedTaskDTO.getDescription(), 500);
-        validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30);
+        validateFieldSize("title", updatedTaskDTO.getTitle(), 100, validationErrors);
+        validateFieldSize("description", updatedTaskDTO.getDescription(), 500, validationErrors);
+        validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30, validationErrors);
+
+        // If there are any validation errors, throw the exception
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
+        }
 
         // Validate status
         Status status;
@@ -182,15 +195,16 @@ public class TaskService {
             status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-            ex.addError("status", "does not exist");
-            throw ex;
+            validationErrors.addError("status", "does not exist");
+            throw validationErrors;
+        }if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+            validationErrors.addError("", "The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
+            throw validationErrors;
         }
 
-        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            ValidationErrorException ex = new ValidationErrorException(HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed");
-            ex.addError("", "The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
-            throw ex;
+        // If there are any validation errors, throw the exception
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
         }
 
         setDefaultValuesForTask(existingTask);
@@ -205,31 +219,23 @@ public class TaskService {
         return ResponseEntity.ok(updatedTaskCDTO);
     }
 
-
     public TaskRDTO getTaskDetailsById(Integer id) {
         Task task = getTaskById(id);
         return modelMapper.map(task, TaskRDTO.class);
     }
 
     private void setDefaultValuesForTask(Task task) {
-        if (task.getTitle() == null) {
-            throw new IllegalArgumentException("Task title is required");
-        } else {
-            task.setTitle(task.getTitle().trim());
-        }
-
-        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
-
-        task.setAssignees((task.getAssignees() == null || task.getAssignees().trim().isEmpty()) ? null : task.getAssignees().trim());
-
+        task.setTitle(task.getTitle().trim());
+        task.setDescription(task.getDescription() != null && !task.getDescription().trim().isEmpty() ? task.getDescription().trim() : null);
+        task.setAssignees(task.getAssignees() != null && !task.getAssignees().trim().isEmpty() ? task.getAssignees().trim() : null);
         if (task.getCreatedOn() == null) {
             task.setCreatedOn(ZonedDateTime.now());
         }
-
         task.setUpdatedOn(ZonedDateTime.now());
     }
 
-
-
-
+    private Status getDefaultStatus() {
+        return statusRepository.findByNameIgnoreCase("no status")
+                .orElseThrow(() -> new IllegalStateException("Default 'no status' not found in the database"));
+    }
 }

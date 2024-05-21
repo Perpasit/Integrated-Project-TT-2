@@ -5,7 +5,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class InvalidTransferStatusException extends RuntimeException {
-    public InvalidTransferStatusException(String message) {
+    private String additionalMessage;
+
+    public InvalidTransferStatusException(String message, String additionalMessage) {
         super(message);
+        this.additionalMessage = additionalMessage;
     }
+
+
 }
