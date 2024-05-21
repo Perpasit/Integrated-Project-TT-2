@@ -138,35 +138,44 @@ async function saveStatus() {
       colorCode: editedStatus.value.colorCode
     }
 
-if (props.mode === "edit") {
-  const statusId = router.currentRoute.value.params.id
-  if (statusId) {
-    await statusStore.updateStatus(statusId, updatedStatus)
-    await statusStore.fetchAllStatuses()
-    emit("statusSaved")
-    modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+    if (props.mode === "edit") {
+      const statusId = router.currentRoute.value.params.id
+      if (statusId) {
+        await statusStore.updateStatus(statusId, updatedStatus)
+        await statusStore.fetchAllStatuses()
+        emit("statusSaved")
+        modalStore.openStatusSuccessModal(
+          updatedStatus.name,
+          props.mode,
+          "status"
+        )
 
-    // Set a timeout to close the success modal after 3 seconds
-    successModalTimeout.value = setTimeout(() => {
-      modalStore.closeStatusSuccessModal()
-    }, 3000)
-  } else {
-    console.error("The status does not exist.")
+        // Set a timeout to close the success modal after 3 seconds
+        successModalTimeout.value = setTimeout(() => {
+          modalStore.closeStatusSuccessModal()
+        }, 3000)
+      } else {
+        console.error("The status does not exist.")
+      }
+    } else {
+      await statusStore.createStatus(updatedStatus)
+      await statusStore.fetchAllStatuses()
+      modalStore.openStatusSuccessModal(
+        updatedStatus.name,
+        props.mode,
+        "status"
+      )
+
+      // Set a timeout to close the success modal after 3 seconds
+      successModalTimeout.value = setTimeout(() => {
+        modalStore.closeStatusSuccessModal()
+      }, 3000)
+    }
+
+    router.push("/status/manage")
+  } catch (error) {
+    console.error("Error saving status:", error)
   }
-} else {
-  await statusStore.createStatus(updatedStatus)
-  await statusStore.fetchAllStatuses()
-  modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
-
-  // Set a timeout to close the success modal after 3 seconds
-  successModalTimeout.value = setTimeout(() => {
-    modalStore.closeStatusSuccessModal()
-  }, 3000)
-}
-router.push("/status/manage")
-} catch (error) {
-console.error("Error saving status:", error)
-}
 }
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -208,7 +217,7 @@ function closeModal() {
                   rows="2"
                   v-model="editedStatus.name"
                   class="itbkk-status-name shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  ></textarea>
+                ></textarea>
                 <p v-if="!editedStatus.name" class="text-red-500 text-sm mt-1">
                   Name is required.
                 </p>
@@ -236,7 +245,8 @@ function closeModal() {
                   placeholder="No Description Provided"
                 ></textarea>
                 <p
-                class="itbkk-status-description text-gray-500 text-sm mt-1":class="{ 'text-red-500': isDescriptionTooLong }"
+                  class="itbkk-status-description text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
                 >
                   {{
                     editedStatus.description
@@ -250,7 +260,8 @@ function closeModal() {
                 <label class="block text-sm font-bold mt-1">Color Code:</label>
                 <input
                   type="color"
-                  v-model="editedStatus.colorCode"class="itbkk-status-colorCode shadow-sm px-1 ml-4 p- block border border-gray-300 rounded-md h-8 w-20"
+                  v-model="editedStatus.colorCode"
+                  class="itbkk-status-colorCode shadow-sm px-1 ml-4 p- block border border-gray-300 rounded-md h-8 w-20"
                 />
               </div>
 
@@ -284,11 +295,11 @@ function closeModal() {
             class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-              isNameValid &&
+                isNameValid &&
                 !isDuplicateName &&
                 !isNameTooLong &&
                 !isDescriptionTooLong,
-                'bg-gray-300 cursor-not-allowed':
+              'bg-gray-300 cursor-not-allowed':
                 !isNameValid ||
                 isDuplicateName ||
                 isNameTooLong ||
@@ -349,5 +360,3 @@ function closeModal() {
 </template>
 
 <style scoped></style>
-
-          
