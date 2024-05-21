@@ -225,16 +225,16 @@ public class StatusService {
         }
     }
 
-    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
-        if (value != null && value.length() > maxSize) {
-            return new CustomErrorResponse(
-                    LocalDateTime.now(),
-                    HttpStatus.BAD_REQUEST.value(),
-                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                    "The field '" + field + "' must be between 0 and " + maxSize + " characters",
-                    path
-            );
-        }
-        return null;
-    }
+//    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
+//        if (value != null && value.length() > maxSize) {
+//            return new CustomErrorResponse(
+//                    LocalDateTime.now(),
+//                    HttpStatus.BAD_REQUEST.value(),
+//                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
+//                    "The field '" + field + "' must be between 0 and " + maxSize + " characters",
+//                    path
+//            );
+//        }
+//        return null;
+//    }
 }
