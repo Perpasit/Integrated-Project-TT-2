@@ -136,7 +136,14 @@ public class StatusService {
                 throw new NotAllowedOperationException(status.getName() + " cannot be deleted.");
             }
 
-            // Proceed with the deletion logic
+            // Check if there are tasks associated with this status
+            int taskCount = taskRepository.countByStatusId(id);
+            if (taskCount > 0) {
+                // Send to transfer if tasks are associated with this status
+                throw new TransferTasksRequiredException("destination status for task transfer not specified.");
+            }
+
+            // Proceed with the deletion logic if no tasks are associated
             statusRepository.delete(status);
             StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
             return ResponseEntity.ok(statusDDTO);
@@ -147,34 +154,43 @@ public class StatusService {
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
         Status statusToDelete = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
 
-        // Check if the status to delete is "No Status" or "Done"
         validateStatusNotDeletable(statusToDelete);
 
+        // Retrieve the new status to transfer tasks to
         Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " that you are about to transfer does not exist!"));
+                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " does not exist!"));
 
-        if (id.equals(newId)) {
-            throw new IllegalArgumentException("Source and destination status cannot be the same");
+        // Check if the source and destination status are the same
+        if (statusToDelete.equals(newStatus)) {
+            throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status");
         }
 
+
+        // Check if there are tasks associated with the status to delete
         int deletingStatusTaskCount = taskRepository.countByStatusId(id);
-        validateStatusNotTransferrable(newStatus, deletingStatusTaskCount + taskRepository.countByStatusId(newId));
 
-        List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
-        for (Task task : tasksToUpdate) {
-            task.setStatus(newStatus);
+        // Check if the destination status is transferrable
+        if (deletingStatusTaskCount > 0) {
+            // Transfer tasks to the new status before deleting
+            List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
+            for (Task task : tasksToUpdate) {
+                task.setStatus(newStatus);
+            }
+
+            // Check if the destination status is over the task limit
+            validateStatusNotTransferrable(newStatus, deletingStatusTaskCount + taskRepository.countByStatusId(newId));
         }
 
+        // Delete the status
         statusRepository.delete(statusToDelete);
 
-        StatusTFDDTO statusTFDDTO = ListMapper.mapObject(statusToDelete, StatusTFDDTO.class);
+        // Map the deleted status to DTO for response
+        StatusTFDDTO statusTFDDTO = modelMapper.map(statusToDelete, StatusTFDDTO.class);
         return ResponseEntity.ok(statusTFDDTO);
     }
-
-
-
+    
     @Transactional
     public ResponseEntity<Object> updateStatus(Integer id, StatusUDTO statusUDTO) {
 
@@ -213,11 +229,6 @@ public class StatusService {
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
-
-
-
-
-
 
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
@@ -266,8 +277,8 @@ public class StatusService {
     }
 
     private void validateStatusNotTransferrable(Status status, int taskCount) {
-        if (status.getGlobalSetting().isLimitMaximumTask() && taskCount > status.getGlobalSetting().getMaximumTaskLimit()) {
-            throw new StatusLimitReachedException("The destination status cannot be over the limit after transfer");
+        if (status != null && status.getGlobalSetting().isLimitMaximumTask() && taskCount > status.getGlobalSetting().getMaximumTaskLimit()) {
+            throw new TransferTasksRequiredException("The destination status cannot be over the limit after transfer");
         }
     }
 
