@@ -309,15 +309,17 @@ const toggleStatusFilter = (statusName) => {
                         <label
                           v-for="(status, index) in filteredStatuses"
                           :key="status.name"
-                          class="flex items-center text-sm text-gray-700 mt-1"
+                          class="flex items-center text-sm m-0 text-gray-700 mt-1  break-all"
+                          
                         >
                           <input
                             type="checkbox"
                             v-model="selectedStatuses"
                             :value="status.name"
-                            class="itbkk-filter-item mr-2"
+                            class="itbkk-filter-item mr-2 "
                           />
-                          {{ status.name }} ({{ status.noOfTasks || 0 }})
+                          <!-- {{ status.name }} ({{ status.noOfTasks || 0 }}) -->
+                          <span class="break-words whitespace-normal text-left">{{ status.name }} ({{ status.noOfTasks || 0 }})</span>
                         </label>
                       </div>
 
