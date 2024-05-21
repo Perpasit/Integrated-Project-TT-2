@@ -75,8 +75,8 @@ public class TaskController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO task) {
-        return taskService.createNewTask(task);
+    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO taskCDTO) {
+        return taskService.createNewTask(taskCDTO);
     }
 
     @DeleteMapping("/{id}")

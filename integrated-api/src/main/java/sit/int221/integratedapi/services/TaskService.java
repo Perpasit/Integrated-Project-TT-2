@@ -12,6 +12,7 @@ import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDDTO;
 import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
+import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.*;
@@ -22,6 +23,7 @@ import sit.int221.integratedapi.utils.ListMapper;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @NoArgsConstructor
@@ -119,13 +121,15 @@ public class TaskService {
         }
 
         // Validate status
-        Status status;
-        try {
-            status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
-        } catch (NoSuchElementException e) {
-            validationErrors.addError("status", "does not exist");
-            throw validationErrors;
+        Status status = getDefaultStatus();
+        if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
+            try {
+                status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
+                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+            } catch (NoSuchElementException e) {
+                validationErrors.addError("status", "does not exist");
+                throw validationErrors;
+            }
         }
 
         // Check if the status has reached its maximum task limit
@@ -134,23 +138,25 @@ public class TaskService {
         }
 
         Task task = new Task();
-        task.setTitle(taskCDTO.getTitle());
-        task.setDescription(taskCDTO.getDescription());
-        task.setAssignees(taskCDTO.getAssignees());
+        task.setTitle(taskCDTO.getTitle().trim());
+        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
+        task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
         task.setStatus(status);
-        task.setCreatedOn(ZonedDateTime.now());
-        task.setUpdatedOn(ZonedDateTime.now());
-
+        setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
+
 
     private void validateFieldSize(String field, String value, int maxSize, ValidationErrorException validationErrors) {
         if (value != null && value.length() > maxSize) {
             validationErrors.addError(field, "size must be between 0 and " + maxSize);
         } else if (value != null && value.length() == 0) {
-            validationErrors.addError(field, "must not be null");
+            // Only add the "must not be null" error for the "title" field
+            if (field.equalsIgnoreCase("title")) {
+                validationErrors.addError(field, "must not be null");
+            }
         }
     }
 
@@ -219,20 +225,17 @@ public class TaskService {
     }
 
     private void setDefaultValuesForTask(Task task) {
-        if (task.getTitle() == null) {
-            throw new IllegalArgumentException("Task title is required");
-        } else {
-            task.setTitle(task.getTitle().trim());
-        }
-
-        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
-
-        task.setAssignees((task.getAssignees() == null || task.getAssignees().trim().isEmpty()) ? null : task.getAssignees().trim());
-
+        task.setTitle(task.getTitle().trim());
+        task.setDescription(task.getDescription() != null && !task.getDescription().trim().isEmpty() ? task.getDescription().trim() : null);
+        task.setAssignees(task.getAssignees() != null && !task.getAssignees().trim().isEmpty() ? task.getAssignees().trim() : null);
         if (task.getCreatedOn() == null) {
             task.setCreatedOn(ZonedDateTime.now());
         }
-
         task.setUpdatedOn(ZonedDateTime.now());
+    }
+
+    private Status getDefaultStatus() {
+        return statusRepository.findByNameIgnoreCase("no status")
+                .orElseThrow(() -> new IllegalStateException("Default 'no status' not found in the database"));
     }
 }

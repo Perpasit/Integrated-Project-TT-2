@@ -23,4 +23,11 @@ public class GlobalSetting {
 
     @Column(name = "limitMaximumTask", nullable = false)
     private boolean limitMaximumTask;
+    public GlobalSetting(String name, Integer maximumTaskLimit, boolean limitMaximumTask) {
+        this.name = name;
+        this.maximumTaskLimit = maximumTaskLimit;
+        this.limitMaximumTask = limitMaximumTask;
+    }
+
+
 }
