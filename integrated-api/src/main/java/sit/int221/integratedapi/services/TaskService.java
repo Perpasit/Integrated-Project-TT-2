@@ -14,8 +14,7 @@ import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
-import sit.int221.integratedapi.exceptions.CustomErrorResponse;
-import sit.int221.integratedapi.exceptions.ItemNotFoundException;
+import sit.int221.integratedapi.exceptions.*;
 import sit.int221.integratedapi.repositories.StatusRepository;
 import sit.int221.integratedapi.repositories.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
@@ -50,7 +49,7 @@ public class TaskService {
 
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> new CustomErrorResponse("Task " + id + " does not exist !!!!"));
+                .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
     public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses) {
@@ -102,7 +101,9 @@ public class TaskService {
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", new CustomErrorResponse("must not be null")));
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+            ex.addError("title", "must not be null");
+            throw ex;
         }
 
         // Validate field sizes
@@ -114,31 +115,47 @@ public class TaskService {
         Status status;
         try {
             status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-                    .orElseThrow(() -> new CustomErrorResponse("Status with id " + taskCDTO.getStatus() + " does not exist!"));
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", new CustomErrorResponse("does not exist")));
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+            ex.addError("status", "does not exist");
+            throw ex;
         }
 
-        Task task = modelMapper.map(taskCDTO, Task.class);
-
-        // Check status task limit
+        // Check if the status has reached its maximum task limit
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(new CustomErrorResponse("The status " + status.getName() + " will have too many tasks. Please make progress and update status of existing tasks first."));
+            throw new StatusLimitReachedException("The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
         }
 
+        Task task = new Task();
+        task.setTitle(taskCDTO.getTitle());
+        task.setDescription(taskCDTO.getDescription());
+        task.setAssignees(taskCDTO.getAssignees());
         task.setStatus(status);
-        setDefaultValuesForTask(task);
+        task.setCreatedOn(ZonedDateTime.now());
+        task.setUpdatedOn(ZonedDateTime.now());
+
         Task createdTask = taskRepository.save(task);
 
-        TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
+
+
+
+    private void validateFieldSize(String field, String value, int maxSize) {
+        if (value != null && value.length() > maxSize) {
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+            ex.addError(field, "size must be between 0 and " + maxSize);
+            throw ex;
+        }
+    }
+
+
 
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new CustomErrorResponse("Task " + taskId + " does not exist !!!!"));
+                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
         taskRepository.delete(task);
         TaskDDTO taskDDTO = modelMapper.map(task, TaskDDTO.class);
         return ResponseEntity.ok(taskDDTO);
@@ -150,10 +167,11 @@ public class TaskService {
 
         // Check if the title is null or empty
         if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("field", "title", "message", new CustomErrorResponse("must not be null")));
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+            ex.addError("title", "must not be null");
+            throw ex;
         }
 
-        // Validate field sizes
         validateFieldSize("title", updatedTaskDTO.getTitle(), 100);
         validateFieldSize("description", updatedTaskDTO.getDescription(), 500);
         validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30);
@@ -162,14 +180,17 @@ public class TaskService {
         Status status;
         try {
             status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
-                    .orElseThrow(() -> new CustomErrorResponse("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
+                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().body(Map.of("field", "status", "message", new CustomErrorResponse("does not exist")));
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+            ex.addError("status", "does not exist");
+            throw ex;
         }
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                    .body(new CustomErrorResponse("The status " + status.getName() + " will have too many tasks.  Please make progress and update status of existing tasks first."));
+            ValidationErrorException ex = new ValidationErrorException(HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed");
+            ex.addError("", "The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
+            throw ex;
         }
 
         setDefaultValuesForTask(existingTask);
@@ -183,6 +204,7 @@ public class TaskService {
         TaskUDTO updatedTaskCDTO = modelMapper.map(updatedTask, TaskUDTO.class);
         return ResponseEntity.ok(updatedTaskCDTO);
     }
+
 
     public TaskRDTO getTaskDetailsById(Integer id) {
         Task task = getTaskById(id);
@@ -207,9 +229,7 @@ public class TaskService {
         task.setUpdatedOn(ZonedDateTime.now());
     }
 
-    private void validateFieldSize(String field, String value, int maxSize) {
-        if (value != null && value.length() > maxSize) {
-            throw new CustomErrorResponse(field + " size must be between 0 and " + maxSize);
-        }
-    }
+
+
+
 }
