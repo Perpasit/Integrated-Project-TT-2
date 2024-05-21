@@ -10,13 +10,10 @@ import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
-import sit.int221.integratedapi.exceptions.CustomErrorResponse;
-import sit.int221.integratedapi.exceptions.StatusLimitReachedException;
+import sit.int221.integratedapi.exceptions.*;
 import sit.int221.integratedapi.repositories.StatusRepository;
 import sit.int221.integratedapi.repositories.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
-import sit.int221.integratedapi.exceptions.ItemNotFoundException;
-import sit.int221.integratedapi.exceptions.DuplicateStatusException;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -75,6 +72,25 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<Object> createStatus(StatusCDTO statusCDTO) {
+
+        if (statusCDTO.getName() == null || statusCDTO.getName().trim().isEmpty()) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
+            validationError.addError("name", "Name must not be null or empty");
+            throw validationError;
+        }
+
+        if (statusCDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+            throw validationError;
+        }
+
+        if (statusCDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Description must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+            validationError.addError("description", "Description must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+            throw validationError;
+        }
+
         if (statusCDTO.getId() != null) {
             // Update an existing status
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
@@ -110,20 +126,22 @@ public class StatusService {
         }
     }
 
+
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
-        Status status = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+        Status status = statusRepository.findById(id).orElse(null);
+        if (status != null) {
+            // Check if the status name is "No Status" or "Done"
+            if ("No Status".equalsIgnoreCase(status.getName()) || "Done".equalsIgnoreCase(status.getName())) {
+                throw new NotAllowedOperationException(status.getName() + " cannot be deleted.");
+            }
 
-        validateStatusNotDeletable(status);
-
-        if (taskRepository.countByStatusId(id) > 0) {
-            throw new IllegalArgumentException("Cannot delete a status that still has tasks");
+            // Proceed with the deletion logic
+            statusRepository.delete(status);
+            StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
+            return ResponseEntity.ok(statusDDTO);
         }
-
-        statusRepository.delete(status);
-        StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
-        return ResponseEntity.ok(statusDDTO);
+        throw new ItemNotFoundException("Status " + id + " does not exist!");
     }
 
     @Transactional
@@ -131,6 +149,7 @@ public class StatusService {
         Status statusToDelete = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " that you are about to delete does not exist!"));
 
+        // Check if the status to delete is "No Status" or "Done"
         validateStatusNotDeletable(statusToDelete);
 
         Status newStatus = statusRepository.findById(newId)
@@ -154,26 +173,53 @@ public class StatusService {
         return ResponseEntity.ok(statusTFDDTO);
     }
 
+
+
     @Transactional
-    public ResponseEntity<StatusUDTO> updateStatus(Integer id, Status status) {
-        Status existingStatus = statusRepository.findById(id).orElse(null);
-        if (existingStatus != null) {
-            validateStatusNotDeletable(existingStatus);
+    public ResponseEntity<Object> updateStatus(Integer id, StatusUDTO statusUDTO) {
 
-            validateStatusName(status.getName(), id);
-            validateStatusDescription(status.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
-
-            existingStatus.setName(status.getName().trim());
-            existingStatus.setDescription(status.getDescription() != null ? status.getDescription().trim() : null);
-            if (status.getColorCode() != null) {
-                existingStatus.setColorCode(status.getColorCode());
-            }
-            Status savedStatus = statusRepository.save(existingStatus);
-            StatusUDTO statusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
-            return ResponseEntity.ok(statusUDTO);
+        // Validate statusUDTO fields
+        if (statusUDTO.getName() == null || statusUDTO.getName().trim().isEmpty()) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
+            validationError.addError("name", "Name must not be null or empty");
+            throw validationError;
         }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
+        if (statusUDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+            throw validationError;
+        }
+        if (statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
+            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+            throw validationError;
+        }
+
+        Status existingStatus = statusRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+
+        // Check if the status name is "No Status" or "Done"
+        if ("No Status".equalsIgnoreCase(existingStatus.getName()) || "Done".equalsIgnoreCase(existingStatus.getName())) {
+            throw new NotAllowedOperationException(existingStatus.getName() + " cannot be modified.");
+        }
+
+        // Update status fields
+        existingStatus.setName(statusUDTO.getName().trim());
+        existingStatus.setDescription(statusUDTO.getDescription() != null ? statusUDTO.getDescription().trim() : null);
+        if (statusUDTO.getColorCode() != null) {
+            existingStatus.setColorCode(statusUDTO.getColorCode());
+        }
+
+        Status savedStatus = statusRepository.save(existingStatus);
+        StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
+        return ResponseEntity.ok(responseStatusUDTO);
     }
+
+
+
+
+
+
+
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
             status.setColorCode("#000000");
@@ -225,16 +271,4 @@ public class StatusService {
         }
     }
 
-//    private CustomErrorResponse validateFieldSize(String field, String value, int maxSize, String path) {
-//        if (value != null && value.length() > maxSize) {
-//            return new CustomErrorResponse(
-//                    LocalDateTime.now(),
-//                    HttpStatus.BAD_REQUEST.value(),
-//                    HttpStatus.BAD_REQUEST.getReasonPhrase(),
-//                    "The field '" + field + "' must be between 0 and " + maxSize + " characters",
-//                    path
-//            );
-//        }
-//        return null;
-//    }
 }

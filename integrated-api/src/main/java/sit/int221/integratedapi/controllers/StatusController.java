@@ -50,21 +50,8 @@ public class StatusController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StatusUDTO> updateStatus(@RequestBody StatusUpdateDTO statusUpdateDTO, @PathVariable Integer id) {
-        Status status = new Status();
-        status.setName(statusUpdateDTO.getName().trim());
-
-        if (statusUpdateDTO.getDescription() != null) {
-            status.setDescription(statusUpdateDTO.getDescription().trim());
-        } else {
-            status.setDescription(null);
-        }
-
-        if (statusUpdateDTO.getColorCode() != null) {
-            status.setColorCode(statusUpdateDTO.getColorCode());
-        }
-
-        return statusService.updateStatus(id, status);
+    public ResponseEntity<Object> updateStatus(@RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
+        return statusService.updateStatus(id, statusUDTO);
     }
 
     @GetMapping("/{id}/tasks")

@@ -1,10 +1,12 @@
 package sit.int221.integratedapi.exceptions;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class ValidationErrorException extends RuntimeException {
     private final HttpStatus status;
     private final String reason;

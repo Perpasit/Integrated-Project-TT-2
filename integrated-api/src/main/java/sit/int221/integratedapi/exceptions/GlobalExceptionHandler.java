@@ -19,14 +19,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleValidationErrorException(ValidationErrorException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
-                ex.getStatus().value(),
+                HttpStatus.BAD_REQUEST.value(),
                 ex.getReason(),
                 request.getDescription(false).replace("uri=", ""),
                 ex.getErrors()
         );
 
-        return new ResponseEntity<>(errorResponse, ex.getStatus());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
 
     @ExceptionHandler(ItemNotFoundException.class)
     public ResponseEntity<Object> handleItemNotFoundException(ItemNotFoundException ex, WebRequest request) {
@@ -69,5 +70,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(NotAllowedOperationException.class)
+    public ResponseEntity<Object> handleNotAllowedOperationException(NotAllowedOperationException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }
