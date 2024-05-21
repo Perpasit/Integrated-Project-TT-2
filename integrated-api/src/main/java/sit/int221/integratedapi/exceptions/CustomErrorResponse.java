@@ -1,12 +1,9 @@
 package sit.int221.integratedapi.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 
-@JsonPropertyOrder({"timestamp", "status", "message", "instance", "errors"})
 public class CustomErrorResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
     private ZonedDateTime timestamp;
@@ -14,6 +11,7 @@ public class CustomErrorResponse {
     private String message;
     private String instance;
     private List<ValidationError> errors;
+
 
     public CustomErrorResponse(ZonedDateTime timestamp, int status, String message, String instance, List<ValidationError> errors) {
         this.timestamp = timestamp;
@@ -23,30 +21,36 @@ public class CustomErrorResponse {
         this.errors = errors;
     }
 
-    // Getters and setters...
+    // Getters and setters
 
     public static class ValidationError {
-        private final String field;
-        private final String message;
+        private String field;
+        private String message;
 
         public ValidationError(String field, String message) {
             this.field = field;
             this.message = message;
         }
 
-        // Getters...
-
+        // Getters and setters
         public String getField() {
             return field;
+        }
+
+        public void setField(String field) {
+            this.field = field;
         }
 
         public String getMessage() {
             return message;
         }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 
-    // Getters and setters...
-
+    // Getters and setters for CustomErrorResponse fields
     public ZonedDateTime getTimestamp() {
         return timestamp;
     }

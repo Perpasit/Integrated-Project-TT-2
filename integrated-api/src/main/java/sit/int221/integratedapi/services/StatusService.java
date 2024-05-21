@@ -72,22 +72,19 @@ public class StatusService {
 
     @Transactional
     public ResponseEntity<Object> createStatus(StatusCDTO statusCDTO) {
+        ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
 
         if (statusCDTO.getName() == null || statusCDTO.getName().trim().isEmpty()) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
             validationError.addError("name", "Name must not be null or empty");
-            throw validationError;
+        } else if (statusCDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
+            validationError.addError("name", "Name size must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         }
 
-        if (statusCDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
-            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
-            throw validationError;
+        if (statusCDTO.getDescription() != null && statusCDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
+            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
         }
 
-        if (statusCDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Description must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-            validationError.addError("description", "Description must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+        if (!validationError.getErrors().isEmpty()) {
             throw validationError;
         }
 
@@ -154,19 +151,19 @@ public class StatusService {
     @Transactional
     public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
         Status statusToDelete = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status " + id + " does not exist!"));
 
         validateStatusNotDeletable(statusToDelete);
 
         // Retrieve the new status to transfer tasks to
         Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + newId + " does not exist!"));
+                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "the specified status for task transfer does not exist"));
 
         // Check if the source and destination status are the same
         if (statusToDelete.equals(newStatus)) {
-            throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status");
-        }
+            throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status", "the specified status for task transfer does not exist");
 
+        }
 
         // Check if there are tasks associated with the status to delete
         int deletingStatusTaskCount = taskRepository.countByStatusId(id);
@@ -190,32 +187,43 @@ public class StatusService {
         StatusTFDDTO statusTFDDTO = modelMapper.map(statusToDelete, StatusTFDDTO.class);
         return ResponseEntity.ok(statusTFDDTO);
     }
-    
+
+
+
     @Transactional
     public ResponseEntity<Object> updateStatus(Integer id, StatusUDTO statusUDTO) {
+        Status existingStatus = statusRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+
+
+
+        ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
 
         // Validate statusUDTO fields
         if (statusUDTO.getName() == null || statusUDTO.getName().trim().isEmpty()) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
             validationError.addError("name", "Name must not be null or empty");
-            throw validationError;
+        } else if (statusUDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
+            validationError.addError("name", "Name size must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
+        } else {
+            Status existingStatusWithName = statusRepository.findByNameIgnoreCase(statusUDTO.getName().trim()).orElse(null);
+            if (existingStatusWithName != null && !existingStatusWithName.getId().equals(id)) {
+                validationError.addError("name", "must be unique");
+                // Instead of setting reason, you can directly add the message to the error map
+                validationError.addError("message", "Status name '" + statusUDTO.getName().trim() + "' already exists");
+            }
         }
-        if (statusUDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
-            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
-            throw validationError;
-        }
-        if (statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
-            ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Name must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-            validationError.addError("name", "Name must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-            throw validationError;
-        }
-
-        Status existingStatus = statusRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
 
         // Check if the status name is "No Status" or "Done"
         if ("No Status".equalsIgnoreCase(existingStatus.getName()) || "Done".equalsIgnoreCase(existingStatus.getName())) {
             throw new NotAllowedOperationException(existingStatus.getName() + " cannot be modified.");
+        }
+
+        if (statusUDTO.getDescription() != null && statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
+            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
+        }
+
+        if (!validationError.getErrors().isEmpty()) {
+            throw validationError;
         }
 
         // Update status fields
@@ -229,6 +237,10 @@ public class StatusService {
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
+
+
+
+
 
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
