@@ -140,8 +140,8 @@ public class TaskService {
         Task task = new Task();
         task.setTitle(taskCDTO.getTitle().trim());
         task.setStatus(status);
-        task.setDescription(taskCDTO.getDescription().trim());
-        task.setAssignees(taskCDTO.getAssignees().trim());
+        task.setDescription(taskCDTO.getDescription() != null && !taskCDTO.getDescription().trim().isEmpty() ? taskCDTO.getDescription().trim() : null);
+        task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
         setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
         TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
@@ -219,8 +219,8 @@ public class TaskService {
         setDefaultValuesForTask(existingTask);
         existingTask.setStatus(status);
         existingTask.setTitle(updatedTaskDTO.getTitle().trim());
-        existingTask.setDescription(updatedTaskDTO.getDescription().trim());
-        existingTask.setAssignees(updatedTaskDTO.getAssignees().trim());
+        existingTask.setDescription(updatedTaskDTO.getDescription() != null && !updatedTaskDTO.getDescription().trim().isEmpty() ? updatedTaskDTO.getDescription().trim() : null);
+        existingTask.setAssignees(updatedTaskDTO.getAssignees() != null && !updatedTaskDTO.getAssignees().trim().isEmpty() ? updatedTaskDTO.getAssignees().trim() : null);
         existingTask.setUpdatedOn(ZonedDateTime.now());
 
         Task updatedTask = taskRepository.save(existingTask);

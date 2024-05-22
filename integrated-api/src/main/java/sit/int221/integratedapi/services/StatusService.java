@@ -115,7 +115,8 @@ public class StatusService {
             if (status.getDescription() != null) {
                 status.setDescription(status.getDescription().trim());
             }
-
+            status.setName(status.getName().trim());
+            status.setDescription(status.getDescription() != null && !status.getDescription().trim().isEmpty() ? status.getDescription().trim() : null);
             setDefaultValuesForStatus(status, "General");
             Status createdStatus = statusRepository.save(status);
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
@@ -232,7 +233,8 @@ public class StatusService {
         if (statusUDTO.getColorCode() != null) {
             existingStatus.setColorCode(statusUDTO.getColorCode());
         }
-
+        existingStatus.setName(statusUDTO.getName().trim());
+        existingStatus.setDescription(statusUDTO.getDescription() != null && !statusUDTO.getDescription().trim().isEmpty() ? statusUDTO.getDescription().trim() : null);
         Status savedStatus = statusRepository.save(existingStatus);
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
