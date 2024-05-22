@@ -196,22 +196,26 @@ public class StatusService {
         Status existingStatus = statusRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
 
-
-
         ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
 
         // Validate statusUDTO fields
-        if (statusUDTO.getName() == null || statusUDTO.getName().trim().isEmpty()) {
-            validationError.addError("name", "Name must not be null or empty");
+        if (statusUDTO.getName() == null) {
+            validationError.addError("name", "must not be null");
+            throw validationError;
+        } else if (statusUDTO.getName().trim().isEmpty()) {
+            validationError.addError("name", "Name must not be empty");
         } else if (statusUDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
             validationError.addError("name", "Name size must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         } else {
             Status existingStatusWithName = statusRepository.findByNameIgnoreCase(statusUDTO.getName().trim()).orElse(null);
             if (existingStatusWithName != null && !existingStatusWithName.getId().equals(id)) {
                 validationError.addError("name", "must be unique");
-                // Instead of setting reason, you can directly add the message to the error map
                 validationError.addError("message", "Status name '" + statusUDTO.getName().trim() + "' already exists");
             }
+        }
+
+        if (statusUDTO.getDescription() != null && statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
+            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
         }
 
         // Check if the status name is "No Status" or "Done"
@@ -219,30 +223,23 @@ public class StatusService {
             throw new NotAllowedOperationException(existingStatus.getName() + " cannot be modified.");
         }
 
-        if (statusUDTO.getDescription() != null && statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
-            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-        }
-
         if (!validationError.getErrors().isEmpty()) {
             throw validationError;
         }
 
         // Update status fields
-        existingStatus.setName(statusUDTO.getName().trim());
-        existingStatus.setDescription(statusUDTO.getDescription() != null ? statusUDTO.getDescription().trim() : null);
+        if (statusUDTO.getName() != null) {
+            existingStatus.setName(statusUDTO.getName().trim());
+        }
+        existingStatus.setDescription(statusUDTO.getDescription() != null && !statusUDTO.getDescription().trim().isEmpty() ? statusUDTO.getDescription().trim() : null);
         if (statusUDTO.getColorCode() != null) {
             existingStatus.setColorCode(statusUDTO.getColorCode());
         }
-        existingStatus.setName(statusUDTO.getName().trim());
-        existingStatus.setDescription(statusUDTO.getDescription() != null && !statusUDTO.getDescription().trim().isEmpty() ? statusUDTO.getDescription().trim() : null);
+
         Status savedStatus = statusRepository.save(existingStatus);
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
-
-
-
-
 
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
