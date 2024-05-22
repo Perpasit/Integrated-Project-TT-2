@@ -247,7 +247,6 @@ const getStatusUsage = (statusId) => {
   return "0/0 tasks"
 }
 
-console.log(editedTask)
 </script>
 
 <template>
