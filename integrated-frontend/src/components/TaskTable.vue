@@ -20,7 +20,6 @@ const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 const showLimitTaskModal = ref(false)
 const maxTasksPerStatus = ref(10)
-
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
@@ -46,8 +45,8 @@ const formattedStatus = computed(() => {
     const status = statusStore.getStatusByName(task.status)
     if (status) {
       return status.name
-        .toUpperCase()
-        .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+        // .toUpperCase()
+        // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {
       return "Unknown"
     }
@@ -61,18 +60,24 @@ const confirmDelete = (task) => {
 
 const deleteTask = async () => {
   showDeleteConfirmation.value = false
-  const selectedTask = await taskStore.deleteTask(selectedTaskToDelete.id)
-  if (selectedTask.status === 404) {
-    showNotFoundModal.value = true
-  } else {
+  try {
+    await taskStore.deleteTask(selectedTaskToDelete.id)
     showSuccessModal.value = true
-  }
-  selectedTaskToDelete = null
-  await fetchTasks()
+    selectedTaskToDelete = null
+    await fetchTasks()
 
-  setTimeout(() => {
-    closeDeleteModal()
-  }, 3000)
+    setTimeout(() => {
+      closeDeleteModal()
+    }, 3000)
+  } catch (error) {
+    if (error.message.includes('does not exist')) {
+      showNotFoundModal.value = true
+      await fetchTasks()
+      setTimeout(() => {
+      closeDeleteModal()
+    }, 3000)
+    } 
+  }
 }
 const fetchTasks = async () => {
   await taskStore.fetchAllTasks()
@@ -82,7 +87,6 @@ function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
 }
-
 const cancelDelete = () => {
   selectedTaskToDelete = null
   showDeleteConfirmation.value = false
@@ -93,7 +97,6 @@ const editTask = (task) => {
     router.push({ name: "EditTask", params: { id: task.id } })
   }
 }
-
 onMounted(async () => {
   await taskStore.fetchAllTasks()
   await statusStore.fetchAllStatuses()
@@ -103,7 +106,7 @@ onMounted(async () => {
   if (
     sortByFromUrl === "asc" ||
     sortByFromUrl === "desc" ||
-    sortByFromUrl === "normal"
+    sortByFromUrl === "createOn"
   ) {
     sortBy.value = sortByFromUrl
     await fetchTasks()
@@ -121,7 +124,6 @@ onMounted(async () => {
     await fetchTasks()
   }
 })
-
 const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
@@ -141,7 +143,6 @@ const clearStatusFilter = () => {
 const searchKeyword = ref("")
 const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
-
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
@@ -158,16 +159,15 @@ const sortBy = computed({
 })
 
 const togglesortBy = () => {
-  if (sortBy.value === "normal") {
+  if (sortBy.value === "createOn") {
     sortBy.value = "asc"
   } else if (sortBy.value === "asc") {
     sortBy.value = "desc"
   } else {
-    sortBy.value = "normal"
+    sortBy.value = "createOn"
   }
   taskStore.setSortBy(sortBy.value)
 }
-
 const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
 }
@@ -181,36 +181,40 @@ const filteredTasksByStatus = computed(() => {
       task && task.status && selectedStatuses.value.includes(task.status)
   )
 })
-const currentStatusId = ref(null)
+
 const currentTaskCountForStatus = ref({});
 const currentStatusNames = ref([]);
+const currentStatusesWithTaskCounts = ref([]);
+const maxTasks = ref();
+const openLimitTaskModal = async () => {
+  try {
+    // Fetch the latest status data
+    await statusStore.fetchAllStatuses();
+    currentStatusesWithTaskCounts.value = statusStore.statuses.map((status) => ({
+      name: status.name,
+      noOfTasks: status.noOfTasks || 0,
+    }));
 
-const updateCurrentTaskCountAndStatus = (statusName) => {
-  if (statusName) {
-    const selectedStatus = statusStore.getStatusByName(statusName)
-    if (selectedStatus) {
-      currentStatusId.value = selectedStatus.id
-      currentTaskCountForStatus.value = tasks.value.filter(
-        (task) => task.status === selectedStatus.name
-      ).length
-      showLimitTaskModal.value = true
-    } else {
-      currentStatusId.value = null
-      currentTaskCountForStatus.value = 0
-    }
+    // Update the maxTasks value based on the first status
+    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10;
+
+    currentTaskCountForStatus.value = currentStatusesWithTaskCounts.value.reduce(
+      (counts, status) => {
+        counts[status.name] = status.noOfTasks;
+        return counts;
+      },
+      {}
+    );
+
+    currentStatusNames.value = currentStatusesWithTaskCounts.value.map(
+      (status) => status.name
+    );
+
+    showLimitTaskModal.value = true;
+  } catch (error) {
+    console.error("Error fetching status data:", error);
   }
-}
-const openLimitTaskModal = () => {
-  currentTaskCountForStatus.value = statusStore.statuses.reduce((counts, status) => {
-    const taskCount = tasks.value.filter((task) => task.status === status.name).length;
-    counts[status.name] = taskCount;
-    return counts;
-  }, {});
-
-  currentStatusNames.value = statusStore.statuses.map((status) => status.name);
-  showLimitTaskModal.value = true;
 };
-
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false
 }
@@ -218,12 +222,45 @@ const handleLimitTaskModalClick = (statuses) => {
   selectedStatuses.value = statuses
   showLimitTaskModal.value = true
 }
+const toggleStatusFilter = (statusName) => {
+  const isSelected = selectedStatuses.value.includes(statusName)
+  if (isSelected) {
+    selectedStatuses.value = selectedStatuses.value.filter(
+      (status) => status !== statusName
+    )
+  } else {
+    selectedStatuses.value.push(statusName)
+  }
+  fetchTasks()
+}
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex justify-end mb-10"></div>
-
+    <div class="flex mb-10 ">
+      <thead class="absolute mt-2 ">
+        <th class="w-full text-xl font-medium">
+          <div class="flex items-center text-white">
+            <span v-if="selectedStatuses.length > 0" class="mr-2 ml-36"
+              >Filter :
+            </span>
+            <div class="flex">
+              <button
+                v-for="(status, index) in selectedStatuses"
+                :key="index"
+                class=" transition-all duration-200 ease-in-out ml-4  text-white font-semibold text-sm  py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100  rounded"
+                @click="toggleStatusFilter(status)"
+              >
+              
+                {{ status }}
+                
+                <span class="ml-2 text-white">x</span>
+              </button>
+            </div>
+          </div>
+        </th>
+      </thead>
+    </div>
     <div class="overflow-visible">
       <table
         class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
@@ -262,7 +299,7 @@ const handleLimitTaskModalClick = (statuses) => {
                           type="text"
                           v-model="searchKeyword"
                           placeholder="Search keywords..."
-                          class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                          class="itbkk-status-filter w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         />
                       </div>
                       <div class="px-4 py-2">
@@ -278,7 +315,7 @@ const handleLimitTaskModalClick = (statuses) => {
                             type="checkbox"
                             v-model="selectedStatuses"
                             :value="status.name"
-                            class="mr-2"
+                            class="itbkk-filter-item mr-2"
                           />
                           {{ status.name }} ({{ status.noOfTasks || 0 }})
                         </label>
@@ -298,7 +335,7 @@ const handleLimitTaskModalClick = (statuses) => {
                         </button>
                         <button
                           @click="clearStatusFilter"
-                          class="text-sm text-gray-600 hover:text-gray-800"
+                          class="itbkk-filter-clear text-sm text-gray-600 hover:text-gray-800"
                         >
                           Clear all
                         </button>
@@ -310,13 +347,12 @@ const handleLimitTaskModalClick = (statuses) => {
             </th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Title</th>
             <th class="w-1/3 px-4 py-2 text-xl font-medium">Assignees</th>
-
             <th
               class="w-1/6 px-4 py-2 text-xl font-medium cursor-pointer"
               @click="togglesortBy"
             >
               Status
-              <button class="ml-2 itbkk-status-sort">
+              <button class="itbkk-status-sort ml-2">
                 <svg
                   v-if="sortBy === 'asc'"
                   xmlns="http://www.w3.org/2000/svg"
@@ -352,7 +388,6 @@ const handleLimitTaskModalClick = (statuses) => {
                 </svg>
               </button>
             </th>
-
             <th class="w-1/8 px-4 py-2 rounded-r-lg">
               <button class="itbkk-status-setting" @click="openLimitTaskModal">
                 <svg
@@ -374,7 +409,6 @@ const handleLimitTaskModalClick = (statuses) => {
             </th>
           </tr>
         </thead>
-
         <LimitTaskModal
   :show="showLimitTaskModal"
   :currentTaskCounts="currentTaskCountForStatus"
@@ -386,19 +420,18 @@ const handleLimitTaskModalClick = (statuses) => {
           <tr
             v-for="(task, index) in tasks"
             :key="index"
-            class="bg-white shadow-lg hover:bg-gray-100 itbkk-item hover:scale-105 transition-all duration-200 ease-in-out"
+            class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out"
           >
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
               <p
-                class="truncate cursor-pointer itbkk-title"
+                class="itbkk-title truncate cursor-pointer"
                 @click="showTaskDetail(task)"
               >
                 {{ task?.title || "" }}
               </p>
             </td>
-
-            <td class="truncate px-4 py-5 text-center itbkk-assignees">
+            <td class="itbkk-assignees truncate px-4 py-5 text-center">
               <span v-if="task && task.assignees">
                 {{
                   task.assignees
@@ -407,21 +440,20 @@ const handleLimitTaskModalClick = (statuses) => {
                     .join(", ")
                 }}
               </span>
-              <span v-else class="text-gray-400 italic itbkk-assignees"
+              <span v-else class="itbkk-assignees text-gray-400 italic"
                 >Unassigned</span
               >
             </td>
 
             <td class="px-5 py-2 text-center">
               <span
-                class="truncate inline-block px-2 py-1 rounded-full text-center itbkk-status w-32 h-10"
+                class="itbkk-status truncate inline-block px-2 py-1 rounded-full text-center w-32 h-10"
                 :style="statusStore.getStatusClass(task.status)"
               >
                 {{ formattedStatus(task) }}
               </span>
             </td>
-
-            <td class="px-1 py-2 rounded-r-lg itbkk-button-action">
+            <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                 @click="editTask(task)"
@@ -441,7 +473,6 @@ const handleLimitTaskModalClick = (statuses) => {
                   />
                 </svg>
               </button>
-
               <button
                 class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                 @click="confirmDelete(task)"
@@ -466,9 +497,8 @@ const handleLimitTaskModalClick = (statuses) => {
         </tbody>
       </table>
     </div>
-
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
-      No task
+      No Task
     </div>
 
     <AddEditTask
@@ -489,19 +519,19 @@ const handleLimitTaskModalClick = (statuses) => {
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div class="bg-white p-8 rounded-lg">
-      <p class="text-lg mb-4">
+      <p class="itbkk-message text-lg mb-4">
         Are you sure you want to delete
         <span class="text-red-500">{{ selectedTaskToDelete.title }}</span> task?
       </p>
       <div class="flex justify-end">
         <button
-          class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+        class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
           @click="cancelDelete"
         >
           Cancel
         </button>
         <button
-          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+        class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
         >
           Delete
@@ -525,7 +555,7 @@ const handleLimitTaskModalClick = (statuses) => {
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
               @click="closeDeleteModal"
             >
-              <svg
+            <svg
                 class="h-6 w-6"
                 stroke="currentColor"
                 fill="none"
@@ -541,7 +571,7 @@ const handleLimitTaskModalClick = (statuses) => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+            <p class="itbkk-message text-sm leading-5 text-gray-500">
               The Task is deleted successfully.
             </p>
           </div>
@@ -560,7 +590,6 @@ const handleLimitTaskModalClick = (statuses) => {
       </div>
     </div>
   </div>
-
   <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
       <div
@@ -592,7 +621,7 @@ const handleLimitTaskModalClick = (statuses) => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-red-600 itbkk-message">
+            <p class="itbkk-message text-sm leading-5 text-red-600">
               The Task is not found.
             </p>
           </div>

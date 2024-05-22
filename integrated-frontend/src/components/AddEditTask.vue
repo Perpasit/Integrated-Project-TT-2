@@ -1,20 +1,42 @@
 <!-- AddEdiTask.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useTaskStore } from "../stores/task";
-import { useStatusStore } from "../stores/status";
-import { useModalStore } from "../stores/useModalStore";
-import { useRouter } from "vue-router";
+import { ref, computed, watch, onMounted } from "vue"
+import { useTaskStore } from "../stores/task"
+import { useStatusStore } from "../stores/status"
+import { useModalStore } from "../stores/useModalStore"
+import { useGlobalSettingStore } from "../stores/global_setting"
+import { useRouter } from "vue-router"
 
-const router = useRouter();
-const taskStore = useTaskStore();
-const statusStore = useStatusStore();
-const modalStore = useModalStore();
+const router = useRouter()
+const taskStore = useTaskStore()
+const statusStore = useStatusStore()
+const modalStore = useModalStore()
+const globalSettingStore = useGlobalSettingStore()
+const generalSetting = computed(
+  () => globalSettingStore.getCurrentGlobalSetting
+)
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+
+const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
+
+watch(generalSetting, (newValue) => {
+  isLimitEnabled.value = newValue?.limitMaximumTask
+  maxTasks.value = newValue?.maximumTaskLimit
+})
+
+const isMaxTasksValid = computed(() => {
+  return (
+    isLimitEnabled.value !==
+      globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
+    maxTasks.value !==
+      globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
+  )
+})
 
 const props = defineProps({
   show: {
     type: Boolean,
-    required: true,
+    required: true
   },
   task: {
     type: Object,
@@ -23,29 +45,39 @@ const props = defineProps({
       title: "",
       description: "",
       assignees: "",
-      status: 1,
-    }),
+      status: 1
+    })
   },
   mode: {
     type: String,
-    default: "add",
-  },
-});
+    default: "add"
+  }
+})
 
-const emit = defineEmits(["close", "taskSaved"]);
+const emit = defineEmits(["close", "taskSaved"])
 const editedTask = ref({
   id: "",
   title: "",
   description: "",
   assignees: "",
-  status: 1,
-});
+  status: 1
+})
 
-const titleError = ref("");
+const titleError = ref("")
+const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
+const isDescriptionTooLong = computed(
+  () => editedTask.value?.description?.length > 500
+)
+const areAssigneesTooLong = computed(
+  () => editedTask.value?.assignees?.length > 30
+)
 
 const isTitleValid = computed(() => {
   return (
     editedTask.value.title.trim() !== "" &&
+    !isTitleTooLong.value &&
+    !isDescriptionTooLong.value &&
+    !areAssigneesTooLong.value &&
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedTask.value &&
@@ -53,10 +85,10 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-  );
-});
+          )
+})
 
-const originalTask = ref(null);
+const originalTask = ref(null)
 
 watch(
   () => router.currentRoute.value.params.id,
@@ -65,116 +97,157 @@ watch(
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
-        );
+        )
         if (response.status === 404) {
-          editedTask.value = null;
+          editedTask.value = null
+          setTimeout(() => {
+            closeModal()
+          }, 3000)
         } else {
-          const data = await response.json();
-          const statusId = statusStore.getStatusByName(data.status)?.id;
-          editedTask.value = { ...data, status: statusId || 1 };
-          originalTask.value = { ...data, status: statusId || 1 };
-          titleError.value = "";
+          const data = await response.json()
+          // console.log(data)
+          const statusId = statusStore.getStatusByName(data.status)?.id
+          editedTask.value = { ...data, status: statusId || 1 }
+          originalTask.value = { ...data, status: statusId || 1 }
+          titleError.value = ""
         }
       } catch (error) {
-        console.error("Error fetching task:", error);
-        editedTask.value = null;
+        console.error("Error fetching task:", error)
+        editedTask.value = null
       }
     } else {
       // existing code
     }
   },
   { immediate: true }
-);
+)
 
 onMounted(async () => {
-  await statusStore.fetchAllStatuses();
-});
+  await statusStore.fetchAllStatuses()
+})
 
 function resetForm() {
   editedTask.value = {
     title: "",
     description: "",
     assignees: "",
-    status: 1,
-  };
+    status: 1
+  }
 }
 
 async function saveTask() {
   if (!isTitleValid.value) {
-    titleError.value = "Title is required.";
-    return;
+    titleError.value = "Title is required."
+    return
   }
 
   try {
-    errorMessage.value = ""; // Reset the error message
+    errorMessage.value = "" // Reset the error message
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
-      description: editedTask.value.description ? editedTask.value.description.trim() : "",
-      assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
-      status: { id: editedTask.value.status },
-    };
+      description: editedTask.value.description
+        ? editedTask.value.description.trim()
+        : "",
+      assignees: editedTask.value.assignees
+        ? editedTask.value.assignees.trim()
+        : "",
+        status: { id: editedTask.value.status }
+    }
 
     if (props.mode === "edit") {
-      const taskId = router.currentRoute.value.params.id;
+      const taskId = router.currentRoute.value.params.id
       if (taskId) {
-        await taskStore.updateTask(taskId, updatedTask);
-        await taskStore.fetchAllTasks();
-        emit("taskSaved");
-        modalStore.openSuccessModal(updatedTask.title, props.mode);
+        await taskStore.updateTask(taskId, updatedTask)
+        await taskStore.fetchAllTasks()
+        emit("taskSaved")
+        modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
-        console.error("The task does not exist.");
+        console.error("The task does not exist.")
       }
     } else {
       const newTask = {
         title: editedTask.value.title.trim(),
-        description: editedTask.value.description ? editedTask.value.description.trim() : "",
-        assignees: editedTask.value.assignees ? editedTask.value.assignees.trim() : "",
-        status: editedTask.value.status,
-      };
-      await taskStore.addTask(newTask);
-      await taskStore.fetchAllTasks();
-      router.push("/"); 
-      modalStore.openSuccessModal(newTask.title, props.mode);
+        description: editedTask.value.description
+          ? editedTask.value.description.trim()
+          : "",
+        assignees: editedTask.value.assignees
+          ? editedTask.value.assignees.trim()
+          : "",
+          status: editedTask.value.status
+      }
+      await taskStore.addTask(newTask)
+      await taskStore.fetchAllTasks()
+      router.push("/")
+      modalStore.openTaskSuccessModal(newTask.title, props.mode)
+
+      const status = statusStore.statuses.find((s) => s.id === newTask.status)
+      if (status) {
+        status.noOfTasks++
+      }
+
+      closeModal()
     }
+    router.push("/")
+    await taskStore.fetchAllTasks()
   } catch (error) {
     // console.error("Error saving task:", error);
-    errorMessage.value = error.message; 
+    errorMessage.value = error.message
   }
 }
-const errorMessage = ref("");
+const errorMessage = ref("")
 async function handleErrorResponse(error) {
   if (error.status === 422) {
     try {
-      const response = await error.json();
-      errorMessage.value = response.message; // Set the error message from the JSON response
+      const response = await error.json()
+      errorMessage.value = response.message // Set the error message from the JSON response
     } catch (jsonError) {
-      console.error("Error parsing JSON response:", jsonError);
-      errorMessage.value = "An error occurred while saving the task.";
+      console.error("Error parsing JSON response:", jsonError)
+      errorMessage.value = "An error occurred while saving the task."
     }
   } else {
     // Handle other error cases
-    console.error("Error saving task:", error);
+    console.error("Error saving task:", error)
   }
 }
 async function parseErrorResponse(error) {
-  return await error.json();
+  return await error.json()
+}
+
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const parseAndFormatDate = (dateString) => {
+  const date = new Date(dateString)
+  if (isNaN(date)) {
+    return "Invalid Date"
+  }
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
 
 const formatStatus = (status) => {
-  return (
-    status
-      .toUpperCase()
-      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-  );
-};
-
-function closeModal() {
-  router.push("/");
-  resetForm();
+  return status
+  // .toUpperCase()
+  // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
+function closeModal() {
+  router.push("/")
+  resetForm()
+  taskStore.fetchAllTasks()
+}
 
+const getStatusUsage = (statusId) => {
+  const status = statusStore.statuses.find((s) => s.id === statusId)
+  if (status) {
+    if (
+      status.name.toLowerCase() === "no status" ||
+      status.name.toLowerCase() === "done"
+    ) {
+      return ""
+    }
+    return `${status.noOfTasks}/${maxTasks.value} tasks`
+  }
+  return "0/0 tasks"
+}
 </script>
 
 <template>
@@ -189,7 +262,7 @@ function closeModal() {
       >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div
-            class="itbkk-button-add text-lg leading-6 font-medium text-gray-900 mb-4"
+            class="itbkk-title text-lg leading-6 font-medium text-gray-900 mb-4"
           >
             {{ mode === "add" ? "New Task" : "Edit Task" }}
           </div>
@@ -202,12 +275,14 @@ function closeModal() {
                   rows="2"
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  :maxlength="100"
                 ></textarea>
                 <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
                   {{ titleError }}
                 </p>
-                <p class="text-gray-500 text-sm mt-1">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isTitleTooLong }"
+                >
                   {{ editedTask.title ? editedTask.title.length : 0 }}/100
                   characters
                 </p>
@@ -216,13 +291,15 @@ function closeModal() {
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
                 <textarea
-                  rows="10"
+                  rows="14"
                   v-model="editedTask.description"
                   class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="No Description Provided"
-                  :maxlength="500"
                 ></textarea>
-                <p class="text-gray-500 text-sm mt-1">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
+                >
                   {{
                     editedTask.description ? editedTask.description.length : 0
                   }}/500 characters
@@ -238,9 +315,11 @@ function closeModal() {
                   v-model="editedTask.assignees"
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                   placeholder="Unassigned"
-                  :maxlength="30"
                 ></textarea>
-                <p class="text-gray-500 text-sm mt-1">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': areAssigneesTooLong }"
+                >
                   {{
                     editedTask.assignees ? editedTask.assignees.length : 0
                   }}/30 characters
@@ -262,6 +341,42 @@ function closeModal() {
                   </option>
                 </select>
               </div>
+
+              <div
+                v-if="mode === 'add' || mode === 'edit'"
+                class="text-sm text-gray-500 mb-4"
+              >
+                <template v-if="isLimitEnabled">
+                  <p class="text-green-500">(Limit is enabled)</p>
+                  <template v-if="getStatusUsage(editedTask.status) !== ''">
+                    <p>Status usage: {{ getStatusUsage(editedTask.status) }}</p>
+                  </template>
+                </template>
+                <template v-else>
+                  <p class="text-red-500">(Limit is disabled)</p>
+                </template>
+              </div>
+
+              <div v-if="mode === 'edit'">
+                <div class="mt-4">
+                  <label class="itbkk-timezone block text-sm font-bold mb-1"
+                    >TimeZone : {{ localTimeZone }}</label
+                  >
+                </div>
+                <div class="mt-4">
+                  <label class="itbkk-created-on block text-sm font-bold mb-1"
+                    >Created On :
+                    {{ parseAndFormatDate(editedTask.createdOn) }}</label
+                  >
+                </div>
+                <div class="mt-4">
+                  <label class="itbkk-updated-on block text-sm font-bold mb-1"
+                    >Updated On :
+                    {{ parseAndFormatDate(editedTask.updatedOn) }}</label
+                  >
+                  <p class="mt-1 text-sm text-gray-900"></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -273,10 +388,15 @@ function closeModal() {
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                 isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid,
+              'bg-gray-300 cursor-not-allowed': !isTitleValid
             }"
             @click="saveTask"
-            :disabled="!isTitleValid"
+            :disabled="
+              !isTitleValid ||
+              isTitleTooLong ||
+              isDescriptionTooLong ||
+              areAssigneesTooLong
+            "
           >
             {{ mode === "add" ? "Add" : "Save" }}
           </button>
@@ -302,7 +422,9 @@ function closeModal() {
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-red-500">
+              <h3
+                class="itbkk-message text-lg leading-6 font-medium text-red-500"
+              >
                 The task does not exist.
               </h3>
             </div>
@@ -321,21 +443,20 @@ function closeModal() {
     </div>
   </div>
 
- 
   <div v-if="errorMessage" class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-red-500">
-                Error
-              </h3>
+              <h3 class="text-lg leading-6 font-medium text-red-500">Error</h3>
               <div class="mt-2">
-                <p class="text-sm leading-5 text-gray-500">
+                <p class="itbkk-message text-sm leading-5 text-red-500">
                   {{ errorMessage }}
                 </p>
               </div>
@@ -343,9 +464,11 @@ function closeModal() {
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="errorMessage = ''; emit('close')">
+            @click=";(errorMessage = ''), emit('close')"
+          >
             OK
           </button>
         </div>

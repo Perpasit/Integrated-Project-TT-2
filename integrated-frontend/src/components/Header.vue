@@ -50,7 +50,7 @@ const addStatus = () => {
     <div class="flex items-center space-x-4">
       <span
         :class="[
-          'text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
+          'itbkk-button-home text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
           isHomePage ? 'text-white' : 'text-blue-600 hover:text-white'
         ]"
         @click="goHome"
@@ -59,7 +59,7 @@ const addStatus = () => {
       </span>
       <span
         :class="[
-          'text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
+           'itbkk-manage-status text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
           isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white'
         ]"
         @click="goToManageStatus"
@@ -83,4 +83,3 @@ const addStatus = () => {
     </div>
   </div>
 </template>
-

@@ -12,7 +12,7 @@ const modalStore = useModalStore()
 const statusStore = useStatusStore()
 const router = useRouter()
 const statuses = computed(() => statusStore.getStatuses)
-
+const deleteResult = ref(null)
 const selectedStatus = ref(null)
 const showDeleteConfirmation = ref(false)
 
@@ -24,13 +24,10 @@ let selectedStatusToDelete = null
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
-
-
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
-    params: { statusId: status.id },
-   
+    params: { statusId: status.id }
   })
 }
 
@@ -41,16 +38,15 @@ const closeCannotDeleteModal = () => {
 }
 
 const editStatus = (status) => {
-  if ( status.id !== 1 && status.id !== 4) {
-    router.push({ name: "EditStatus", params: { id: status.id } });
+  if (status.name.toLowerCase() !== "no status" && status.name.toLowerCase() !== "done") {
+    router.push({ name: "EditStatus", params: { id: status.id } })
   } else {
-    showCannotEditDeleteModal.value = true;
+    showCannotEditDeleteModal.value = true
     cannotDeleteEditTimeout.value = setTimeout(() => {
-      closeCannotDeleteModal();
-    }, 3000);
+      closeCannotDeleteModal()
+    }, 3000)
   }
-};
-
+}
 const saveStatus = (status) => {
   if (status.id) {
     const index = statuses.value.findIndex((s) => s.id === status.id)
@@ -61,7 +57,6 @@ const saveStatus = (status) => {
   }
   selectedStatus.value = null
 }
-
 async function confirmDeleteStatus() {
   if (selectedStatusToDelete) {
     try {
@@ -87,10 +82,11 @@ async function confirmDeleteStatus() {
           router.push({ name: "ManageStatus" })
         }, 3000)
       }
-    } catch (error) {
-      console.error("Error deleting status:", error)
+    }catch (error) {
+      statusStore.fetchAllStatuses()
     }
     setTimeout(() => {
+      statusStore.fetchAllStatuses()
       closeDeleteModal()
     }, 3000)
   }
@@ -99,7 +95,6 @@ async function confirmDeleteStatus() {
 const canDeleteStatus = computed(() => {
   return selectedStatusToDelete && selectedStatusToDelete.id !== 1
 })
-
 const confirmDeleteTransfer = (status) => {
   if (status && status.id !== 1) {
     selectedStatusToDelete = status
@@ -116,7 +111,6 @@ const closeCannotEditDeleteModal = () => {
   selectedStatusToDelete = null
 }
 const newStatusId = ref(1)
-
 const deleteAndTransfer = async (newStatusId) => {
   if (canDeleteStatus.value) {
     try {
@@ -124,28 +118,31 @@ const deleteAndTransfer = async (newStatusId) => {
         selectedStatusToDelete.id,
         newStatusId
       )
+      deleteResult.value = result
       selectedStatusToDelete = null
       showDeleteTransferModal.value = false
       statusStore.fetchAllStatuses()
 
       if (result.notFound) {
         showNotFoundModal.value = true
-      } else if (result.status === 404) {
+      } else if (result.status === 500) {
         showNotFoundModal.value = true
+     
       } else {
         showSuccessModal.value = true
       }
     } catch (error) {
       console.error("Error deleting and transferring status:", error)
+      deleteResult.value = { status: 500 }
       showSuccessModal.value = false
       showNotFoundModal.value = true
     }
     setTimeout(() => {
       closeDeleteModal()
+  
     }, 3000)
   }
 }
-
 function closeDeleteModal() {
   showSuccessModal.value = false
   showNotFoundModal.value = false
@@ -154,7 +151,6 @@ function closeDeleteModal() {
 const fetchStatuses = async () => {
   await statusStore.fetchAllStatuses()
 }
-
 const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null
   showDeleteTransferModal.value = false
@@ -163,9 +159,9 @@ const cancelDeleteTransfer = () => {
 const formatStatus = (status) => {
   return (
     status
-      .toUpperCase()
+      // .toUpperCase()
       // .replace(/_/g, " ")
-      .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
+      // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
   )
 }
 
@@ -208,12 +204,11 @@ onMounted(async () => {
               </th>
             </tr>
           </thead>
-
           <tbody>
             <tr
               v-for="(status, index) in statuses"
               :key="status.id"
-              class="bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out"
+              class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out"
             >
               <td class="px-4 py-5 rounded-l-lg text-center">
                 {{ index + 1 }}
@@ -233,7 +228,7 @@ onMounted(async () => {
                 </span>
                 <span
                   v-else
-                  class="text-gray-400 italic itbkk-status-description"
+                  class="itbkk-status-description text-gray-400 italic"
                 >
                   No Description Provided
                 </span>
@@ -247,7 +242,7 @@ onMounted(async () => {
               </td>
 
               <td
-                class="px-4 py-2 rounded-r-lg text-center itbkk-button-action"
+              class="itbkk-button-action px-4 py-2 rounded-r-lg text-center"
               >
                 <button
                   class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
@@ -268,11 +263,10 @@ onMounted(async () => {
                     />
                   </svg>
                 </button>
-
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                   @click="
-                    if (status.id === 1 || status.id === 4) {
+                    if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
                       showCannotEditDeleteModal = true;
                       selectedStatusToDelete = status;
                     } else {
@@ -301,7 +295,9 @@ onMounted(async () => {
           </tbody>
         </table>
       </div>
-
+      <div v-if="statuses.length <= 0" class="text-center mt-4 text-gray-500">
+        No Status
+      </div>
       <AddEditStatus
         v-if="selectedStatus"
         :show="!!selectedStatus"
@@ -310,7 +306,6 @@ onMounted(async () => {
         @save="saveStatus"
       />
     </div>
-
     <div
       v-if="showCannotEditDeleteModal"
       class="fixed z-50 inset-0 overflow-y-auto"
@@ -321,12 +316,13 @@ onMounted(async () => {
         >
           <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
             <div class="flex justify-between items-center">
-              <div class="text-lg leading-6 font-medium text-red-600">
+              <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
                 {{
                   selectedStatusToDelete
-                    ? 'Cannot Delete "NO_STATUS"'
-                    : 'Cannot Edit "NO_STATUS"'
+                    ? 'Cannot Delete  Default Status'
+                    : 'Cannot Edit Default Status'
                 }}
+              
               </div>
               <button
                 type="button"
@@ -349,7 +345,7 @@ onMounted(async () => {
               </button>
             </div>
             <div>
-              <p class="text-sm leading-5 text-red-600 itbkk-message">
+              <p class="itbkk-message text-sm leading-5 text-red-600">
                 {{
                   selectedStatusToDelete
                     ? "You cannot delete the Default status."
@@ -372,13 +368,12 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
     <div
       v-if="showDeleteTransferModal"
       class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
     >
       <div class="bg-white p-8 rounded-lg">
-        <p class="text-lg mb-4 itbkk-message">
+        <p class="itbkk-message text-lg mb-4">
           Transfer tasks from
           <span class="text-red-500">{{ selectedStatusToDelete.name }}</span>
           status to:
@@ -387,9 +382,10 @@ onMounted(async () => {
         <div class="mb-4">
           <select
             v-model="newStatusId"
-            class="border border-gray-300 rounded py-2 px-3 w-full"
+            class="itbkk-status border border-gray-300 rounded py-2 px-3 w-full"
           >
             <option
+              class="itbkk-status"
               v-for="status in statuses.filter(
                 (s) => s.id !== selectedStatusToDelete.id
               )"
@@ -412,7 +408,7 @@ onMounted(async () => {
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             @click="deleteAndTransfer(newStatusId)"
           >
-            Transfer and Delete
+          Transfer and Delete
           </button>
         </div>
       </div>
@@ -426,7 +422,7 @@ onMounted(async () => {
       >
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
+            <div class="itbkk-message text-lg leading-6 font-medium text-gray-900">
               Success
             </div>
             <button
@@ -450,7 +446,7 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
+            <p class="itbkk-message text-sm leading-5 text-gray-500">
               The task(s) have been transferred and the status has been deleted.
             </p>
           </div>
@@ -470,15 +466,19 @@ onMounted(async () => {
     </div>
   </div>
 
-  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-    <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
-        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-          <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-red-600">
-              Status Not Found
+<div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+  <div class="flex items-start justify-center min-h-screen">
+    <div
+      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+        <div class="flex justify-between items-center">
+          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
+              {{
+                deleteResult?.status === 500
+                  ? "Status Limit Reached"
+                  : "Status Not Found"
+              }}
             </div>
             <button
               type="button"
@@ -501,8 +501,12 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="text-sm leading-5 text-red-600 itbkk-message">
-              An error has occurred, the status does not exist.
+            <p class="itbkk-message text-sm leading-5 text-red-600">
+              {{
+                deleteResult?.status === 500
+                  ? "The status that you are about to transfer has reached its maximum task limit."
+                  : "An error has occurred, the status does not exist."
+              }}
             </p>
           </div>
         </div>
@@ -521,73 +525,134 @@ onMounted(async () => {
     </div>
   </div>
 
-  <div
-    v-if="modalStore.showSuccessModal"
-    class="fixed z-50 inset-0 overflow-y-auto"
-  >
-    <div class="flex items-start justify-center min-h-screen">
-      <div
-        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-      >
-        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-          <div class="flex justify-between items-center">
-            <div class="text-lg leading-6 font-medium text-gray-900">
-              Success
-            </div>
-            <button
-              type="button"
-              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-              @click="closeSuccessModal"
-            >
-              <svg
-                class="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </button>
+  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+  <div class="flex items-start justify-center min-h-screen">
+    <div
+      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+        <div class="flex justify-between items-center">
+          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
+            {{
+              deleteResult?.status === 500
+                ? "Status Limit Reached"
+                : "Status Not Found"
+            }}
           </div>
-          <div>
-            <p class="text-sm leading-5 text-gray-500 itbkk-message">
-              The {{ modalStore.entityType }} "{{ modalStore.taskTitle }}" is
-              {{
-                modalStore.mode === "add"
-                  ? "added"
-                  : modalStore.mode === "edit"
-                  ? "edited"
-                  : "deleted"
-              }}
-              successfully.
-            </p>
-          </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-            <button
-              type="button"
-              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-              @click="closeSuccessModal"
+          <button
+            type="button"
+            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+            @click="closeDeleteModal"
+          >
+            <svg
+              class="h-6 w-6"
+              stroke="currentColor"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              OK
-            </button>
-          </span>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
         </div>
+        <div>
+          <p class="itbkk-message text-sm leading-5 text-red-600">
+            {{
+              deleteResult?.status === 500
+                ? `Cannot transfer to "${statuses.find(s => s.id === newStatusId).name}" status since it will exceed the limit. Please choose another status to transfer to.`
+                : "An error has occurred, the status does not exist."
+            }}
+          </p>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+          <button
+            type="button"
+            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+            @click="closeDeleteModal"
+          >
+            OK
+          </button>
+        </span>
       </div>
     </div>
   </div>
-  <div
+</div>
+
+
+
+
+<div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+  <div class="flex items-start justify-center min-h-screen">
+    <div
+      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+        <div class="flex justify-between items-center">
+          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
+            {{
+              deleteResult?.status === 500
+                ? "Status Limit Reached"
+                : "Status Not Found"
+            }}
+          </div>
+          <button
+            type="button"
+            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+            @click="closeDeleteModal"
+          >
+            <svg
+              class="h-6 w-6"
+              stroke="currentColor"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <div>
+          <p class="itbkk-message text-sm leading-5 text-red-600">
+            {{
+              deleteResult?.status === 500
+                ? `Cannot transfer to "${statuses.find(s => s.id === newStatusId).name}" status since it will exceed the limit. Please choose another status to transfer to.`
+                : "An error has occurred, the status does not exist."
+            }}
+          </p>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+          <button
+            type="button"
+            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+            @click="closeDeleteModal"
+          >
+            OK
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div
     v-if="showDeleteConfirmationModal"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div class="bg-white p-8 rounded-lg">
-      <p class="text-lg mb-4 itbkk-message">
+      <p class="itbkk-message text-lg mb-4 ">
         Are you sure you want to delete the status "{{
           selectedStatusToDelete.name
         }}"?
@@ -611,6 +676,43 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
+  <div v-if="modalStore.showStatusSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
+  <div class="flex items-start justify-center min-h-screen">
+    <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+        <div class="flex justify-between items-center">
+          <div class="text-lg leading-6 font-medium text-gray-900">
+            Success
+          </div>
+          <button
+            type="button"
+            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+            @click="modalStore.closeStatusSuccessModal()"
+          >
+            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div>
+          <p class="text-sm leading-5 text-gray-500">
+            The status "{{ modalStore.statusName }}" has been {{ modalStore.mode === 'add' ? 'added' : 'updated' }} successfully.
+          </p>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+          <button
+            type="button"
+            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+            @click="modalStore.closeStatusSuccessModal()"
+          >
+            OK
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
   <router-view />
 </template>

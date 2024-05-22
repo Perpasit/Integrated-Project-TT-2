@@ -18,9 +18,7 @@ const clearTask = () => {
   showTask.value = false
 }
 
-const closeSuccessModal = () => {
-  modalStore.closeSuccessModal()
-}
+
 </script>
 
 <template>
@@ -39,7 +37,7 @@ const closeSuccessModal = () => {
 />
 
     <div
-      v-if="modalStore.showSuccessModal"
+      v-if="modalStore.showTaskSuccessModal"
       class="fixed z-50 inset-0 overflow-y-auto"
     >
       <div class="flex items-start justify-center min-h-screen">
@@ -54,7 +52,7 @@ const closeSuccessModal = () => {
               <button
                 type="button"
                 class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-                @click="closeSuccessModal"
+                @click="modalStore.closeTaskSuccessModal()"
               >
                 <svg
                   class="h-6 w-6"
@@ -72,7 +70,7 @@ const closeSuccessModal = () => {
               </button>
             </div>
             <div>
-              <p class="text-sm leading-5 text-gray-500 itbkk-message">
+              <p class="itbkk-message text-sm leading-5 text-gray-500">
                 The task "{{ modalStore.taskTitle }}" is
                 {{
                   modalStore.mode === "add" ? "added" : "edited"
@@ -86,7 +84,7 @@ const closeSuccessModal = () => {
               <button
                 type="button"
                 class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-                @click="closeSuccessModal"
+                @click="modalStore.closeTaskSuccessModal()"
               >
                 OK
               </button>

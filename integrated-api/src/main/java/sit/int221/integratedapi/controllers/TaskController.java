@@ -1,0 +1,80 @@
+package sit.int221.integratedapi.controllers;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import sit.int221.integratedapi.dtos.*;
+import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.services.TaskService;
+import sit.int221.integratedapi.utils.ListMapper;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/v2/tasks")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
+public class TaskController {
+    private final TaskService taskService;
+    private final ListMapper listMapper;
+
+    public TaskController(TaskService taskService, ListMapper listMapper) {
+        this.taskService = taskService;
+        this.listMapper = listMapper;
+    }
+
+//    @GetMapping("")
+//    public ResponseEntity<List<TaskDTO>> getTasks() {
+//        List<Task> tasks = taskService.getAllTasks();
+//        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+//        return ResponseEntity.ok(taskDTOs);
+//    }
+
+    @GetMapping("")
+    public ResponseEntity<Object> getTasks(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) List<String> filterStatuses,
+            @RequestParam Map<String, String> allParams) {
+        if (sortBy != null && !sortBy.isEmpty() && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc") && !sortBy.equalsIgnoreCase("createOn")) {
+            return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc', 'desc', and 'createOn' are allowed.");
+        }
+
+        // Remove the expected parameters from the allParams map
+        allParams.remove("sortBy");
+        allParams.remove("filterStatuses");
+
+        if (!allParams.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid filter parameter. Only filtering by status names is allowed.");
+        }
+
+        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            List<Task> tasks = (List<Task>) response.getBody();
+            List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+            return ResponseEntity.ok(taskDTOs);
+        } else {
+            return response;
+        }
+    }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(id);
+        return ResponseEntity.ok(taskRDTO);
+    }
+
+    @PostMapping("")
+    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO task) {
+        return taskService.createNewTask(task);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<TaskDDTO> removeTask(@PathVariable Integer id) {
+        return taskService.removeTask(id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateTask(@RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
+        return taskService.updateTask(id, updatedTaskDTO);
+    }
+}
