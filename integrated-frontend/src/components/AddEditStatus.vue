@@ -89,10 +89,10 @@ watch(
           editedStatus.value = {
             ...data,
             name: data.name || null, 
-            description: data.description === "" ? null : data.description, 
+            description: data.description || "", 
             colorCode: data.colorCode
           }
-          originalStatus.value = { ...data }
+          originalStatus.value = { ...data,description: data.description || "" }
           nameError.value = ""
         }
       } catch (error) {

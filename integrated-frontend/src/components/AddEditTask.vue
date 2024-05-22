@@ -107,8 +107,8 @@ watch(
           const data = await response.json()
           // console.log(data)
           const statusId = statusStore.getStatusByName(data.status)?.id
-          editedTask.value = { ...data, status: statusId || 1 }
-          originalTask.value = { ...data, status: statusId || 1 }
+          editedTask.value = { ...data,description: data.description || "", status: statusId || 1 }
+          originalTask.value = { ...data,description: data.description || "", status: statusId || 1 }
           titleError.value = ""
         }
       } catch (error) {
