@@ -115,9 +115,7 @@ watch(
         console.error("Error fetching task:", error)
         editedTask.value = null
       }
-    } else {
-      // existing code
-    }
+    } 
   },
   { immediate: true }
 )
@@ -248,6 +246,8 @@ const getStatusUsage = (statusId) => {
   }
   return "0/0 tasks"
 }
+
+console.log(editedTask)
 </script>
 
 <template>

@@ -139,8 +139,6 @@ public class TaskService {
 
         Task task = new Task();
         task.setTitle(taskCDTO.getTitle().trim());
-        task.setDescription((task.getDescription() == null || task.getDescription().trim().isEmpty()) ? null : task.getDescription().trim());
-        task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
         task.setStatus(status);
         setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
