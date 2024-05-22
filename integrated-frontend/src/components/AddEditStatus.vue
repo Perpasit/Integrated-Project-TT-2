@@ -49,9 +49,6 @@ const isDuplicateName = computed(() => {
 })
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
 const isDescriptionTooLong = computed(() => {
-  if (editedStatus.value.description === null) {
-    return false;
-  }
   return editedStatus.value.description.length > 200;
 });
 
