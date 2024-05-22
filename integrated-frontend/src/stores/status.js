@@ -29,6 +29,8 @@ export const useStatusStore = defineStore("status", {
         return "background-color: #f87171; color: white; border-radius: 0.375rem; padding: 0.5rem 0.75rem;"
       }
     }
+  
+    
   },
 
   actions: {

@@ -48,9 +48,12 @@ const isDuplicateName = computed(() => {
   )
 })
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
-const isDescriptionTooLong = computed(
-  () => editedStatus.value.description.length > 200
-)
+const isDescriptionTooLong = computed(() => {
+  if (editedStatus.value.description === null) {
+    return false;
+  }
+  return editedStatus.value.description.length > 200;
+});
 
 const isNameValid = computed(() => {
   return (
@@ -75,9 +78,7 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
-        )
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
@@ -87,11 +88,10 @@ watch(
           const data = await response.json()
           editedStatus.value = {
             ...data,
-            name: data.name || "",
-            description: data.description || "",
+            name: data.name || null, 
+            description: data.description === "" ? null : data.description, 
             colorCode: data.colorCode
           }
-          // console.log("Fetched status data:", editedStatus.value);
           originalStatus.value = { ...data }
           nameError.value = ""
         }
@@ -134,8 +134,9 @@ async function saveStatus() {
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description.trim(),
-      colorCode: editedStatus.value.colorCode
+      description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
+      colorCode: editedStatus.value.colorCode,
+      globalSettingId: editedStatus.value.globalSetting?.id || null // Add the globalSettingId property
     }
 
     if (props.mode === "edit") {
@@ -144,15 +145,12 @@ async function saveStatus() {
         await statusStore.updateStatus(statusId, updatedStatus)
         await statusStore.fetchAllStatuses()
         emit("statusSaved")
-        modalStore.openStatusSuccessModal(
-          updatedStatus.name,
-          props.mode,
-          "status"
-        )
+        modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
         // Set a timeout to close the success modal after 3 seconds
         successModalTimeout.value = setTimeout(() => {
           modalStore.closeStatusSuccessModal()
+          resetForm() // Reset the form after closing the success modal
         }, 3000)
       } else {
         console.error("The status does not exist.")
@@ -160,15 +158,12 @@ async function saveStatus() {
     } else {
       await statusStore.createStatus(updatedStatus)
       await statusStore.fetchAllStatuses()
-      modalStore.openStatusSuccessModal(
-        updatedStatus.name,
-        props.mode,
-        "status"
-      )
+      modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
       successModalTimeout.value = setTimeout(() => {
         modalStore.closeStatusSuccessModal()
+        resetForm() // Reset the form after closing the success modal
       }, 3000)
     }
 
@@ -238,12 +233,7 @@ function closeModal() {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea
-                  rows="5"
-                  v-model="editedStatus.description"
-                  class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="No Description Provided"
-                ></textarea>
+                <textarea rows="5" v-model="editedStatus.description" class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="No Description Provided"></textarea>
                 <p
                   class="itbkk-status-description text-gray-500 text-sm mt-1"
                   :class="{ 'text-red-500': isDescriptionTooLong }"
