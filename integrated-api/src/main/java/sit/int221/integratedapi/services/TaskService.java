@@ -140,6 +140,8 @@ public class TaskService {
         Task task = new Task();
         task.setTitle(taskCDTO.getTitle().trim());
         task.setStatus(status);
+        task.setDescription(taskCDTO.getDescription().trim());
+        task.setAssignees(taskCDTO.getAssignees().trim());
         setDefaultValuesForTask(task);
         Task createdTask = taskRepository.save(task);
         TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
@@ -188,28 +190,37 @@ public class TaskService {
         }
 
         // Validate status
-        Status status;
-        try {
-            status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
-                    .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
-        } catch (NoSuchElementException e) {
-            validationErrors.addError("status", "does not exist");
-            throw validationErrors;
-        }if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
+        // Validate status
+        Status status = getDefaultStatus();
+        if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().isEmpty()) {
+            try {
+                status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
+                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
+            } catch (NoSuchElementException e) {
+                validationErrors.addError("status", "does not exist");
+                throw validationErrors;
+            }
+        }
+
+        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             validationErrors.addError("", "The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
             throw validationErrors;
         }
+
+
 
         // If there are any validation errors, throw the exception
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
 
+
+
         setDefaultValuesForTask(existingTask);
         existingTask.setStatus(status);
-        existingTask.setTitle(updatedTaskDTO.getTitle());
-        existingTask.setDescription(updatedTaskDTO.getDescription());
-        existingTask.setAssignees(updatedTaskDTO.getAssignees());
+        existingTask.setTitle(updatedTaskDTO.getTitle().trim());
+        existingTask.setDescription(updatedTaskDTO.getDescription().trim());
+        existingTask.setAssignees(updatedTaskDTO.getAssignees().trim());
         existingTask.setUpdatedOn(ZonedDateTime.now());
 
         Task updatedTask = taskRepository.save(existingTask);
