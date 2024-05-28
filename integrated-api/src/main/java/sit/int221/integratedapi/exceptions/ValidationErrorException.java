@@ -1,7 +1,6 @@
 package sit.int221.integratedapi.exceptions;
 
 import org.springframework.http.HttpStatus;
-
 import java.util.HashMap;
 import java.util.Map;
 

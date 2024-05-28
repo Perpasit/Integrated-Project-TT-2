@@ -7,7 +7,6 @@ import sit.int221.integratedapi.utils.ListMapper;
 
 @Configuration
 public class ApplicationConfig {
-
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();

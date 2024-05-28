@@ -2,12 +2,8 @@ package sit.int221.integratedapi.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import java.time.ZonedDateTime;
 @Entity
 @Table(name = "tasks")
 @Getter
