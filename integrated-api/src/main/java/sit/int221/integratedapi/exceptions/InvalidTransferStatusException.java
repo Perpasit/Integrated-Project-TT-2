@@ -11,6 +11,4 @@ public class InvalidTransferStatusException extends RuntimeException {
         super(message);
         this.additionalMessage = additionalMessage;
     }
-
-
 }
