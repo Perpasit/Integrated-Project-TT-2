@@ -33,8 +33,7 @@ public class StatusService {
     @Autowired
     private ModelMapper modelMapper;
 
-    private static final int MAX_STATUS_NAME_LENGTH = 50;
-    private static final int MAX_STATUS_DESCRIPTION_LENGTH = 200;
+
 
     public List<StatusDTO> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();
@@ -73,43 +72,27 @@ public class StatusService {
     @Transactional
     public ResponseEntity<Object> createStatus(StatusCDTO statusCDTO) {
         ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
-
         if (statusCDTO.getName() == null || statusCDTO.getName().trim().isEmpty()) {
             validationError.addError("name", "Name must not be null or empty");
-        } else if (statusCDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
-            validationError.addError("name", "Name size must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         }
-
-        if (statusCDTO.getDescription() != null && statusCDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
-            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-        }
-
         if (!validationError.getErrors().isEmpty()) {
             throw validationError;
         }
-
         if (statusCDTO.getId() != null) {
-            // Update an existing status
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
 
             validateStatusName(statusCDTO.getName(), existingStatus.getId());
-            validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
-
             existingStatus.setName(statusCDTO.getName().trim());
             existingStatus.setDescription(statusCDTO.getDescription() != null ? statusCDTO.getDescription().trim() : null);
             if (statusCDTO.getColorCode() != null) {
                 existingStatus.setColorCode(statusCDTO.getColorCode());
             }
-
             Status updatedStatus = statusRepository.save(existingStatus);
             StatusCDTO updatedStatusCDTO = modelMapper.map(updatedStatus, StatusCDTO.class);
             return ResponseEntity.ok(updatedStatusCDTO);
         } else {
-            // Create a new status
             validateStatusName(statusCDTO.getName(), null);
-            validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
-
             Status status = modelMapper.map(statusCDTO, Status.class);
             status.setName(status.getName().trim());
             if (status.getDescription() != null) {
@@ -204,8 +187,6 @@ public class StatusService {
             throw validationError;
         } else if (statusUDTO.getName().trim().isEmpty()) {
             validationError.addError("name", "Name must not be empty");
-        } else if (statusUDTO.getName().length() > MAX_STATUS_NAME_LENGTH) {
-            validationError.addError("name", "Name size must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
         } else {
             Status existingStatusWithName = statusRepository.findByNameIgnoreCase(statusUDTO.getName().trim()).orElse(null);
             if (existingStatusWithName != null && !existingStatusWithName.getId().equals(id)) {
@@ -214,9 +195,6 @@ public class StatusService {
             }
         }
 
-        if (statusUDTO.getDescription() != null && statusUDTO.getDescription().length() > MAX_STATUS_DESCRIPTION_LENGTH) {
-            validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
-        }
 
         // Check if the status name is "No Status" or "Done"
         if ("No Status".equalsIgnoreCase(existingStatus.getName()) || "Done".equalsIgnoreCase(existingStatus.getName())) {
@@ -265,9 +243,6 @@ public class StatusService {
             throw new IllegalArgumentException("Status name cannot be null or empty");
         }
 
-        if (statusName.length() > MAX_STATUS_NAME_LENGTH) {
-            throw new IllegalArgumentException("Status name must be between 0 and " + MAX_STATUS_NAME_LENGTH + " characters");
-        }
 
         Status existingStatus = statusRepository.findByNameIgnoreCase(statusName.trim()).orElse(null);
         if (existingStatus != null && !existingStatus.getId().equals(id)) {
