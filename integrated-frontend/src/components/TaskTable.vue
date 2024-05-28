@@ -21,6 +21,16 @@ const showNotFoundModal = ref(false)
 const showLimitTaskModal = ref(false)
 const maxTasksPerStatus = ref(10)
 
+const isDropdownOpen = ref(false)
+
+const currentTaskCountForStatus = ref({});
+const currentStatusNames = ref([]);
+const currentStatusesWithTaskCounts = ref([]);
+const maxTasks = ref();
+
+const searchKeyword = ref("")
+const displayStatusLimit = ref(5)
+const showAllStatuses = ref(false)
 
 const showTaskDetail = (task) => {
   router.push({
@@ -99,34 +109,8 @@ const editTask = (task) => {
     router.push({ name: "EditTask", params: { id: task.id } })
   }
 }
-onMounted(async () => {
-  await taskStore.fetchAllTasks()
-  await statusStore.fetchAllStatuses()
-  await fetchTasks()
 
-  const sortByFromUrl = route.query.sortBy
-  if (
-    sortByFromUrl === "asc" ||
-    sortByFromUrl === "desc" ||
-    sortByFromUrl === "createOn"
-  ) {
-    sortBy.value = sortByFromUrl
-    await fetchTasks()
-  }
 
-  // Check the filterStatus query parameter from the URL
-  const filterStatusFromUrl = route.query.filterStatus
-  if (filterStatusFromUrl) {
-    const statusArray = filterStatusFromUrl.split(",")
-    selectedStatuses.value = statusArray
-    await fetchTasks()
-  } else {
-    // If filterStatus is not provided, clear the selectedStatuses
-    selectedStatuses.value = []
-    await fetchTasks()
-  }
-})
-const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
@@ -142,9 +126,7 @@ const clearStatusFilter = () => {
   searchKeyword.value = ""
 }
 
-const searchKeyword = ref("")
-const displayStatusLimit = ref(5)
-const showAllStatuses = ref(false)
+
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
@@ -174,20 +156,6 @@ const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
 }
 
-const filteredTasksByStatus = computed(() => {
-  if (selectedStatuses.value.length === 0) {
-    return tasks.value
-  }
-  return tasks.value.filter(
-    (task) =>
-      task && task.status && selectedStatuses.value.includes(task.status)
-  )
-})
-
-const currentTaskCountForStatus = ref({});
-const currentStatusNames = ref([]);
-const currentStatusesWithTaskCounts = ref([]);
-const maxTasks = ref();
 const openLimitTaskModal = async () => {
   try {
     // Fetch the latest status data
@@ -217,13 +185,11 @@ const openLimitTaskModal = async () => {
     console.error("Error fetching status data:", error);
   }
 };
+
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false
 }
-const handleLimitTaskModalClick = (statuses) => {
-  selectedStatuses.value = statuses
-  showLimitTaskModal.value = true
-}
+
 const toggleStatusFilter = (statusName) => {
   const isSelected = selectedStatuses.value.includes(statusName)
   if (isSelected) {
@@ -235,6 +201,34 @@ const toggleStatusFilter = (statusName) => {
   }
   fetchTasks()
 }
+
+onMounted(async () => {
+  await taskStore.fetchAllTasks()
+  await statusStore.fetchAllStatuses()
+  await fetchTasks()
+
+  const sortByFromUrl = route.query.sortBy
+  if (
+    sortByFromUrl === "asc" ||
+    sortByFromUrl === "desc" ||
+    sortByFromUrl === "createOn"
+  ) {
+    sortBy.value = sortByFromUrl
+    await fetchTasks()
+  }
+
+  // Check the filterStatus query parameter from the URL
+  const filterStatusFromUrl = route.query.filterStatus
+  if (filterStatusFromUrl) {
+    const statusArray = filterStatusFromUrl.split(",")
+    selectedStatuses.value = statusArray
+    await fetchTasks()
+  } else {
+    // If filterStatus is not provided, clear the selectedStatuses
+    selectedStatuses.value = []
+    await fetchTasks()
+  }
+})
 </script>
 
 <template>
