@@ -29,7 +29,6 @@ public class GlobalExceptionHandler  {
                 request.getDescription(false).replace("uri=", ""),
                 null
         );
-
         for (Map.Entry<String, String> entry : ex.getErrors().entrySet()) {
             errorResponse.addValidationError(entry.getKey(), entry.getValue());
         }
