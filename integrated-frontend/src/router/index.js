@@ -32,27 +32,16 @@ const router = createRouter({
           name: "AddTask",
           component: AddEditTask,
           props: () => ({
-            task: {
-              id: "",
-              title: "",
-              description: "",
-              assignees: "",
-              status: "NO_STATUS",
-            },
             mode: "add",
-            show: true,
           }),
         },
         {
           path: "/task/:id/edit",
           name: "EditTask",
           component: AddEditTask,
-          props: (route) => {
-            const taskStore = useTaskStore()
+          props: () => {
             return {
-              task: taskStore.getTaskById(route.params.id),
-              mode: "edit",
-              show: true,
+              mode: "edit"
             }
           },
         },

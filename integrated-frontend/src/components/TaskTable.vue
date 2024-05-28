@@ -3,7 +3,6 @@
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
-import AddEditTask from "./AddEditTask.vue"
 import { useRouter, useRoute } from "vue-router"
 import LimitTaskModal from "./LimitTaskModal.vue"
 
@@ -496,19 +495,8 @@ onMounted(async () => {
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No Task
     </div>
-
-    <AddEditTask
-      v-if="selectedTask"
-      :show="!!selectedTask"
-      :task="{
-        ...selectedTask,
-        status: selectedTask.status,
-      }"
-      mode="edit"
-      @close="closeModal"
-      @save="saveTask"
-    />
   </div>
+
 
   <div
     v-if="showDeleteConfirmation"

@@ -29,7 +29,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(["close", "save", "toggle"])
+const emit = defineEmits(["close", "save"])
 
 
 
@@ -96,7 +96,7 @@ function toggleLimitEnabled() {
   isLimitEnabled.value = !isLimitEnabled.value
   globalSettingStore.setIsLimitEnabled(isLimitEnabled.value)
   saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
-  emit("toggle", isLimitEnabled.value)
+
 }
 
 const limitReachedStatusesWithCounts = computed(() => {
