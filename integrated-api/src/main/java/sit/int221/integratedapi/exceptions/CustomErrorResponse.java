@@ -2,7 +2,9 @@ package sit.int221.integratedapi.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CustomErrorResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
@@ -12,7 +14,6 @@ public class CustomErrorResponse {
     private String instance;
     private List<ValidationError> errors;
 
-
     public CustomErrorResponse(ZonedDateTime timestamp, int status, String message, String instance, List<ValidationError> errors) {
         this.timestamp = timestamp;
         this.status = status;
@@ -21,24 +22,21 @@ public class CustomErrorResponse {
         this.errors = errors;
     }
 
-    // Getters and setters
-
     public static class ValidationError {
-        private String field;
+        private String fieldName; // เปลี่ยนชื่อ field เป็น fieldName
         private String message;
 
-        public ValidationError(String field, String message) {
-            this.field = field;
+        public ValidationError(String fieldName, String message) {
+            this.fieldName = fieldName; // เปลี่ยนชื่อ field เป็น fieldName
             this.message = message;
         }
 
-        // Getters and setters
-        public String getField() {
-            return field;
+        public String getFieldName() { // เปลี่ยนชื่อเมท็อดเป็น getFieldName
+            return fieldName; // เปลี่ยนชื่อ field เป็น fieldName
         }
 
-        public void setField(String field) {
-            this.field = field;
+        public void setFieldName(String fieldName) { // เพิ่มเมท็อด setFieldName
+            this.fieldName = fieldName; // เปลี่ยนชื่อ field เป็น fieldName
         }
 
         public String getMessage() {
@@ -48,15 +46,6 @@ public class CustomErrorResponse {
         public void setMessage(String message) {
             this.message = message;
         }
-    }
-
-    // Getters and setters for CustomErrorResponse fields
-    public ZonedDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(ZonedDateTime timestamp) {
-        this.timestamp = timestamp;
     }
 
     public int getStatus() {
@@ -75,12 +64,11 @@ public class CustomErrorResponse {
         this.message = message;
     }
 
-    public String getInstance() {
-        return instance;
-    }
-
-    public void setInstance(String instance) {
-        this.instance = instance;
+    public void addValidationError(String field, String message) {
+        if (Objects.isNull(errors)) {
+            errors = new ArrayList<>();
+        }
+        errors.add(new ValidationError(field, message));
     }
 
     public List<ValidationError> getErrors() {

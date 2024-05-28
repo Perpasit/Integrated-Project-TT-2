@@ -1,5 +1,6 @@
 package sit.int221.integratedapi.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
@@ -75,7 +76,7 @@ public class TaskController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO taskCDTO) {
+    public ResponseEntity<Object> addNewTask(@Valid @RequestBody TaskCDTO taskCDTO) {
         return taskService.createNewTask(taskCDTO);
     }
 
@@ -85,7 +86,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateTask(@RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
+    public ResponseEntity<Object> updateTask(@Valid @RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
         return taskService.updateTask(id, updatedTaskDTO);
     }
 }
