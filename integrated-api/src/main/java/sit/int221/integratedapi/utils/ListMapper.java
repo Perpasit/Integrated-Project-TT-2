@@ -5,6 +5,7 @@ import org.modelmapper.PropertyMap;
 import org.modelmapper.convention.MatchingStrategies;
 import sit.int221.integratedapi.dtos.TaskDTO;
 import sit.int221.integratedapi.entities.Task;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,8 @@ public class ListMapper {
                 .setMatchingStrategy(MatchingStrategies.STRICT)
                 .setFieldMatchingEnabled(true)
                 .setSkipNullEnabled(false);
+
+        // Add mappings for title and assignees
         modelMapper.addMappings(new PropertyMap<Task, TaskDTO>() {
             @Override
             protected void configure() {
