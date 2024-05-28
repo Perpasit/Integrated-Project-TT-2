@@ -10,15 +10,14 @@ const isHomePage = computed(() => {
 
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.startsWith("/status/manage")
+  
 })
 
 const isTaskPage = computed(() => {
   return router.currentRoute.value.path.startsWith("/task")
 })
 
-const isManagePage = computed(() => {
-  return router.currentRoute.value.path.startsWith("/status/manage")
-})
+
 
 const addTask = () => {
   router.push({ name: "AddTask" })
@@ -74,7 +73,7 @@ const addStatus = () => {
         + NEW TASK
       </button>
       <button
-        v-show="isManagePage"
+        v-show="isManageStatusPage"
         @click="addStatus"
         class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded"
       >

@@ -20,6 +20,8 @@ const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 const showLimitTaskModal = ref(false)
 const maxTasksPerStatus = ref(10)
+
+
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
@@ -27,8 +29,8 @@ const showTaskDetail = (task) => {
   })
 }
 
-const closeModal = () => {
-  selectedTask.value = null
+const fetchTasks = async () => {
+  await taskStore.fetchAllTasks()
 }
 
 const saveTask = async (updatedTask) => {
@@ -45,13 +47,15 @@ const formattedStatus = computed(() => {
     const status = statusStore.getStatusByName(task.status)
     if (status) {
       return status.name
-        // .toUpperCase()
-        // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {
       return "Unknown"
     }
   }
 })
+
+const closeModal = () => {
+  selectedTask.value = null
+}
 
 const confirmDelete = (task) => {
   selectedTaskToDelete = task
@@ -79,9 +83,7 @@ const deleteTask = async () => {
     } 
   }
 }
-const fetchTasks = async () => {
-  await taskStore.fetchAllTasks()
-}
+
 
 function closeDeleteModal() {
   showSuccessModal.value = false

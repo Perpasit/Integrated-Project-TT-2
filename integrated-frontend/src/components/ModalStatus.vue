@@ -5,9 +5,21 @@ import { getItems } from "../utils/fetch"
 
 const route = useRoute()
 const router = useRouter()
-
 const status = ref(null)
 const loading = ref(true)
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+const closeModal = () => {
+  router.push("/status/manage")
+}
+
+const parseAndFormatDate = (dateString) => {
+  const date = new Date(dateString)
+  if (isNaN(date)) {
+    return "Invalid Date"
+  }
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
+}
 
 onMounted(async () => {
   try {
@@ -24,46 +36,23 @@ onMounted(async () => {
     loading.value = false
   }
 })
-const closeModal = () => {
-  router.push("/status/manage")
-}
-
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-
-const parseAndFormatDate = (dateString) => {
-  const date = new Date(dateString)
-  if (isNaN(date)) {
-    return "Invalid Date"
-  }
-  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
-}
-
-const formatStatusName = (statusName) => {
-  return statusName
-    // .toUpperCase()
-    // .replace(/_/g, " ")
-    // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-}
 </script>
 
 <template>
   <div
-    v-if="!loading"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div
       class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
     >
       <div class="mt-5 sm:mt-6 sm:mx-6">
-        
-        <div v-if="loading" class="px-4 py-5">Loading status...</div>
-        <div v-else-if="status" class="px-4 py-5">
+        <div v-if="status" class="px-4 py-5">
           <div class="mb-4">
             <label class="block text-sm font-bold mb-1">Name :</label>
             <textarea
               rows="2"
               readonly
-              :value="formatStatusName(status.name)"
+              :value="status.name"
               class="itbkk-status-name w-full border border-gray-300 rounded-md p-1 shadow-sm mt-1"
             ></textarea>
           </div>
@@ -94,17 +83,13 @@ const formatStatusName = (statusName) => {
               <label class="itbkk-timezone block">{{ localTimeZone }}</label>
             </div>
             <div>
-              <label class="block text-sm font-bold mb-1"
-                >Created On</label
-              >
+              <label class="block text-sm font-bold mb-1">Created On</label>
               <label class="itbkk-created-on block">{{
                 parseAndFormatDate(status.createdOn)
               }}</label>
             </div>
             <div>
-              <label class="block text-sm font-bold mb-1"
-                >Updated On</label
-              >
+              <label class="block text-sm font-bold mb-1">Updated On</label>
               <label class="itbkk-updated-on block">{{
                 parseAndFormatDate(status.updatedOn)
               }}</label>
