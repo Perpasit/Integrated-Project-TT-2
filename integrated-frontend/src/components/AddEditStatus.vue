@@ -1,6 +1,6 @@
 <!-- AddEditStatus.vue -->
 <script setup>
-import { ref, computed, watch, onMounted } from "vue"
+import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter } from "vue-router"
@@ -9,6 +9,9 @@ const router = useRouter()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
 const successModalTimeout = ref(null)
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
+const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
 
 const props = defineProps({
   show: {
@@ -38,8 +41,6 @@ const editedStatus = ref({
   colorCode: "#000000"
 })
 
-const nameError = ref("")
-
 const isDuplicateName = computed(() => {
   return statusStore.statuses.some(
     (status) =>
@@ -47,10 +48,7 @@ const isDuplicateName = computed(() => {
       status.id !== editedStatus.value.id
   )
 })
-const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
-const isDescriptionTooLong = computed(() => {
-  return editedStatus.value.description.length > 200;
-});
+
 
 const isNameValid = computed(() => {
   return (
@@ -76,6 +74,7 @@ watch(
     if (props.mode === "edit") {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
+        console.log(response)
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
@@ -90,14 +89,12 @@ watch(
             colorCode: data.colorCode
           }
           originalStatus.value = { ...data,description: data.description || "" }
-          nameError.value = ""
         }
       } catch (error) {
         editedStatus.value = null
       }
     } else {
       resetForm()
-      nameError.value = "Name is required."
     }
   },
   { immediate: true }
@@ -110,24 +107,7 @@ function resetForm() {
   }
 }
 
-const closeSuccessModal = () => {
-  modalStore.closeSuccessModal()
-  clearTimeout(successModalTimeout.value)
-}
-
 async function saveStatus() {
-  if (!editedStatus.value.name) {
-    nameError.value = "Name is required."
-    return
-  }
-
-  if (isDuplicateName.value) {
-    nameError.value = "Status name must be unique, please choose another name."
-    return
-  }
-
-  nameError.value = ""
-
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
@@ -170,8 +150,6 @@ async function saveStatus() {
   }
 }
 
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString)
   if (isNaN(date)) {
@@ -184,6 +162,7 @@ function closeModal() {
   router.push("/status/manage")
   resetForm()
 }
+
 </script>
 
 <template>
