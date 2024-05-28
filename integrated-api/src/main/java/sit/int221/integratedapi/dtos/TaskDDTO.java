@@ -1,5 +1,6 @@
 package sit.int221.integratedapi.dtos;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class TaskDDTO {
     private Integer id;
     private String title;

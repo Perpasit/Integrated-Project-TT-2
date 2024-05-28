@@ -12,6 +12,7 @@ public class CustomErrorResponse {
     private String instance;
     private List<ValidationError> errors;
 
+
     public CustomErrorResponse(ZonedDateTime timestamp, int status, String message, String instance, List<ValidationError> errors) {
         this.timestamp = timestamp;
         this.status = status;
@@ -20,19 +21,42 @@ public class CustomErrorResponse {
         this.errors = errors;
     }
 
+    // Getters and setters
+
     public static class ValidationError {
         private String field;
         private String message;
+
         public ValidationError(String field, String message) {
             this.field = field;
             this.message = message;
         }
+
+        // Getters and setters
+        public String getField() {
+            return field;
+        }
+
+        public void setField(String field) {
+            this.field = field;
+        }
+
         public String getMessage() {
             return message;
         }
+
         public void setMessage(String message) {
             this.message = message;
         }
+    }
+
+    // Getters and setters for CustomErrorResponse fields
+    public ZonedDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(ZonedDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     public int getStatus() {
@@ -51,4 +75,19 @@ public class CustomErrorResponse {
         this.message = message;
     }
 
+    public String getInstance() {
+        return instance;
+    }
+
+    public void setInstance(String instance) {
+        this.instance = instance;
+    }
+
+    public List<ValidationError> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(List<ValidationError> errors) {
+        this.errors = errors;
+    }
 }

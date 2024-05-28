@@ -23,6 +23,7 @@ import sit.int221.integratedapi.utils.ListMapper;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @NoArgsConstructor
@@ -39,19 +40,22 @@ public class TaskService {
     @Autowired
     private StatusService statusService;
 
+    @Autowired
+    public TaskService(TaskRepository taskRepository, StatusRepository statusRepository, ListMapper listMapper) {
+        this.taskRepository = taskRepository;
+        this.statusRepository = statusRepository;
+        this.listMapper = listMapper;
+    }
+
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public TaskRDTO getTaskDetailsById(Integer id) {
-        Task task = getTaskById(id);
-        return modelMapper.map(task, TaskRDTO.class);
-    }
-
     public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses, List<String> allParams) {
+        // ตรวจสอบว่า filterStatuses มีค่าและมี # หรือไม่
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
-            return ResponseEntity.ok(new ArrayList<>());
+            return ResponseEntity.ok(new ArrayList<>()); // ส่งคืน []
         }
 
         Sort sort;
@@ -70,7 +74,21 @@ public class TaskService {
         } else {
             tasks = taskRepository.findAll(sort);
         }
+
         return ResponseEntity.ok(tasks);
+    }
+
+    private List<Integer> extractStatusIds(List<String> filterStatuses) {
+        List<Integer> statusIds = new ArrayList<>();
+        for (String status : filterStatuses) {
+            try {
+                int statusId = Integer.parseInt(status);
+                statusIds.add(statusId);
+            } catch (NumberFormatException e) {
+                // Ignore non-numeric status values
+            }
+        }
+        return statusIds;
     }
 
     private List<String> extractStatusNames(List<String> filterStatuses) {
@@ -87,18 +105,22 @@ public class TaskService {
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
+        // Check if the title is null or empty
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
             validationErrors.addError("title", "must not be null");
         }
 
+        // Validate field sizes
         validateFieldSize("title", taskCDTO.getTitle(), 100, validationErrors);
         validateFieldSize("description", taskCDTO.getDescription(), 500, validationErrors);
         validateFieldSize("assignees", taskCDTO.getAssignees(), 30, validationErrors);
 
+        // If there are any validation errors, throw the exception
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
 
+        // Validate status
         Status status = getDefaultStatus();
         if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
             try {
@@ -110,6 +132,7 @@ public class TaskService {
             }
         }
 
+        // Check if the status has reached its maximum task limit
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
             throw new StatusLimitReachedException("The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
         }
@@ -125,10 +148,12 @@ public class TaskService {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
 
+
     private void validateFieldSize(String field, String value, int maxSize, ValidationErrorException validationErrors) {
         if (value != null && value.length() > maxSize) {
             validationErrors.addError(field, "size must be between 0 and " + maxSize);
         } else if (value != null && value.length() == 0) {
+            // Only add the "must not be null" error for the "title" field
             if (field.equalsIgnoreCase("title")) {
                 validationErrors.addError(field, "must not be null");
             }
@@ -150,6 +175,7 @@ public class TaskService {
 
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
+        // Check if the title is null or empty
         if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
             validationErrors.addError("title", "must not be null");
         }
@@ -158,10 +184,13 @@ public class TaskService {
         validateFieldSize("description", updatedTaskDTO.getDescription(), 500, validationErrors);
         validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30, validationErrors);
 
+        // If there are any validation errors, throw the exception
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
 
+        // Validate status
+        // Validate status
         Status status = getDefaultStatus();
         if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().isEmpty()) {
             try {
@@ -178,9 +207,14 @@ public class TaskService {
             throw validationErrors;
         }
 
+
+
+        // If there are any validation errors, throw the exception
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
+
+
 
         setDefaultValuesForTask(existingTask);
         existingTask.setStatus(status);
@@ -194,9 +228,9 @@ public class TaskService {
         return ResponseEntity.ok(updatedTaskCDTO);
     }
 
-    private Status getDefaultStatus() {
-        return statusRepository.findByNameIgnoreCase("no status")
-                .orElseThrow(() -> new IllegalStateException("Default 'no status' not found in the database"));
+    public TaskRDTO getTaskDetailsById(Integer id) {
+        Task task = getTaskById(id);
+        return modelMapper.map(task, TaskRDTO.class);
     }
 
     private void setDefaultValuesForTask(Task task) {
@@ -207,5 +241,10 @@ public class TaskService {
             task.setCreatedOn(ZonedDateTime.now());
         }
         task.setUpdatedOn(ZonedDateTime.now());
+    }
+
+    private Status getDefaultStatus() {
+        return statusRepository.findByNameIgnoreCase("no status")
+                .orElseThrow(() -> new IllegalStateException("Default 'no status' not found in the database"));
     }
 }

@@ -3,8 +3,10 @@ package sit.int221.integratedapi.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
+import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.services.StatusService;
 import sit.int221.integratedapi.utils.ListMapper;
+import sit.int221.integratedapi.dtos.StatusUpdateDTO;
 import java.util.List;
 
 @RestController
@@ -57,4 +59,5 @@ public class StatusController {
         List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
         return ResponseEntity.ok(taskDTOs);
     }
+
 }
