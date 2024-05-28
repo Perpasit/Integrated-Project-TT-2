@@ -23,10 +23,10 @@ const maxTasksPerStatus = ref(10)
 
 const isDropdownOpen = ref(false)
 
-const currentTaskCountForStatus = ref({});
-const currentStatusNames = ref([]);
-const currentStatusesWithTaskCounts = ref([]);
-const maxTasks = ref();
+const currentTaskCountForStatus = ref({})
+const currentStatusNames = ref([])
+const currentStatusesWithTaskCounts = ref([])
+const maxTasks = ref()
 
 const searchKeyword = ref("")
 const displayStatusLimit = ref(5)
@@ -84,16 +84,15 @@ const deleteTask = async () => {
       closeDeleteModal()
     }, 3000)
   } catch (error) {
-    if (error.message.includes('does not exist')) {
+    if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true
       await fetchTasks()
       setTimeout(() => {
-      closeDeleteModal()
-    }, 3000)
-    } 
+        closeDeleteModal()
+      }, 3000)
+    }
   }
 }
-
 
 function closeDeleteModal() {
   showSuccessModal.value = false
@@ -110,8 +109,6 @@ const editTask = (task) => {
   }
 }
 
-
-
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
 }
@@ -125,7 +122,6 @@ const clearStatusFilter = () => {
   taskStore.setFilterStatuses([])
   searchKeyword.value = ""
 }
-
 
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
@@ -159,32 +155,32 @@ const updateMaxTasksPerStatus = (limit) => {
 const openLimitTaskModal = async () => {
   try {
     // Fetch the latest status data
-    await statusStore.fetchAllStatuses();
-    currentStatusesWithTaskCounts.value = statusStore.statuses.map((status) => ({
-      name: status.name,
-      noOfTasks: status.noOfTasks || 0,
-    }));
+    await statusStore.fetchAllStatuses()
+    currentStatusesWithTaskCounts.value = statusStore.statuses.map(
+      (status) => ({
+        name: status.name,
+        noOfTasks: status.noOfTasks || 0,
+      })
+    )
 
     // Update the maxTasks value based on the first status
-    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10;
+    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10
 
-    currentTaskCountForStatus.value = currentStatusesWithTaskCounts.value.reduce(
-      (counts, status) => {
-        counts[status.name] = status.noOfTasks;
-        return counts;
-      },
-      {}
-    );
+    currentTaskCountForStatus.value =
+      currentStatusesWithTaskCounts.value.reduce((counts, status) => {
+        counts[status.name] = status.noOfTasks
+        return counts
+      }, {})
 
     currentStatusNames.value = currentStatusesWithTaskCounts.value.map(
       (status) => status.name
-    );
+    )
 
-    showLimitTaskModal.value = true;
+    showLimitTaskModal.value = true
   } catch (error) {
-    console.error("Error fetching status data:", error);
+    console.error("Error fetching status data:", error)
   }
-};
+}
 
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false
@@ -233,8 +229,8 @@ onMounted(async () => {
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex mb-10 ">
-      <thead class="absolute mt-2 ">
+    <div class="flex mb-10">
+      <thead class="absolute mt-2">
         <th class="w-full text-xl font-medium">
           <div class="flex items-center text-white">
             <span v-if="selectedStatuses.length > 0" class="mr-2 ml-36"
@@ -244,12 +240,11 @@ onMounted(async () => {
               <button
                 v-for="(status, index) in selectedStatuses"
                 :key="index"
-                class=" transition-all duration-200 ease-in-out ml-4  text-white font-semibold text-sm  py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100  rounded"
+                class="transition-all duration-200 ease-in-out ml-4 text-white font-semibold text-sm py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100 rounded"
                 @click="toggleStatusFilter(status)"
               >
-              
                 {{ status }}
-                
+
                 <span class="ml-2 text-white">x</span>
               </button>
             </div>
@@ -305,17 +300,20 @@ onMounted(async () => {
                         <label
                           v-for="(status, index) in filteredStatuses"
                           :key="status.name"
-                          class="flex items-center text-sm m-0 text-gray-700 mt-1  break-all"
-                          
+                          class="flex items-center text-sm m-0 text-gray-700 mt-1 break-all"
                         >
                           <input
                             type="checkbox"
                             v-model="selectedStatuses"
                             :value="status.name"
-                            class="itbkk-filter-item mr-2 "
+                            class="itbkk-filter-item mr-2"
                           />
                           <!-- {{ status.name }} ({{ status.noOfTasks || 0 }}) -->
-                          <span class="break-words whitespace-normal text-left">{{ status.name }} ({{ status.noOfTasks || 0 }})</span>
+                          <span class="break-words whitespace-normal text-left"
+                            >{{ status.name }} ({{
+                              status.noOfTasks || 0
+                            }})</span
+                          >
                         </label>
                       </div>
 
@@ -408,12 +406,12 @@ onMounted(async () => {
           </tr>
         </thead>
         <LimitTaskModal
-  :show="showLimitTaskModal"
-  :currentTaskCounts="currentTaskCountForStatus"
-  :currentStatusNames="currentStatusNames"
-  @close="closeLimitTaskModal"
-  @save="updateMaxTasksPerStatus"
-/>
+          :show="showLimitTaskModal"
+          :currentTaskCounts="currentTaskCountForStatus"
+          :currentStatusNames="currentStatusNames"
+          @close="closeLimitTaskModal"
+          @save="updateMaxTasksPerStatus"
+        />
         <tbody>
           <tr
             v-for="(task, index) in tasks"
@@ -523,13 +521,13 @@ onMounted(async () => {
       </p>
       <div class="flex justify-end">
         <button
-        class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+          class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
           @click="cancelDelete"
         >
           Cancel
         </button>
         <button
-        class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
         >
           Delete
@@ -553,7 +551,7 @@ onMounted(async () => {
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
               @click="closeDeleteModal"
             >
-            <svg
+              <svg
                 class="h-6 w-6"
                 stroke="currentColor"
                 fill="none"

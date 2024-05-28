@@ -161,7 +161,7 @@ const getStatusColor = (status) => {
 }
 
 onMounted(async () => {
-  await statusStore.fetchStatuses()
+  await statusStore.fetchAllStatuses()
 })
 </script>
 

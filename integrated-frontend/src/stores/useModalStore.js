@@ -4,8 +4,6 @@ export const useModalStore = defineStore('modalStore', {
   state: () => ({
     showTaskSuccessModal: false,
     showStatusSuccessModal: false,
-    showStatusFullModal: false,
-    statusFullModalMessage: "",
     taskTitle: '',
     statusName: '',
     mode: '',
@@ -41,13 +39,6 @@ export const useModalStore = defineStore('modalStore', {
       this.mode = '';
       clearTimeout(this.statusSuccessTimeout);
     },
-    openStatusFullModal(message) {
-      this.showStatusFullModal = true;
-      this.statusFullModalMessage = message;
-    },
-    closeStatusFullModal() {
-      this.showStatusFullModal = false;
-      this.statusFullModalMessage = "";
-    }
+   
   },
 });
