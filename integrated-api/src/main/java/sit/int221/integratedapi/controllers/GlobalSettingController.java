@@ -1,24 +1,24 @@
 package sit.int221.integratedapi.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.GlobalSettingDTO;
 import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.services.GlobalSettingService;
 import sit.int221.integratedapi.utils.ListMapper;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/v2/global-settings")
 @CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class GlobalSettingController {
-    @Autowired
-    private GlobalSettingService globalSettingService;
+    final private GlobalSettingService globalSettingService;
+    final private ListMapper listMapper;
 
-    @Autowired
-    private ListMapper listMapper;
+    public GlobalSettingController(GlobalSettingService globalSettingService, ListMapper listMapper) {
+        this.globalSettingService = globalSettingService;
+        this.listMapper = listMapper;
+    }
 
     @GetMapping("")
     public ResponseEntity<List<GlobalSettingDTO>> getAllGlobalSettings() {
