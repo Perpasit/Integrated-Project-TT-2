@@ -5,11 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class StatusUDTO {
     private Integer id;
     @Size(max = 50, message = "Name size must be between 0 and 50 characters")

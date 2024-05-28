@@ -7,11 +7,8 @@ import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v2/tasks")
@@ -25,30 +22,20 @@ public class TaskController {
         this.listMapper = listMapper;
     }
 
-//    @GetMapping("")
-//    public ResponseEntity<List<TaskDTO>> getTasks() {
-//        List<Task> tasks = taskService.getAllTasks();
-//        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
-//        return ResponseEntity.ok(taskDTOs);
-//    }
-
     @GetMapping("")
     public ResponseEntity<Object> getTasks(
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses,
             @RequestParam(required = false) List<String> allParams) {
 
-        // ตรวจสอบว่า filterStatuses มีค่าและมี # หรือไม่
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
-            return ResponseEntity.ok(new ArrayList<>()); // ส่งคืน []
+            return ResponseEntity.ok(new ArrayList<>());
         }
 
-        // ตรวจสอบความถูกต้องของ sortBy
         if (sortBy != null && !isValidSortBy(sortBy)) {
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        // ตรวจสอบว่ามีอาร์กิวเมนต์ที่ไม่คาดหวังหรือไม่
         if (allParams != null && !allParams.isEmpty()) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -62,12 +49,10 @@ public class TaskController {
             return response;
         }
     }
+
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
-
-
-
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {

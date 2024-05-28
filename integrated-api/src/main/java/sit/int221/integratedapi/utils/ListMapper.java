@@ -5,7 +5,6 @@ import org.modelmapper.PropertyMap;
 import org.modelmapper.convention.MatchingStrategies;
 import sit.int221.integratedapi.dtos.TaskDTO;
 import sit.int221.integratedapi.entities.Task;
-
 import java.util.List;
 import java.util.stream.Collectors;
 

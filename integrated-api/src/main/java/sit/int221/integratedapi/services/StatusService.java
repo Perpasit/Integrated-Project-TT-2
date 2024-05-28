@@ -15,7 +15,6 @@ import sit.int221.integratedapi.repositories.StatusRepository;
 import sit.int221.integratedapi.repositories.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,6 @@ public class StatusService {
     private ListMapper listMapper;
     @Autowired
     private ModelMapper modelMapper;
-
 
 
     public List<StatusDTO> getAllStatuses() {
