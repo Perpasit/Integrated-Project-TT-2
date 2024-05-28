@@ -54,6 +54,7 @@ public class StatusService {
     public List<TaskDTO> getTasksByStatusId(Integer statusId) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist!"));
+
         List<Task> tasks = taskRepository.findByStatusId(statusId);
         return listMapper.mapList(tasks, TaskDTO.class);
     }
@@ -88,6 +89,7 @@ public class StatusService {
         }
 
         if (statusCDTO.getId() != null) {
+            // Update an existing status
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
 
@@ -104,6 +106,7 @@ public class StatusService {
             StatusCDTO updatedStatusCDTO = modelMapper.map(updatedStatus, StatusCDTO.class);
             return ResponseEntity.ok(updatedStatusCDTO);
         } else {
+            // Create a new status
             validateStatusName(statusCDTO.getName(), null);
             validateStatusDescription(statusCDTO.getDescription(), MAX_STATUS_DESCRIPTION_LENGTH);
 
@@ -121,19 +124,24 @@ public class StatusService {
         }
     }
 
+
     @Transactional
     public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
         Status status = statusRepository.findById(id).orElse(null);
         if (status != null) {
+            // Check if the status name is "No Status" or "Done"
             if ("No Status".equalsIgnoreCase(status.getName()) || "Done".equalsIgnoreCase(status.getName())) {
                 throw new NotAllowedOperationException(status.getName() + " cannot be deleted.");
             }
 
+            // Check if there are tasks associated with this status
             int taskCount = taskRepository.countByStatusId(id);
             if (taskCount > 0) {
+                // Send to transfer if tasks are associated with this status
                 throw new TransferTasksRequiredException("destination status for task transfer not specified.");
             }
 
+            // Proceed with the deletion logic if no tasks are associated
             statusRepository.delete(status);
             StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
             return ResponseEntity.ok(statusDDTO);
@@ -148,23 +156,35 @@ public class StatusService {
 
         validateStatusNotDeletable(statusToDelete);
 
+        // Retrieve the new status to transfer tasks to
         Status newStatus = statusRepository.findById(newId)
                 .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "the specified status for task transfer does not exist"));
+
+        // Check if the source and destination status are the same
         if (statusToDelete.equals(newStatus)) {
             throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status", "the specified status for task transfer does not exist");
 
         }
 
+        // Check if there are tasks associated with the status to delete
         int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+
+        // Check if the destination status is transferrable
         if (deletingStatusTaskCount > 0) {
+            // Transfer tasks to the new status before deleting
             List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
             for (Task task : tasksToUpdate) {
                 task.setStatus(newStatus);
             }
+
+            // Check if the destination status is over the task limit
             validateStatusNotTransferrable(newStatus, deletingStatusTaskCount + taskRepository.countByStatusId(newId));
         }
 
+        // Delete the status
         statusRepository.delete(statusToDelete);
+
+        // Map the deleted status to DTO for response
         StatusTFDDTO statusTFDDTO = modelMapper.map(statusToDelete, StatusTFDDTO.class);
         return ResponseEntity.ok(statusTFDDTO);
     }
@@ -178,6 +198,7 @@ public class StatusService {
 
         ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
 
+        // Validate statusUDTO fields
         if (statusUDTO.getName() == null) {
             validationError.addError("name", "must not be null");
             throw validationError;
@@ -197,6 +218,7 @@ public class StatusService {
             validationError.addError("description", "Description size must be between 0 and " + MAX_STATUS_DESCRIPTION_LENGTH + " characters");
         }
 
+        // Check if the status name is "No Status" or "Done"
         if ("No Status".equalsIgnoreCase(existingStatus.getName()) || "Done".equalsIgnoreCase(existingStatus.getName())) {
             throw new NotAllowedOperationException(existingStatus.getName() + " cannot be modified.");
         }
@@ -205,6 +227,7 @@ public class StatusService {
             throw validationError;
         }
 
+        // Update status fields
         if (statusUDTO.getName() != null) {
             existingStatus.setName(statusUDTO.getName().trim());
         }
@@ -217,6 +240,7 @@ public class StatusService {
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
+
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
         if (status.getColorCode() == null || status.getColorCode().isEmpty()) {
@@ -268,4 +292,5 @@ public class StatusService {
             throw new TransferTasksRequiredException("The destination status cannot be over the limit after transfer");
         }
     }
+
 }

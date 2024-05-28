@@ -91,10 +91,6 @@ public class TaskService {
             validationErrors.addError("title", "must not be null");
         }
 
-        validateFieldSize("title", taskCDTO.getTitle(), 100, validationErrors);
-        validateFieldSize("description", taskCDTO.getDescription(), 500, validationErrors);
-        validateFieldSize("assignees", taskCDTO.getAssignees(), 30, validationErrors);
-
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
@@ -125,15 +121,7 @@ public class TaskService {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
 
-    private void validateFieldSize(String field, String value, int maxSize, ValidationErrorException validationErrors) {
-        if (value != null && value.length() > maxSize) {
-            validationErrors.addError(field, "size must be between 0 and " + maxSize);
-        } else if (value != null && value.length() == 0) {
-            if (field.equalsIgnoreCase("title")) {
-                validationErrors.addError(field, "must not be null");
-            }
-        }
-    }
+
 
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
@@ -154,9 +142,6 @@ public class TaskService {
             validationErrors.addError("title", "must not be null");
         }
 
-        validateFieldSize("title", updatedTaskDTO.getTitle(), 100, validationErrors);
-        validateFieldSize("description", updatedTaskDTO.getDescription(), 500, validationErrors);
-        validateFieldSize("assignees", updatedTaskDTO.getAssignees(), 30, validationErrors);
 
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
@@ -174,8 +159,7 @@ public class TaskService {
         }
 
         if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            validationErrors.addError("", "The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
-            throw validationErrors;
+            throw new StatusLimitReachedException("The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
         }
 
         if (!validationErrors.getErrors().isEmpty()) {

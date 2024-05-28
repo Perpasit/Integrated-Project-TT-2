@@ -2,28 +2,38 @@ package sit.int221.integratedapi.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import sit.int221.integratedapi.exceptions.CustomErrorResponse;
+
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler  {
+
     @ExceptionHandler(ValidationErrorException.class)
     public ResponseEntity<Object> handleValidationErrorException(ValidationErrorException ex, WebRequest request) {
-        List<CustomErrorResponse.ValidationError> errors = new ArrayList<>();
-        for (Map.Entry<String, String> entry : ex.getErrors().entrySet()) {
-            errors.add(new CustomErrorResponse.ValidationError(entry.getKey(), entry.getValue()));
-        }
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getReason(),
                 request.getDescription(false).replace("uri=", ""),
-                errors
+                null
         );
+
+        for (Map.Entry<String, String> entry : ex.getErrors().entrySet()) {
+            errorResponse.addValidationError(entry.getKey(), entry.getValue());
+        }
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -42,15 +52,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DuplicateStatusException.class)
     public ResponseEntity<Object> handleDuplicateStatusException(DuplicateStatusException ex, WebRequest request) {
-        List<CustomErrorResponse.ValidationError> errors = new ArrayList<>();
-        errors.add(new CustomErrorResponse.ValidationError("name", "must be unique"));
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", ""),
-                errors
+                null
         );
+
+        errorResponse.addValidationError("name", "must be unique");
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -68,16 +79,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(NotAllowedOperationException.class)
     public ResponseEntity<Object> handleNotAllowedOperationException(NotAllowedOperationException ex, WebRequest request) {
-        List<CustomErrorResponse.ValidationError> errors = new ArrayList<>();
-        errors.add(new CustomErrorResponse.ValidationError("name", ex.getMessage()));
-
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", ""),
-                errors
+                null
         );
+
+        errorResponse.addValidationError("name", ex.getMessage());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -95,8 +106,41 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(InvalidTransferStatusException.class)
     public ResponseEntity<CustomErrorResponse> handleInvalidTransferStatusException(InvalidTransferStatusException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                null
+        );
+
+        errorResponse.addValidationError("message", "the specified status for task transfer does not exist");
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<CustomErrorResponse> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation error. Check 'errors' field for details.",
+                request.getDescription(false),
+                null
+        );
+
+        exception.getBindingResult().getFieldErrors().forEach(fieldError ->
+                errorResponse.addValidationError(fieldError.getField(), fieldError.getDefaultMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(StatusLimitReachedException.class)
+    public ResponseEntity<Object> handleStatusLimitReachedException(StatusLimitReachedException ex, WebRequest request) {
         List<CustomErrorResponse.ValidationError> errors = new ArrayList<>();
-        errors.add(new CustomErrorResponse.ValidationError("message", "the specified status for task transfer does not exist"));
+        errors.add(new CustomErrorResponse.ValidationError("status", ex.getMessage()));
 
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
@@ -105,6 +149,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 request.getDescription(false).replace("uri=", ""),
                 errors
         );
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }
+
+
