@@ -107,7 +107,7 @@ async function saveStatus() {
       const statusId = router.currentRoute.value.params.id
       if (statusId) {
         await statusStore.updateStatus(statusId, updatedStatus)
-        await statusStore.fetchAllStatuses()
+        fetchStatus()
         emit("statusSaved")
         modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
@@ -121,7 +121,7 @@ async function saveStatus() {
       }
     } else {
       await statusStore.createStatus(updatedStatus)
-      await statusStore.fetchAllStatuses()
+      fetchStatus()
       modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
       // Set a timeout to close the success modal after 3 seconds
@@ -150,6 +150,13 @@ function closeModal() {
   resetForm()
 }
 
+const fetchStatus = async () => {
+  await statusStore.fetchAllStatuses()
+}
+
+onMounted(async () => {
+  fetchStatus()
+})
 </script>
 
 <template>

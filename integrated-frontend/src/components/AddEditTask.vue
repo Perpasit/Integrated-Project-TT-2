@@ -125,7 +125,7 @@ async function saveTask() {
       const taskId = router.currentRoute.value.params.id
       if (taskId) {
         await taskStore.updateTask(taskId, updatedTask)
-        await taskStore.fetchAllTasks()
+        fetchTaskAndStatus()
         modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
         console.error("The task does not exist.")
@@ -142,7 +142,7 @@ async function saveTask() {
           status: editedTask.value.status
       }
       await taskStore.addTask(newTask)
-      await taskStore.fetchAllTasks()
+      fetchTaskAndStatus()
       router.push("/")
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
@@ -154,8 +154,7 @@ async function saveTask() {
       closeModal()
     }
     router.push("/")
-    await taskStore.fetchAllTasks()
-    await statusStore.fetchAllStatuses()
+    fetchTaskAndStatus()
 
   } catch (error) {
     errorMessage.value = error.message
@@ -196,8 +195,13 @@ const getStatusUsage = (statusId) => {
   }
   return "0/0 tasks"
 }
-onMounted(async () => {
+
+const fetchTaskAndStatus = async () => {
   await statusStore.fetchAllStatuses()
+  await taskStore.fetchAllTasks()
+}
+onMounted(async () => {
+  fetchStatus()
 })
 </script>
 
