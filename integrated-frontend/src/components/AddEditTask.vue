@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -80,7 +81,7 @@ watch(
           }, 3000)
         } else {
           const data = await response.json()
-          // console.log(data)
+
           const statusId = statusStore.getStatusByName(data.status)?.id
           editedTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
           originalTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
@@ -94,9 +95,7 @@ watch(
   { immediate: true }
 )
 
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-})
+
 
 function resetForm() {
   editedTask.value = {
@@ -109,7 +108,7 @@ function resetForm() {
 
 async function saveTask() {
   try {
-    errorMessage.value = "" // Reset the error message
+    errorMessage.value = "" 
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
@@ -126,7 +125,7 @@ async function saveTask() {
       const taskId = router.currentRoute.value.params.id
       if (taskId) {
         await taskStore.updateTask(taskId, updatedTask)
-        await taskStore.fetchAllTasks()
+        fetchTaskAndStatus()
         modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
         console.error("The task does not exist.")
@@ -143,7 +142,7 @@ async function saveTask() {
           status: editedTask.value.status
       }
       await taskStore.addTask(newTask)
-      await taskStore.fetchAllTasks()
+      fetchTaskAndStatus()
       router.push("/")
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
@@ -155,30 +154,13 @@ async function saveTask() {
       closeModal()
     }
     router.push("/")
-    await taskStore.fetchAllTasks()
+    fetchTaskAndStatus()
+
   } catch (error) {
-    // console.error("Error saving task:", error);
     errorMessage.value = error.message
   }
 }
 const errorMessage = ref("")
-async function handleErrorResponse(error) {
-  if (error.status === 422) {
-    try {
-      const response = await error.json()
-      errorMessage.value = response.message // Set the error message from the JSON response
-    } catch (jsonError) {
-      console.error("Error parsing JSON response:", jsonError)
-      errorMessage.value = "An error occurred while saving the task."
-    }
-  } else {
-    // Handle other error cases
-    console.error("Error saving task:", error)
-  }
-}
-async function parseErrorResponse(error) {
-  return await error.json()
-}
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
@@ -199,6 +181,7 @@ function closeModal() {
   taskStore.fetchAllTasks()
 }
 
+
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find((s) => s.id === statusId)
   if (status) {
@@ -213,6 +196,13 @@ const getStatusUsage = (statusId) => {
   return "0/0 tasks"
 }
 
+const fetchTaskAndStatus = async () => {
+  await statusStore.fetchAllStatuses()
+  await taskStore.fetchAllTasks()
+}
+onMounted(async () => {
+  fetchStatus()
+})
 </script>
 
 <template>

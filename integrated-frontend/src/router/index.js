@@ -62,27 +62,16 @@ const router = createRouter({
           name: "AddStatus",
           component: AddEditStatus,
           props: () => ({
-            task: {
-              name: "",
-              description: "",
-              colorCode: "#000000",
-            },
             mode: "add",
-            show: true,
           }),
         },
         {
           path: "/status/manage/:id/edit",
           name: "EditStatus",
           component: AddEditStatus,
-          props: (route) => {
-            const statusStore = useStatusStore();
-            return {
-              status: statusStore.getStatusById(route.params.id),
-              mode: "edit",
-              show: true,
-            };
-          },
+          props: () => ({
+            mode: "edit",
+          }),
         },
       ]
     },

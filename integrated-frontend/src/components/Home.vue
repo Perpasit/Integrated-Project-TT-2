@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref } from "vue"
 import TaskTable from "./TaskTable.vue"
@@ -15,6 +16,8 @@ const modalStore = useModalStore()
   >
     <Header  />
     <TaskTable />
+
+/>
 
     <div
       v-if="modalStore.showTaskSuccessModal"

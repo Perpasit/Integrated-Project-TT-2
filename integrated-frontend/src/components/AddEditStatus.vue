@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
@@ -13,19 +14,6 @@ const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
 const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  },
-  status: {
-    type: Object,
-    default: () => ({
-      id: "",
-      name: "",
-      description: "",
-      colorCode: "#000000"
-    })
-  },
   mode: {
     type: String,
     default: "add"
@@ -112,34 +100,34 @@ async function saveStatus() {
       name: editedStatus.value.name.trim(),
       description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
       colorCode: editedStatus.value.colorCode,
-      globalSettingId: editedStatus.value.globalSetting?.id || null // Add the globalSettingId property
+      globalSettingId: editedStatus.value.globalSetting?.id || null 
     }
 
     if (props.mode === "edit") {
       const statusId = router.currentRoute.value.params.id
       if (statusId) {
         await statusStore.updateStatus(statusId, updatedStatus)
-        await statusStore.fetchAllStatuses()
+        fetchStatus()
         emit("statusSaved")
         modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
-        // Set a timeout to close the success modal after 3 seconds
+     
         successModalTimeout.value = setTimeout(() => {
           modalStore.closeStatusSuccessModal()
-          resetForm() // Reset the form after closing the success modal
+          resetForm() 
         }, 3000)
       } else {
         console.error("The status does not exist.")
       }
     } else {
       await statusStore.createStatus(updatedStatus)
-      await statusStore.fetchAllStatuses()
+      fetchStatus()
       modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
-      // Set a timeout to close the success modal after 3 seconds
+     
       successModalTimeout.value = setTimeout(() => {
         modalStore.closeStatusSuccessModal()
-        resetForm() // Reset the form after closing the success modal
+        resetForm() 
       }, 3000)
     }
 
@@ -162,6 +150,13 @@ function closeModal() {
   resetForm()
 }
 
+const fetchStatus = async () => {
+  await statusStore.fetchAllStatuses()
+}
+
+onMounted(async () => {
+  fetchStatus()
+})
 </script>
 
 <template>
