@@ -1,4 +1,3 @@
-<!-- AddEditStatus.vue -->
 <script setup>
 import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
