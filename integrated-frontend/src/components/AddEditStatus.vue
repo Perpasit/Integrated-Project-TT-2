@@ -154,9 +154,7 @@ const fetchStatus = async () => {
   await statusStore.fetchAllStatuses()
 }
 
-onMounted(async () => {
-  fetchStatus()
-})
+
 </script>
 
 <template>

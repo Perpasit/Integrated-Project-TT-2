@@ -17,7 +17,6 @@ const modalStore = useModalStore()
     <Header  />
     <TaskTable />
 
-/>
 
     <div
       v-if="modalStore.showTaskSuccessModal"
