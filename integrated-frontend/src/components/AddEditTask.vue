@@ -95,9 +95,7 @@ watch(
   { immediate: true }
 )
 
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-})
+
 
 function resetForm() {
   editedTask.value = {
@@ -157,29 +155,13 @@ async function saveTask() {
     }
     router.push("/")
     await taskStore.fetchAllTasks()
+    await statusStore.fetchAllStatuses()
+
   } catch (error) {
-    // console.error("Error saving task:", error);
     errorMessage.value = error.message
   }
 }
 const errorMessage = ref("")
-async function handleErrorResponse(error) {
-  if (error.status === 422) {
-    try {
-      const response = await error.json()
-      errorMessage.value = response.message // Set the error message from the JSON response
-    } catch (jsonError) {
-      console.error("Error parsing JSON response:", jsonError)
-      errorMessage.value = "An error occurred while saving the task."
-    }
-  } else {
-    // Handle other error cases
-    console.error("Error saving task:", error)
-  }
-}
-async function parseErrorResponse(error) {
-  return await error.json()
-}
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
@@ -200,6 +182,7 @@ function closeModal() {
   taskStore.fetchAllTasks()
 }
 
+
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find((s) => s.id === statusId)
   if (status) {
@@ -213,7 +196,9 @@ const getStatusUsage = (statusId) => {
   }
   return "0/0 tasks"
 }
-
+onMounted(async () => {
+  await statusStore.fetchAllStatuses()
+})
 </script>
 
 <template>

@@ -14,19 +14,6 @@ const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
 const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  },
-  status: {
-    type: Object,
-    default: () => ({
-      id: "",
-      name: "",
-      description: "",
-      colorCode: "#000000"
-    })
-  },
   mode: {
     type: String,
     default: "add"
