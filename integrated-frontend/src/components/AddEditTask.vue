@@ -201,7 +201,7 @@ const fetchTaskAndStatus = async () => {
   await taskStore.fetchAllTasks()
 }
 onMounted(async () => {
-  fetchStatus()
+  fetchTaskAndStatus()
 })
 </script>
 

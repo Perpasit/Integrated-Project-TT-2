@@ -28,7 +28,7 @@ onMounted(async () => {
       `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
     )
     status.value = data
-    console.log(status)
+    // console.log(status)
   } catch (error) {
     console.error("Error fetching status:", error)
     status.value = null
