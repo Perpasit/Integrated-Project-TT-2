@@ -1,4 +1,4 @@
-<!-- TaskTable.vue -->
+
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -38,17 +38,9 @@ const showTaskDetail = (task) => {
   })
 }
 
-const fetchTasks = async () => {
+const fetchTasksAndStatus = async () => {
   await taskStore.fetchAllTasks()
-}
-
-const saveTask = async (updatedTask) => {
-  if (updatedTask.id) {
-    await taskStore.updateTask(updatedTask.id, updatedTask)
-  } else {
-    await taskStore.addTask(updatedTask)
-  }
-  closeModal()
+  await statusStore.fetchAllStatuses()
 }
 
 const formattedStatus = computed(() => {
@@ -62,10 +54,6 @@ const formattedStatus = computed(() => {
   }
 })
 
-const closeModal = () => {
-  selectedTask.value = null
-}
-
 const confirmDelete = (task) => {
   selectedTaskToDelete = task
   showDeleteConfirmation.value = true
@@ -77,7 +65,7 @@ const deleteTask = async () => {
     await taskStore.deleteTask(selectedTaskToDelete.id)
     showSuccessModal.value = true
     selectedTaskToDelete = null
-    await fetchTasks()
+    fetchTasksAndStatus()
 
     setTimeout(() => {
       closeDeleteModal()
@@ -85,7 +73,7 @@ const deleteTask = async () => {
   } catch (error) {
     if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true
-      await fetchTasks()
+      fetchTasksAndStatus()
       setTimeout(() => {
         closeDeleteModal()
       }, 3000)
@@ -153,7 +141,7 @@ const updateMaxTasksPerStatus = (limit) => {
 
 const openLimitTaskModal = async () => {
   try {
-    // Fetch the latest status data
+    
     await statusStore.fetchAllStatuses()
     currentStatusesWithTaskCounts.value = statusStore.statuses.map(
       (status) => ({
@@ -194,13 +182,11 @@ const toggleStatusFilter = (statusName) => {
   } else {
     selectedStatuses.value.push(statusName)
   }
-  fetchTasks()
+  fetchTasksAndStatus()
 }
 
 onMounted(async () => {
-  await taskStore.fetchAllTasks()
-  await statusStore.fetchAllStatuses()
-  await fetchTasks()
+  fetchTasksAndStatus()
 
   const sortByFromUrl = route.query.sortBy
   if (
@@ -209,7 +195,7 @@ onMounted(async () => {
     sortByFromUrl === "createOn"
   ) {
     sortBy.value = sortByFromUrl
-    await fetchTasks()
+    fetchTasksAndStatus()
   }
 
   // Check the filterStatus query parameter from the URL
@@ -217,11 +203,11 @@ onMounted(async () => {
   if (filterStatusFromUrl) {
     const statusArray = filterStatusFromUrl.split(",")
     selectedStatuses.value = statusArray
-    await fetchTasks()
+    fetchTasksAndStatus()
   } else {
     // If filterStatus is not provided, clear the selectedStatuses
     selectedStatuses.value = []
-    await fetchTasks()
+    fetchTasksAndStatus()
   }
 })
 </script>
@@ -307,7 +293,6 @@ onMounted(async () => {
                             :value="status.name"
                             class="itbkk-filter-item mr-2"
                           />
-                          <!-- {{ status.name }} ({{ status.noOfTasks || 0 }}) -->
                           <span class="break-words whitespace-normal text-left"
                             >{{ status.name }} ({{
                               status.noOfTasks || 0

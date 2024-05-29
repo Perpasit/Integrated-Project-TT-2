@@ -1,4 +1,4 @@
-<!-- ManageStatus.vue -->
+
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
@@ -161,7 +161,7 @@ const getStatusColor = (status) => {
 }
 
 onMounted(async () => {
-  await statusStore.fetchAllStatuses()
+  fetchStatuses()
 })
 </script>
 

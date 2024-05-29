@@ -1,4 +1,4 @@
-<!-- AddEditStatus.vue -->
+
 <script setup>
 import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
@@ -100,7 +100,7 @@ async function saveStatus() {
       name: editedStatus.value.name.trim(),
       description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
       colorCode: editedStatus.value.colorCode,
-      globalSettingId: editedStatus.value.globalSetting?.id || null // Add the globalSettingId property
+      globalSettingId: editedStatus.value.globalSetting?.id || null 
     }
 
     if (props.mode === "edit") {
@@ -111,10 +111,10 @@ async function saveStatus() {
         emit("statusSaved")
         modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
-        // Set a timeout to close the success modal after 3 seconds
+     
         successModalTimeout.value = setTimeout(() => {
           modalStore.closeStatusSuccessModal()
-          resetForm() // Reset the form after closing the success modal
+          resetForm() 
         }, 3000)
       } else {
         console.error("The status does not exist.")
@@ -124,10 +124,10 @@ async function saveStatus() {
       fetchStatus()
       modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
-      // Set a timeout to close the success modal after 3 seconds
+     
       successModalTimeout.value = setTimeout(() => {
         modalStore.closeStatusSuccessModal()
-        resetForm() // Reset the form after closing the success modal
+        resetForm() 
       }, 3000)
     }
 

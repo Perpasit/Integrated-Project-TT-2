@@ -1,4 +1,4 @@
-<!-- AddEdiTask.vue -->
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -81,7 +81,7 @@ watch(
           }, 3000)
         } else {
           const data = await response.json()
-          // console.log(data)
+
           const statusId = statusStore.getStatusByName(data.status)?.id
           editedTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
           originalTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
@@ -108,7 +108,7 @@ function resetForm() {
 
 async function saveTask() {
   try {
-    errorMessage.value = "" // Reset the error message
+    errorMessage.value = "" 
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
