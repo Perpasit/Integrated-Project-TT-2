@@ -4,14 +4,10 @@ import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import sit.int221.integratedapi.repositories.UserRepository;
 
-import de.mkammerer.argon2.Argon2;
-import de.mkammerer.argon2.Argon2Factory;
-import org.springframework.stereotype.Service;
+
 @Service
 public class UserService {
-
     private final Argon2 argon2;
 
     public UserService() {
