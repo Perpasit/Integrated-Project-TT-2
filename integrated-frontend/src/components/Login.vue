@@ -55,7 +55,7 @@ const handleLogin = async () => {
 
 <template>
     <div class="login-container">
-      <h2>Login</h2>
+      <h2 class="justify-center text-center text-2xl" >Login</h2>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="name">Name</label>
@@ -94,7 +94,7 @@ const handleLogin = async () => {
 <style scoped>
   .login-container {
     max-width: 400px;
-    margin: 0 auto;
+    margin: 12lh auto;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 4px;
