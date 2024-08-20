@@ -8,6 +8,8 @@ import AddEditTask from "../components/AddEditTask.vue"
 import ManageStatus from "../components/ManageStatus.vue"
 import AddEditStatus from "../components/AddEditStatus.vue"
 import ModalStatus from "../components/ModalStatus.vue"
+import Login from "../components/Login.vue"
+import Signup from "../components/Signup.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -79,6 +81,16 @@ const router = createRouter({
       path: "/:pathMatch(.*)*",
       name: "NotFound",
       component: Error,
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: Login,
+    },
+    {
+      path: "/signup",
+      name: "signup",
+      component: Signup,
     },
   ],
 })

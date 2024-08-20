@@ -1,0 +1,158 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const name = ref('');
+const password = ref('');
+const errors = ref({ name: '', password: '' });
+const loginError = ref('');
+const router = useRouter();
+
+const validateForm = () => {
+  let valid = true;
+  if (!name.value) {
+    errors.value.name = 'Name is required.';
+    valid = false;
+  } else {
+    errors.value.name = '';
+  }
+
+  if (!password.value) {
+    errors.value.password = 'Password is required.';
+    valid = false;
+  } else {
+    errors.value.password = '';
+  }
+
+  return valid;
+};
+
+const handleLogin = async () => {
+  if (validateForm()) {
+    try {
+      // Simulate API call
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: name.value, password: password.value }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      // On success, redirect to a different page
+      router.push({ name: 'home' });
+
+    } catch (error) {
+      loginError.value = 'Invalid name or password.';
+    }
+  }
+};
+</script>
+
+<template>
+    <div class="login-container">
+      <h2>Login</h2>
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input
+            type="text"
+            id="name"
+            v-model="name"
+            required
+            placeholder="Enter your name"
+          />
+          <span v-if="errors.name" class="error">{{ errors.name }}</span>
+        </div>
+  
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            v-model="password"
+            required
+            placeholder="Enter your password"
+          />
+          <span v-if="errors.password" class="error">{{ errors.password }}</span>
+        </div>
+  
+        <button type="submit">Login</button>
+      </form>
+      <p v-if="loginError" class="login-error">{{ loginError }}</p>
+      <p class="signup">
+        Don't have an account? 
+        <router-link to="/signup">Create a new account</router-link>
+      </p>
+    </div>
+</template>
+  
+<style scoped>
+  .login-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #218838;
+  }
+  
+  .error {
+    color: red;
+    font-size: 0.875em;
+  }
+  
+  .login-error {
+    color: red;
+    margin-top: 15px;
+  }
+  
+  .signup {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .signup a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .signup a:hover {
+    text-decoration: underline;
+  }
+</style>
+  
