@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.UserDTO;
 import sit.int221.integratedapi.entities.User;
-import sit.int221.integratedapi.repositories.UserRepository;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.List;

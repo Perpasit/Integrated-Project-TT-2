@@ -1,24 +1,31 @@
 package sit.int221.integratedapi.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.GlobalSettingDTO;
 import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
-import sit.int221.integratedapi.repositories.GlobalSettingRepository;
+import sit.int221.integratedapi.repositories.primary.GlobalSettingRepository;
 
 import java.util.List;
 
 @Service
+@Qualifier("primaryDataSource")
 public class GlobalSettingService {
-    @Autowired
-    private GlobalSettingRepository globalSettingRepository;
+
+    private final GlobalSettingRepository globalSettingRepository;
 
 //    public GlobalSetting getGlobalSettingById(Integer id) {
 //        return globalSettingRepository.findById(id)
 //                .orElseThrow(() -> new ItemNotFoundException("Global Setting with id " + id + " does not exist!"));
 //    }
+
+    @Autowired
+    public GlobalSettingService(GlobalSettingRepository globalSettingRepository){
+        this.globalSettingRepository = globalSettingRepository;
+    }
 
     public GlobalSetting getGlobalSettingByName(String name) {
         return globalSettingRepository.findByName(name)

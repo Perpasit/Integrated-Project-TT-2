@@ -1,4 +1,4 @@
-package sit.int221.integratedapi;
+package sit.int221.integratedapi.repositories.login;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,21 +14,21 @@ import javax.sql.DataSource;
 
 @Configuration
 @EnableJpaRepositories(
-        basePackages = "sit.int221.integratedapi.repositories",
+        basePackages = "sit.int221.integratedapi.repositories.login",
         entityManagerFactoryRef = "loginEntityManagerFactory",
         transactionManagerRef = "loginTransactionManager"
 )
-public class loginDataSourceConfig {
+public class LoginDataSourceConfig {
 
     private final DataSource loginDataSource;
 
-    public loginDataSourceConfig(@Qualifier("loginDataSource") DataSource loginDataSource) {
+    public LoginDataSourceConfig(@Qualifier("loginDataSource") DataSource loginDataSource) {
         this.loginDataSource = loginDataSource;
     }
 
-    @Bean
-    @Qualifier("loginEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean loginEntityManagerFactory(EntityManagerFactoryBuilder builder) {
+    @Bean(name = "loginEntityManagerFactory")
+    public LocalContainerEntityManagerFactoryBean loginEntityManagerFactory(
+            EntityManagerFactoryBuilder builder) {
         return builder
                 .dataSource(loginDataSource)
                 .packages("sit.int221.integratedapi.entities")
@@ -36,9 +36,9 @@ public class loginDataSourceConfig {
                 .build();
     }
 
-    @Bean
-    @Qualifier("loginTransactionManager")
-    public PlatformTransactionManager loginTransactionManager(@Qualifier("loginEntityManagerFactory") EntityManagerFactory loginEntityManagerFactory) {
-        return new JpaTransactionManager(loginEntityManagerFactory);
+    @Bean(name = "loginTransactionManager")
+    public PlatformTransactionManager loginTransactionManager(
+            @Qualifier("loginEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+        return new JpaTransactionManager(entityManagerFactory);
     }
 }
