@@ -1,56 +1,55 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { postItem } from '../utils/fetch';  // Update with the correct path to fetch.js
+import { ref } from "vue"
+import { useRouter } from "vue-router"
+import { postItem } from "../utils/fetch" // Update with the correct path to fetch.js
 
-const name = ref('');
-const password = ref('');
-const errors = ref({ name: '', password: '' });
-const loginError = ref('');
-const router = useRouter();
+const name = ref("")
+const password = ref("")
+const errors = ref({ name: "", password: "" })
+const loginError = ref("")
+const router = useRouter()
 
 const validateForm = () => {
-  let valid = true;
+  let valid = true
   if (!name.value) {
-    errors.value.name = 'Name is required.';
-    valid = false;
+    errors.value.name = "Name is required."
+    valid = false
   } else {
-    errors.value.name = '';
+    errors.value.name = ""
   }
 
   if (!password.value) {
-    errors.value.password = 'Password is required.';
-    valid = false;
+    errors.value.password = "Password is required."
+    valid = false
   } else {
-    errors.value.password = '';
+    errors.value.password = ""
   }
 
-  return valid;
-};
-
-
+  return valid
+}
 
 const handleLogin = async () => {
   if (validateForm()) {
     try {
       // Use the postItem function from fetch.js
-      const response = await postItem('/api/login', { name: name.value, password: password.value });
+      const response = await postItem("/api/login", {
+        name: name.value,
+        password: password.value,
+      })
 
       // Handle the response from the API
       if (response.success) {
         // On success, redirect to the home page
-        router.push({ name: 'home' });
+        router.push({ name: "home" })
       } else {
         // Handle any additional error messages from the API
-        loginError.value = response.message || 'Invalid name or password.';
+        loginError.value = response.message || "Invalid name or password."
       }
-
     } catch (error) {
-      loginError.value = error.message || 'Invalid name or password.';
+      loginError.value = error.message || "Invalid name or password."
     }
   }
-};
-
+}
 
 // const handleLogin = async () => {
 //   if (validateForm()) {
@@ -91,8 +90,11 @@ const handleLogin = async () => {
 </script>
 
 <template>
+  <div
+    class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen flex justify-center align-middle"
+  >
     <div class="login-container">
-      <h2 class="justify-center text-center my-3 text-2xl" >Login</h2>
+      <h2 class="justify-center text-center my-3 text-2xl">Login</h2>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="name">Name</label>
@@ -105,7 +107,7 @@ const handleLogin = async () => {
           />
           <span v-if="errors.name" class="error">{{ errors.name }}</span>
         </div>
-  
+
         <div class="form-group">
           <label for="password">Password</label>
           <input
@@ -115,82 +117,84 @@ const handleLogin = async () => {
             required
             placeholder="Enter your password"
           />
-          <span v-if="errors.password" class="error">{{ errors.password }}</span>
+          <span v-if="errors.password" class="error">{{
+            errors.password
+          }}</span>
         </div>
-  
+
         <button type="submit">Login</button>
       </form>
       <p v-if="loginError" class="login-error">{{ loginError }}</p>
       <p class="signup">
-        Don't have an account? 
+        Don't have an account?
         <router-link to="/signup">Create a new account</router-link>
       </p>
     </div>
+  </div>
 </template>
-  
+
 <style scoped>
-  .login-container {
-    max-width: 400px;
-    margin: 12lh auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #fff;
-  }
-  
-  .form-group {
-    margin-bottom: 15px;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  
-  input[type="text"],
-  input[type="password"] {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  
-  button {
-    width: 100%;
-    padding: 10px;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background-color: #218838;
-  }
-  
-  .error {
-    color: red;
-    font-size: 0.875em;
-  }
-  
-  .login-error {
-    color: red;
-    margin-top: 15px;
-  }
-  
-  .signup {
-    margin-top: 20px;
-    text-align: center;
-  }
-  
-  .signup a {
-    color: #007bff;
-    text-decoration: none;
-  }
-  
-  .signup a:hover {
-    text-decoration: underline;
-  }
+.login-container {
+  max-width: 400px;
+  margin: 12lh auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+.error {
+  color: red;
+  font-size: 0.875em;
+}
+
+.login-error {
+  color: red;
+  margin-top: 15px;
+}
+
+.signup {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.signup a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.signup a:hover {
+  text-decoration: underline;
+}
 </style>
-  
