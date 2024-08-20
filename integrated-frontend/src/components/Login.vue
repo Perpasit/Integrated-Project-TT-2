@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { postItem } from "../utils/fetch" // Update with the correct path to fetch.js
 
@@ -11,8 +11,8 @@ const router = useRouter()
 
 const validateForm = () => {
   let valid = true
-  if (!name.value) {
-    errors.value.name = "Name is required."
+  if (!name.value || name.value.length > 50) {
+    errors.value.name = "Name is required and must be less than 50 characters."
     valid = false
   } else {
     errors.value.name = ""
@@ -27,6 +27,11 @@ const validateForm = () => {
 
   return valid
 }
+
+// Computed property to determine if the button should be disabled
+const isButtonDisabled = computed(() => {
+  return !name.value || name.value.length > 50 || !password.value
+})
 
 const handleLogin = async () => {
   if (validateForm()) {
@@ -51,6 +56,7 @@ const handleLogin = async () => {
     }
   }
 }
+
 
 // const handleLogin = async () => {
 //   if (validateForm()) {
@@ -91,61 +97,52 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div
-    class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen flex justify-center align-middle"
-  >
-    <div class="login-container">
-      <h2 class="justify-center text-center my-3 text-2xl">Login</h2>
-      <form @submit.prevent="handleLogin">
-        <div class="itbkk-username">
-          <label for="name">Username</label>
-          <input
-            type="text"
-            id="name"
-            v-model="name"
-            required
-            placeholder="Enter your name"
-          />
-          <span v-if="errors.name" class="error">{{ errors.name }}</span>
-        </div>
-
-        <div class="itbkk-password">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            v-model="password"
-            required
-            placeholder="Enter your password"
-          />
-          <span v-if="errors.password" class="error">{{
-            errors.password
-          }}</span>
-        </div>
-
-        <button type="submit" class="itbkk-button-signin">Sign In</button>
-      </form>
-      <p v-if="loginError" class="itbkk-message">{{ loginError }}</p>
-      <p class="signup">
-        Don't have an account?
-        <router-link to="/signup">Create a new account</router-link>
-      </p>
+    <div
+      class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen flex justify-center align-middle"
+    >
+      <div class="login-container bg-white">
+        <h2 class="justify-center text-center my-3 text-2xl">Login</h2>
+        <form @submit.prevent="handleLogin">
+          <div class="itbkk-username mb-4">
+            <label for="name">Username</label>
+            <input
+              type="text"
+              id="name"
+              v-model="name"
+              required
+              placeholder="Enter your name"
+            />
+            <span v-if="errors.name" class="error">{{ errors.name }}</span>
+          </div>
+  
+          <div class="itbkk-password mb-4">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              v-model="password"
+              required
+              placeholder="Enter your password"
+            />
+            <span v-if="errors.password" class="error">{{ errors.password }}</span>
+          </div>
+  
+          <button type="submit" :disabled="isButtonDisabled" class="itbkk-button-signin">
+            Sign In
+          </button>
+        </form>
+        <p v-if="loginError" class="itbkk-message text-red-600 flex mt-4">{{ loginError }}</p>
+      </div>
     </div>
-  </div>
-</template>
+  </template>
 
 <style scoped>
 .login-container {
-  max-width: 400px;
-  margin: 12lh auto;
+  min-width: 400px;
+  margin: 12lh ;
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  background-color: #fff;
-}
-
-.form-group {
-  margin-bottom: 15px;
 }
 
 label {
@@ -171,7 +168,12 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
   background-color: #218838;
 }
 
@@ -180,10 +182,7 @@ button:hover {
   font-size: 0.875em;
 }
 
-.login-error {
-  color: red;
-  margin-top: 15px;
-}
+
 
 .signup {
   margin-top: 20px;
