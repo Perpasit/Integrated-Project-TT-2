@@ -8,19 +8,31 @@ import AddEditTask from "../components/AddEditTask.vue"
 import ManageStatus from "../components/ManageStatus.vue"
 import AddEditStatus from "../components/AddEditStatus.vue"
 import ModalStatus from "../components/ModalStatus.vue"
+import Login from "../components/Login.vue"
+import TaskTable from "../components/TaskTable.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
-      redirect: "/task",
+      redirect: "/login",
+    },
+    {
+      path: "/login",
+      name: "Login", 
+      component: Login,
+    },
+    {
+      path: "/tasks",
+      name: "TaskTable", 
+      component: TaskTable,
     },
     {
       path: "/task",
       name: "home",
       component: Home,
-      
+
       children: [
         {
           path: "/task/:taskId",
@@ -75,8 +87,9 @@ const router = createRouter({
         },
       ]
     },
+
     {
-      path: "/:pathMatch(.*)*",
+      path: "/:pathMatch(.)",
       name: "NotFound",
       component: Error,
     },
