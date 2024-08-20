@@ -3,6 +3,7 @@ package sit.int221.integratedapi.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Entity
 @Getter
@@ -10,6 +11,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Qualifier("loginDataSource")
 @Table(name = "users")
 public class User {
     @Id
@@ -20,3 +22,5 @@ public class User {
     private String email;
     private String role;
 }
+
+
