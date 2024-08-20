@@ -1,12 +1,11 @@
 package sit.int221.integratedapi.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
-import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.services.StatusService;
 import sit.int221.integratedapi.utils.ListMapper;
-import sit.int221.integratedapi.dtos.StatusUpdateDTO;
 import java.util.List;
 
 @RestController
@@ -34,7 +33,7 @@ public class StatusController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Object> addNewStatus(@RequestBody StatusCDTO status) {
+    public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
 
         return statusService.createStatus(status);
     }
@@ -45,26 +44,13 @@ public class StatusController {
     }
 
     @DeleteMapping("/{id}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable Integer id, @PathVariable Integer newId) {
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus( @PathVariable Integer id, @PathVariable Integer newId) {
         return statusService.deleteTransferStatus(id,newId);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StatusUDTO> updateStatus(@RequestBody StatusUpdateDTO statusUpdateDTO, @PathVariable Integer id) {
-        Status status = new Status();
-        status.setName(statusUpdateDTO.getName().trim());
-
-        if (statusUpdateDTO.getDescription() != null) {
-            status.setDescription(statusUpdateDTO.getDescription().trim());
-        } else {
-            status.setDescription(null);
-        }
-
-        if (statusUpdateDTO.getColorCode() != null) {
-            status.setColorCode(statusUpdateDTO.getColorCode());
-        }
-
-        return statusService.updateStatus(id, status);
+    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
+        return statusService.updateStatus(id, statusUDTO);
     }
 
     @GetMapping("/{id}/tasks")

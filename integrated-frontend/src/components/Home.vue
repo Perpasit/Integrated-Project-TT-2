@@ -1,23 +1,11 @@
-<!-- Home.vue -->
+
 <script setup>
 import { ref } from "vue"
 import TaskTable from "./TaskTable.vue"
 import Header from "./Header.vue"
-import AddEditTask from "./AddEditTask.vue"
 import { useModalStore } from "../stores/useModalStore"
 
 const modalStore = useModalStore()
-
-const showTask = ref(false)
-
-const showModal = (flagModal) => {
-  showTask.value = flagModal
-}
-
-const clearTask = () => {
-  showTask.value = false
-}
-
 
 </script>
 
@@ -26,14 +14,9 @@ const clearTask = () => {
     id="app"
     class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen"
   >
-    <Header @openModal="showModal" />
+    <Header  />
     <TaskTable />
 
-    <AddEditTask
-  v-if="showTask"
-  :show="showTask"
-  @close="clearTask"
-  @taskSaved="clearTask"
 />
 
     <div

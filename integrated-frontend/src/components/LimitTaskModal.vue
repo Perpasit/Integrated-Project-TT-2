@@ -1,18 +1,18 @@
-<!-- LimitTaskModal.vue -->
+
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
 import { useGlobalSettingStore } from "../stores/global_setting"
 
 const showConfirmationModal = ref(false);
+const globalSettingStore = useGlobalSettingStore()
+const confirmationMessage = ref("");
 
+const generalSetting = computed(
+  () => globalSettingStore.getCurrentGlobalSetting
+)
 
-function saveIsLimitEnabledToLocalStorage(value) {
-  localStorage.setItem("isLimitEnabled", value)
-}
-
-function getIsLimitEnabledFromLocalStorage() {
-  return localStorage.getItem("isLimitEnabled") === "true"
-}
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
 
 const props = defineProps({
   show: {
@@ -29,16 +29,9 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(["close", "save", "toggle"])
+const emit = defineEmits(["close", "save"])
 
-const globalSettingStore = useGlobalSettingStore()
 
-const generalSetting = computed(
-  () => globalSettingStore.getCurrentGlobalSetting
-)
-
-const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
-const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
 
 const isMaxTasksValid = computed(() => {
   return (
@@ -57,30 +50,9 @@ watch(
   }
 )
 
-onMounted(async () => {
-  try {
-    await globalSettingStore.fetchGlobalSetting("General");
-    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting;
-    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask;
-    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit;
-
-    isLimitEnabled.value = limitMaximumTask;
-    maxTasks.value = maximumTaskLimit || 10;
-    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value);
-    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value);
-
-    watch(
-      () => currentGlobalSetting?.limitMaximumTask,
-      (newValue) => {
-        isLimitEnabled.value = newValue;
-        globalSettingStore.setIsLimitEnabled(newValue);
-        saveIsLimitEnabledToLocalStorage(newValue);
-      }
-    );
-  } catch (error) {
-    console.error("Error fetching global setting:", error);
-  }
-});
+function saveIsLimitEnabledToLocalStorage(value) {
+  localStorage.setItem("isLimitEnabled", value)
+}
 
 function closeModal() {
   isLimitEnabled.value = globalSettingStore.getCurrentGlobalSetting?.limitMaximumTask;
@@ -88,7 +60,7 @@ function closeModal() {
   emit("close");
 }
 
-const confirmationMessage = ref("");
+
 
 function showConfirmation(isLimitEnabled) {
   showConfirmationModal.value = true;
@@ -124,8 +96,9 @@ function toggleLimitEnabled() {
   isLimitEnabled.value = !isLimitEnabled.value
   globalSettingStore.setIsLimitEnabled(isLimitEnabled.value)
   saveIsLimitEnabledToLocalStorage(isLimitEnabled.value)
-  emit("toggle", isLimitEnabled.value)
+
 }
+
 const limitReachedStatusesWithCounts = computed(() => {
   return props.currentStatusNames
     .filter((statusName) => {
@@ -143,14 +116,36 @@ const limitReachedStatusesWithCounts = computed(() => {
 })
 const isTaskLimitReached = computed(() => {
   if (!isLimitEnabled.value) return false
-
   return limitReachedStatusesWithCounts.value.length > 0
 })
 
 const closeConfirmationModal=() => {
     showConfirmationModal.value = false
 }
+onMounted(async () => {
+  try {
+    await globalSettingStore.fetchGlobalSetting("General");
+    const currentGlobalSetting = globalSettingStore.getCurrentGlobalSetting;
+    const limitMaximumTask = currentGlobalSetting?.limitMaximumTask;
+    const maximumTaskLimit = currentGlobalSetting?.maximumTaskLimit;
 
+    isLimitEnabled.value = limitMaximumTask;
+    maxTasks.value = maximumTaskLimit || 10;
+    globalSettingStore.setIsLimitEnabled(isLimitEnabled.value);
+    saveIsLimitEnabledToLocalStorage(isLimitEnabled.value);
+
+    watch(
+      () => currentGlobalSetting?.limitMaximumTask,
+      (newValue) => {
+        isLimitEnabled.value = newValue;
+        globalSettingStore.setIsLimitEnabled(newValue);
+        saveIsLimitEnabledToLocalStorage(newValue);
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching global setting:", error);
+  }
+});
 </script>
 
 <template>

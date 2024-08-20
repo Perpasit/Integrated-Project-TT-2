@@ -1,14 +1,14 @@
 package sit.int221.integratedapi.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
-
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/v2/tasks")
@@ -22,31 +22,25 @@ public class TaskController {
         this.listMapper = listMapper;
     }
 
-//    @GetMapping("")
-//    public ResponseEntity<List<TaskDTO>> getTasks() {
-//        List<Task> tasks = taskService.getAllTasks();
-//        List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
-//        return ResponseEntity.ok(taskDTOs);
-//    }
-
     @GetMapping("")
     public ResponseEntity<Object> getTasks(
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses,
-            @RequestParam Map<String, String> allParams) {
-        if (sortBy != null && !sortBy.isEmpty() && !sortBy.equalsIgnoreCase("asc") && !sortBy.equalsIgnoreCase("desc") && !sortBy.equalsIgnoreCase("createOn")) {
-            return ResponseEntity.badRequest().body("Invalid sort field. Only 'asc', 'desc', and 'createOn' are allowed.");
+            @RequestParam(required = false) List<String> allParams) {
+
+        if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
+            return ResponseEntity.ok(new ArrayList<>());
         }
 
-        // Remove the expected parameters from the allParams map
-        allParams.remove("sortBy");
-        allParams.remove("filterStatuses");
-
-        if (!allParams.isEmpty()) {
-            return ResponseEntity.badRequest().body("Invalid filter parameter. Only filtering by status names is allowed.");
+        if (sortBy != null && !isValidSortBy(sortBy)) {
+            return ResponseEntity.ok(new ArrayList<>());
         }
 
-        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses);
+        if (allParams != null && !allParams.isEmpty()) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
             List<Task> tasks = (List<Task>) response.getBody();
             List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
@@ -56,6 +50,9 @@ public class TaskController {
         }
     }
 
+    private boolean isValidSortBy(String sortBy) {
+        return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
@@ -64,8 +61,8 @@ public class TaskController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Object> addNewTask(@RequestBody TaskCDTO task) {
-        return taskService.createNewTask(task);
+    public ResponseEntity<Object> addNewTask(@Valid @RequestBody TaskCDTO taskCDTO) {
+        return taskService.createNewTask(taskCDTO);
     }
 
     @DeleteMapping("/{id}")
@@ -74,7 +71,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateTask(@RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
+    public ResponseEntity<Object> updateTask(@Valid @RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
         return taskService.updateTask(id, updatedTaskDTO);
     }
 }

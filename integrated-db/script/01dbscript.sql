@@ -13,7 +13,7 @@ CREATE TABLE statuses (
     statusDescription VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     colorCode VARCHAR(7) NOT NULL,
     createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     global_settings_id INT NOT NULL,
     CONSTRAINT CHK_statusName_not_empty CHECK (statusName <> ''),
     CONSTRAINT CHK_statusName_trim CHECK (statusName = TRIM(statusName)),
@@ -28,7 +28,7 @@ CREATE TABLE tasks (
     taskAssignees VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     statusId INT DEFAULT NULL,
     createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT CHK_taskTitle_not_empty CHECK (taskTitle <> ''),
     CONSTRAINT fk_status FOREIGN KEY (statusId) REFERENCES statuses(statusId) ON DELETE SET NULL
 );

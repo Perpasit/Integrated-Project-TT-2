@@ -1,4 +1,4 @@
-<!-- ManageStatus.vue -->
+
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
@@ -14,7 +14,6 @@ const router = useRouter()
 const statuses = computed(() => statusStore.getStatuses)
 const deleteResult = ref(null)
 const selectedStatus = ref(null)
-const showDeleteConfirmation = ref(false)
 
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
@@ -24,6 +23,7 @@ let selectedStatusToDelete = null
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
+const newStatusId = ref(1)
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
@@ -66,8 +66,7 @@ async function confirmDeleteStatus() {
         showDeleteConfirmationModal.value = false
         selectedStatusToDelete = null
         showNotFoundModal.value = true
-
-        statusStore.fetchAllStatuses()
+        fetchStatuses()
         setTimeout(() => {
           showNotFoundModal.value = false
         }, 3000)
@@ -83,10 +82,10 @@ async function confirmDeleteStatus() {
         }, 3000)
       }
     }catch (error) {
-      statusStore.fetchAllStatuses()
+      fetchStatuses()
     }
     setTimeout(() => {
-      statusStore.fetchAllStatuses()
+      fetchStatuses()
       closeDeleteModal()
     }, 3000)
   }
@@ -110,7 +109,8 @@ const closeCannotEditDeleteModal = () => {
   showCannotEditDeleteModal.value = false
   selectedStatusToDelete = null
 }
-const newStatusId = ref(1)
+
+
 const deleteAndTransfer = async (newStatusId) => {
   if (canDeleteStatus.value) {
     try {
@@ -121,7 +121,7 @@ const deleteAndTransfer = async (newStatusId) => {
       deleteResult.value = result
       selectedStatusToDelete = null
       showDeleteTransferModal.value = false
-      statusStore.fetchAllStatuses()
+      fetchStatuses()
 
       if (result.notFound) {
         showNotFoundModal.value = true
@@ -156,25 +156,12 @@ const cancelDeleteTransfer = () => {
   showDeleteTransferModal.value = false
 }
 
-const formatStatus = (status) => {
-  return (
-    status
-      // .toUpperCase()
-      // .replace(/_/g, " ")
-      // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-  )
-}
-
-const closeSuccessModal = () => {
-  modalStore.closeSuccessModal()
-}
-
 const getStatusColor = (status) => {
   return statusStore.getStatusColorByName(status.name)
 }
 
 onMounted(async () => {
-  await statusStore.fetchAllStatuses()
+  fetchStatuses()
 })
 </script>
 
@@ -218,7 +205,7 @@ onMounted(async () => {
                 class="itbkk-status-name px-4 py-5 truncate text-center cursor-pointer"
                 @click="showStatusDetail(status)"
               >
-                {{ formatStatus(status.name) }}
+                {{ status.name }}
               </td>
               <td
                 class="itbkk-status-description px-4 py-2 truncate text-center"
@@ -392,7 +379,7 @@ onMounted(async () => {
               :key="status.id"
               :value="status.id"
             >
-              {{ formatStatus(status.name) }}
+              {{ status.name }}
             </option>
           </select>
         </div>

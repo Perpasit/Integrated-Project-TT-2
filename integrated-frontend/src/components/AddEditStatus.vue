@@ -1,6 +1,6 @@
-<!-- AddEditStatus.vue -->
+
 <script setup>
-import { ref, computed, watch, onMounted } from "vue"
+import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter } from "vue-router"
@@ -9,21 +9,11 @@ const router = useRouter()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
 const successModalTimeout = ref(null)
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
+const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  },
-  status: {
-    type: Object,
-    default: () => ({
-      id: "",
-      name: "",
-      description: "",
-      colorCode: "#000000"
-    })
-  },
   mode: {
     type: String,
     default: "add"
@@ -38,8 +28,6 @@ const editedStatus = ref({
   colorCode: "#000000"
 })
 
-const nameError = ref("")
-
 const isDuplicateName = computed(() => {
   return statusStore.statuses.some(
     (status) =>
@@ -47,10 +35,7 @@ const isDuplicateName = computed(() => {
       status.id !== editedStatus.value.id
   )
 })
-const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
-const isDescriptionTooLong = computed(
-  () => editedStatus.value.description.length > 200
-)
+
 
 const isNameValid = computed(() => {
   return (
@@ -75,9 +60,8 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
-        )
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
+        console.log(response)
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
@@ -87,20 +71,17 @@ watch(
           const data = await response.json()
           editedStatus.value = {
             ...data,
-            name: data.name || "",
-            description: data.description || "",
+            name: data.name || null, 
+            description: data.description || "", 
             colorCode: data.colorCode
           }
-          // console.log("Fetched status data:", editedStatus.value);
-          originalStatus.value = { ...data }
-          nameError.value = ""
+          originalStatus.value = { ...data,description: data.description || "" }
         }
       } catch (error) {
         editedStatus.value = null
       }
     } else {
       resetForm()
-      nameError.value = "Name is required."
     }
   },
   { immediate: true }
@@ -113,63 +94,48 @@ function resetForm() {
   }
 }
 
-const closeSuccessModal = () => {
-  modalStore.closeSuccessModal()
-  clearTimeout(successModalTimeout.value)
-}
-
 async function saveStatus() {
-  if (!editedStatus.value.name) {
-    nameError.value = "Name is required."
-    return
-  }
-
-  if (isDuplicateName.value) {
-    nameError.value = "Status name must be unique, please choose another name."
-    return
-  }
-
-  nameError.value = ""
-
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description.trim(),
-      colorCode: editedStatus.value.colorCode
+      description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
+      colorCode: editedStatus.value.colorCode,
+      globalSettingId: editedStatus.value.globalSetting?.id || null 
     }
 
-if (props.mode === "edit") {
-  const statusId = router.currentRoute.value.params.id
-  if (statusId) {
-    await statusStore.updateStatus(statusId, updatedStatus)
-    await statusStore.fetchAllStatuses()
-    emit("statusSaved")
-    modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+    if (props.mode === "edit") {
+      const statusId = router.currentRoute.value.params.id
+      if (statusId) {
+        await statusStore.updateStatus(statusId, updatedStatus)
+        fetchStatus()
+        emit("statusSaved")
+        modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
 
-    // Set a timeout to close the success modal after 3 seconds
-    successModalTimeout.value = setTimeout(() => {
-      modalStore.closeStatusSuccessModal()
-    }, 3000)
-  } else {
-    console.error("The status does not exist.")
+     
+        successModalTimeout.value = setTimeout(() => {
+          modalStore.closeStatusSuccessModal()
+          resetForm() 
+        }, 3000)
+      } else {
+        console.error("The status does not exist.")
+      }
+    } else {
+      await statusStore.createStatus(updatedStatus)
+      fetchStatus()
+      modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+
+     
+      successModalTimeout.value = setTimeout(() => {
+        modalStore.closeStatusSuccessModal()
+        resetForm() 
+      }, 3000)
+    }
+
+    router.push("/status/manage")
+  } catch (error) {
+    console.error("Error saving status:", error)
   }
-} else {
-  await statusStore.createStatus(updatedStatus)
-  await statusStore.fetchAllStatuses()
-  modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
-
-  // Set a timeout to close the success modal after 3 seconds
-  successModalTimeout.value = setTimeout(() => {
-    modalStore.closeStatusSuccessModal()
-  }, 3000)
 }
-router.push("/status/manage")
-} catch (error) {
-console.error("Error saving status:", error)
-}
-}
-
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const parseAndFormatDate = (dateString) => {
   const date = new Date(dateString)
@@ -183,6 +149,14 @@ function closeModal() {
   router.push("/status/manage")
   resetForm()
 }
+
+const fetchStatus = async () => {
+  await statusStore.fetchAllStatuses()
+}
+
+onMounted(async () => {
+  fetchStatus()
+})
 </script>
 
 <template>
@@ -208,7 +182,7 @@ function closeModal() {
                   rows="2"
                   v-model="editedStatus.name"
                   class="itbkk-status-name shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  ></textarea>
+                ></textarea>
                 <p v-if="!editedStatus.name" class="text-red-500 text-sm mt-1">
                   Name is required.
                 </p>
@@ -229,14 +203,10 @@ function closeModal() {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea
-                  rows="5"
-                  v-model="editedStatus.description"
-                  class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="No Description Provided"
-                ></textarea>
+                <textarea rows="5" v-model="editedStatus.description" class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="No Description Provided"></textarea>
                 <p
-                class="itbkk-status-description text-gray-500 text-sm mt-1":class="{ 'text-red-500': isDescriptionTooLong }"
+                  class="itbkk-status-description text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
                 >
                   {{
                     editedStatus.description
@@ -250,7 +220,8 @@ function closeModal() {
                 <label class="block text-sm font-bold mt-1">Color Code:</label>
                 <input
                   type="color"
-                  v-model="editedStatus.colorCode"class="itbkk-status-colorCode shadow-sm px-1 ml-4 p- block border border-gray-300 rounded-md h-8 w-20"
+                  v-model="editedStatus.colorCode"
+                  class="itbkk-status-colorCode shadow-sm px-1 ml-4 p- block border border-gray-300 rounded-md h-8 w-20"
                 />
               </div>
 
@@ -284,11 +255,11 @@ function closeModal() {
             class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-              isNameValid &&
+                isNameValid &&
                 !isDuplicateName &&
                 !isNameTooLong &&
                 !isDescriptionTooLong,
-                'bg-gray-300 cursor-not-allowed':
+              'bg-gray-300 cursor-not-allowed':
                 !isNameValid ||
                 isDuplicateName ||
                 isNameTooLong ||
@@ -349,5 +320,3 @@ function closeModal() {
 </template>
 
 <style scoped></style>
-
-          

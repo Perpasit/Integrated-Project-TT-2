@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "global_settings")
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "global_settings")
 public class GlobalSetting {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,4 +23,11 @@ public class GlobalSetting {
 
     @Column(name = "limitMaximumTask", nullable = false)
     private boolean limitMaximumTask;
+    public GlobalSetting(String name, Integer maximumTaskLimit, boolean limitMaximumTask) {
+        this.name = name;
+        this.maximumTaskLimit = maximumTaskLimit;
+        this.limitMaximumTask = limitMaximumTask;
+    }
+
+
 }

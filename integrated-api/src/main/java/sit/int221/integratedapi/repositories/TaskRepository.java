@@ -4,7 +4,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import sit.int221.integratedapi.entities.Task;
-
 import java.util.List;
 
 @Repository

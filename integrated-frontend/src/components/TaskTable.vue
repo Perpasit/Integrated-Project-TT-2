@@ -1,9 +1,8 @@
-<!-- TaskTable.vue -->
+
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
-import AddEditTask from "./AddEditTask.vue"
 import { useRouter, useRoute } from "vue-router"
 import LimitTaskModal from "./LimitTaskModal.vue"
 
@@ -20,6 +19,18 @@ const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 const showLimitTaskModal = ref(false)
 const maxTasksPerStatus = ref(10)
+
+const isDropdownOpen = ref(false)
+
+const currentTaskCountForStatus = ref({})
+const currentStatusNames = ref([])
+const currentStatusesWithTaskCounts = ref([])
+const maxTasks = ref()
+
+const searchKeyword = ref("")
+const displayStatusLimit = ref(5)
+const showAllStatuses = ref(false)
+
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
@@ -27,17 +38,9 @@ const showTaskDetail = (task) => {
   })
 }
 
-const closeModal = () => {
-  selectedTask.value = null
-}
-
-const saveTask = async (updatedTask) => {
-  if (updatedTask.id) {
-    await taskStore.updateTask(updatedTask.id, updatedTask)
-  } else {
-    await taskStore.addTask(updatedTask)
-  }
-  closeModal()
+const fetchTasksAndStatus = async () => {
+  await taskStore.fetchAllTasks()
+  await statusStore.fetchAllStatuses()
 }
 
 const formattedStatus = computed(() => {
@@ -45,8 +48,6 @@ const formattedStatus = computed(() => {
     const status = statusStore.getStatusByName(task.status)
     if (status) {
       return status.name
-        // .toUpperCase()
-        // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
     } else {
       return "Unknown"
     }
@@ -64,23 +65,20 @@ const deleteTask = async () => {
     await taskStore.deleteTask(selectedTaskToDelete.id)
     showSuccessModal.value = true
     selectedTaskToDelete = null
-    await fetchTasks()
+    fetchTasksAndStatus()
 
     setTimeout(() => {
       closeDeleteModal()
     }, 3000)
   } catch (error) {
-    if (error.message.includes('does not exist')) {
+    if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true
-      await fetchTasks()
+      fetchTasksAndStatus()
       setTimeout(() => {
-      closeDeleteModal()
-    }, 3000)
-    } 
+        closeDeleteModal()
+      }, 3000)
+    }
   }
-}
-const fetchTasks = async () => {
-  await taskStore.fetchAllTasks()
 }
 
 function closeDeleteModal() {
@@ -97,34 +95,6 @@ const editTask = (task) => {
     router.push({ name: "EditTask", params: { id: task.id } })
   }
 }
-onMounted(async () => {
-  await taskStore.fetchAllTasks()
-  await statusStore.fetchAllStatuses()
-  await fetchTasks()
-
-  const sortByFromUrl = route.query.sortBy
-  if (
-    sortByFromUrl === "asc" ||
-    sortByFromUrl === "desc" ||
-    sortByFromUrl === "createOn"
-  ) {
-    sortBy.value = sortByFromUrl
-    await fetchTasks()
-  }
-
-  // Check the filterStatus query parameter from the URL
-  const filterStatusFromUrl = route.query.filterStatus
-  if (filterStatusFromUrl) {
-    const statusArray = filterStatusFromUrl.split(",")
-    selectedStatuses.value = statusArray
-    await fetchTasks()
-  } else {
-    // If filterStatus is not provided, clear the selectedStatuses
-    selectedStatuses.value = []
-    await fetchTasks()
-  }
-})
-const isDropdownOpen = ref(false)
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
@@ -140,9 +110,6 @@ const clearStatusFilter = () => {
   searchKeyword.value = ""
 }
 
-const searchKeyword = ref("")
-const displayStatusLimit = ref(5)
-const showAllStatuses = ref(false)
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
@@ -172,56 +139,40 @@ const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
 }
 
-const filteredTasksByStatus = computed(() => {
-  if (selectedStatuses.value.length === 0) {
-    return tasks.value
-  }
-  return tasks.value.filter(
-    (task) =>
-      task && task.status && selectedStatuses.value.includes(task.status)
-  )
-})
-
-const currentTaskCountForStatus = ref({});
-const currentStatusNames = ref([]);
-const currentStatusesWithTaskCounts = ref([]);
-const maxTasks = ref();
 const openLimitTaskModal = async () => {
   try {
-    // Fetch the latest status data
-    await statusStore.fetchAllStatuses();
-    currentStatusesWithTaskCounts.value = statusStore.statuses.map((status) => ({
-      name: status.name,
-      noOfTasks: status.noOfTasks || 0,
-    }));
+    
+    await statusStore.fetchAllStatuses()
+    currentStatusesWithTaskCounts.value = statusStore.statuses.map(
+      (status) => ({
+        name: status.name,
+        noOfTasks: status.noOfTasks || 0,
+      })
+    )
 
     // Update the maxTasks value based on the first status
-    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10;
+    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10
 
-    currentTaskCountForStatus.value = currentStatusesWithTaskCounts.value.reduce(
-      (counts, status) => {
-        counts[status.name] = status.noOfTasks;
-        return counts;
-      },
-      {}
-    );
+    currentTaskCountForStatus.value =
+      currentStatusesWithTaskCounts.value.reduce((counts, status) => {
+        counts[status.name] = status.noOfTasks
+        return counts
+      }, {})
 
     currentStatusNames.value = currentStatusesWithTaskCounts.value.map(
       (status) => status.name
-    );
+    )
 
-    showLimitTaskModal.value = true;
+    showLimitTaskModal.value = true
   } catch (error) {
-    console.error("Error fetching status data:", error);
+    console.error("Error fetching status data:", error)
   }
-};
+}
+
 const closeLimitTaskModal = () => {
   showLimitTaskModal.value = false
 }
-const handleLimitTaskModalClick = (statuses) => {
-  selectedStatuses.value = statuses
-  showLimitTaskModal.value = true
-}
+
 const toggleStatusFilter = (statusName) => {
   const isSelected = selectedStatuses.value.includes(statusName)
   if (isSelected) {
@@ -231,14 +182,40 @@ const toggleStatusFilter = (statusName) => {
   } else {
     selectedStatuses.value.push(statusName)
   }
-  fetchTasks()
+  fetchTasksAndStatus()
 }
+
+onMounted(async () => {
+  fetchTasksAndStatus()
+
+  const sortByFromUrl = route.query.sortBy
+  if (
+    sortByFromUrl === "asc" ||
+    sortByFromUrl === "desc" ||
+    sortByFromUrl === "createOn"
+  ) {
+    sortBy.value = sortByFromUrl
+    fetchTasksAndStatus()
+  }
+
+  // Check the filterStatus query parameter from the URL
+  const filterStatusFromUrl = route.query.filterStatus
+  if (filterStatusFromUrl) {
+    const statusArray = filterStatusFromUrl.split(",")
+    selectedStatuses.value = statusArray
+    fetchTasksAndStatus()
+  } else {
+    // If filterStatus is not provided, clear the selectedStatuses
+    selectedStatuses.value = []
+    fetchTasksAndStatus()
+  }
+})
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex mb-10 ">
-      <thead class="absolute mt-2 ">
+    <div class="flex mb-10">
+      <thead class="absolute mt-2">
         <th class="w-full text-xl font-medium">
           <div class="flex items-center text-white">
             <span v-if="selectedStatuses.length > 0" class="mr-2 ml-36"
@@ -248,12 +225,11 @@ const toggleStatusFilter = (statusName) => {
               <button
                 v-for="(status, index) in selectedStatuses"
                 :key="index"
-                class=" transition-all duration-200 ease-in-out ml-4  text-white font-semibold text-sm  py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100  rounded"
+                class="transition-all duration-200 ease-in-out ml-4 text-white font-semibold text-sm py-2 px-3 border border-yellow-200 shadow-md shadow-orange-100 rounded"
                 @click="toggleStatusFilter(status)"
               >
-              
                 {{ status }}
-                
+
                 <span class="ml-2 text-white">x</span>
               </button>
             </div>
@@ -309,7 +285,7 @@ const toggleStatusFilter = (statusName) => {
                         <label
                           v-for="(status, index) in filteredStatuses"
                           :key="status.name"
-                          class="flex items-center text-sm text-gray-700 mt-1"
+                          class="flex items-center text-sm m-0 text-gray-700 mt-1 break-all"
                         >
                           <input
                             type="checkbox"
@@ -317,7 +293,11 @@ const toggleStatusFilter = (statusName) => {
                             :value="status.name"
                             class="itbkk-filter-item mr-2"
                           />
-                          {{ status.name }} ({{ status.noOfTasks || 0 }})
+                          <span class="break-words whitespace-normal text-left"
+                            >{{ status.name }} ({{
+                              status.noOfTasks || 0
+                            }})</span
+                          >
                         </label>
                       </div>
 
@@ -410,12 +390,12 @@ const toggleStatusFilter = (statusName) => {
           </tr>
         </thead>
         <LimitTaskModal
-  :show="showLimitTaskModal"
-  :currentTaskCounts="currentTaskCountForStatus"
-  :currentStatusNames="currentStatusNames"
-  @close="closeLimitTaskModal"
-  @save="updateMaxTasksPerStatus"
-/>
+          :show="showLimitTaskModal"
+          :currentTaskCounts="currentTaskCountForStatus"
+          :currentStatusNames="currentStatusNames"
+          @close="closeLimitTaskModal"
+          @save="updateMaxTasksPerStatus"
+        />
         <tbody>
           <tr
             v-for="(task, index) in tasks"
@@ -500,19 +480,8 @@ const toggleStatusFilter = (statusName) => {
     <div v-if="tasks.length <= 0" class="text-center mt-4 text-gray-500">
       No Task
     </div>
-
-    <AddEditTask
-      v-if="selectedTask"
-      :show="!!selectedTask"
-      :task="{
-        ...selectedTask,
-        status: selectedTask.status,
-      }"
-      mode="edit"
-      @close="closeModal"
-      @save="saveTask"
-    />
   </div>
+
 
   <div
     v-if="showDeleteConfirmation"
@@ -525,13 +494,13 @@ const toggleStatusFilter = (statusName) => {
       </p>
       <div class="flex justify-end">
         <button
-        class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+          class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
           @click="cancelDelete"
         >
           Cancel
         </button>
         <button
-        class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
         >
           Delete
@@ -555,7 +524,7 @@ const toggleStatusFilter = (statusName) => {
               class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
               @click="closeDeleteModal"
             >
-            <svg
+              <svg
                 class="h-6 w-6"
                 stroke="currentColor"
                 fill="none"

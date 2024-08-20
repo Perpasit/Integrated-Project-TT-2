@@ -32,27 +32,16 @@ const router = createRouter({
           name: "AddTask",
           component: AddEditTask,
           props: () => ({
-            task: {
-              id: "",
-              title: "",
-              description: "",
-              assignees: "",
-              status: "NO_STATUS",
-            },
             mode: "add",
-            show: true,
           }),
         },
         {
           path: "/task/:id/edit",
           name: "EditTask",
           component: AddEditTask,
-          props: (route) => {
-            const taskStore = useTaskStore()
+          props: () => {
             return {
-              task: taskStore.getTaskById(route.params.id),
-              mode: "edit",
-              show: true,
+              mode: "edit"
             }
           },
         },
@@ -73,27 +62,16 @@ const router = createRouter({
           name: "AddStatus",
           component: AddEditStatus,
           props: () => ({
-            task: {
-              name: "",
-              description: "",
-              colorCode: "#000000",
-            },
             mode: "add",
-            show: true,
           }),
         },
         {
           path: "/status/manage/:id/edit",
           name: "EditStatus",
           component: AddEditStatus,
-          props: (route) => {
-            const statusStore = useStatusStore();
-            return {
-              status: statusStore.getStatusById(route.params.id),
-              mode: "edit",
-              show: true,
-            };
-          },
+          props: () => ({
+            mode: "edit",
+          }),
         },
       ]
     },

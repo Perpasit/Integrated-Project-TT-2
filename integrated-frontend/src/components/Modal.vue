@@ -1,20 +1,36 @@
 <script setup>
 import { onMounted, ref, computed } from "vue"
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
+import { getItems } from "../utils/fetch"
 import { useRoute, useRouter } from "vue-router"
 import { useStatusStore } from "../stores/status"
+
 const statusStore = useStatusStore()
+const editedTask = ref({})
 const router = useRouter()
+const route = useRoute()
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
 const props = defineProps({
-  task: { type: Object }
+  task: { type: Object },
 })
 
-const route = useRoute()
-const editedTask = ref({})
-const status = computed(() =>
-  statusStore.getStatusByName(editedTask.value.status) || ''
+const status = computed(
+  () => statusStore.getStatusByName(editedTask.value.status) || ""
 )
-const loading = ref(true)
+
+const parseAndFormatDate = (dateString) => {
+  const date = new Date(dateString)
+  if (isNaN(date)) {
+    return "Invalid Date"
+  }
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
+}
+
+const goBack = () => {
+  router.push("/")
+}
+
+
 onMounted(async () => {
   if (route.state && route.state.task) {
     editedTask.value = route.state.task
@@ -30,48 +46,20 @@ onMounted(async () => {
     }
     editedTask.value = data
   }
-  loading.value = false
 })
-
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-const parseAndFormatDate = (dateString) => {
-  const date = new Date(dateString)
-  if (isNaN(date)) {
-    return "Invalid Date"
-  }
-  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
-}
-
-
-const goBack = () => {
-  router.push("/")
-}
-
-
-const formatStatus = (status) => {
-  if (!status) return ''
-  return status
-    // .toUpperCase()
-    // .replace(/_/g, " ")
-    // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
-}
 </script>
 
 <template>
-  <div class="fixed z-10 inset-0 overflow-y-auto" v-if="!loading">
+  <div class="fixed z-10 inset-0 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-
       <div
         class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full"
       >
-        <div v-if="loading" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          Loading task...
-        </div>
         <div
-          v-else-if="task || editedTask?.id"
+          v-if="task || editedTask?.id"
           class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6"
         >
           <div class="sm:flex sm:items-start">
@@ -127,7 +115,7 @@ No Description Provided</textarea
                 <label class="block text-sm font-bold mb-1">Status:</label>
                 <input
                   type="text"
-                  :value="formatStatus(status.name)"
+                  :value="status.name"
                   readonly
                   class="itbkk-status shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 />
@@ -167,11 +155,6 @@ No Description Provided</textarea
           >
             OK
           </button>
-
-          <!-- <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  @click="$emit('close')">
-            CANCEL
-          </button> -->
         </div>
       </div>
     </div>

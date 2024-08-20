@@ -1,43 +1,81 @@
 package sit.int221.integratedapi.exceptions;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-public class CustomErrorResponse extends RuntimeException {
-    private LocalDateTime timestamp;
+public class CustomErrorResponse {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private ZonedDateTime timestamp;
     private int status;
-    private String error;
     private String message;
-    private String path;
+    private String instance;
+    private List<ValidationError> errors;
 
-    public CustomErrorResponse(LocalDateTime timestamp, int status, String error, String message, String path) {
-        super(message);
+    public CustomErrorResponse(ZonedDateTime timestamp, int status, String message, String instance, List<ValidationError> errors) {
         this.timestamp = timestamp;
         this.status = status;
-        this.error = error;
         this.message = message;
-        this.path = path;
+        this.instance = instance;
+        this.errors = errors;
     }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    public static class ValidationError {
+        private String fieldName; // เปลี่ยนชื่อ field เป็น fieldName
+        private String message;
+
+        public ValidationError(String fieldName, String message) {
+            this.fieldName = fieldName; // เปลี่ยนชื่อ field เป็น fieldName
+            this.message = message;
+        }
+
+        public String getFieldName() { // เปลี่ยนชื่อเมท็อดเป็น getFieldName
+            return fieldName; // เปลี่ยนชื่อ field เป็น fieldName
+        }
+
+        public void setFieldName(String fieldName) { // เพิ่มเมท็อด setFieldName
+            this.fieldName = fieldName; // เปลี่ยนชื่อ field เป็น fieldName
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 
     public int getStatus() {
         return status;
     }
 
-    public String getError() {
-        return error;
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public String getMessage() {
         return message;
     }
 
-    public String getPath() {
-        return path;
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void addValidationError(String field, String message) {
+        if (Objects.isNull(errors)) {
+            errors = new ArrayList<>();
+        }
+        errors.add(new ValidationError(field, message));
+    }
+
+    public List<ValidationError> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(List<ValidationError> errors) {
+        this.errors = errors;
     }
 }

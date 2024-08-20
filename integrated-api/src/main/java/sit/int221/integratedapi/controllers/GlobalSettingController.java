@@ -7,7 +7,6 @@ import sit.int221.integratedapi.dtos.GlobalSettingDTO;
 import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.services.GlobalSettingService;
 import sit.int221.integratedapi.utils.ListMapper;
-
 import java.util.List;
 
 @RestController

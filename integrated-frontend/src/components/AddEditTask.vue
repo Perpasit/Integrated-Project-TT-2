@@ -1,4 +1,4 @@
-<!-- AddEdiTask.vue -->
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -24,37 +24,14 @@ watch(generalSetting, (newValue) => {
   maxTasks.value = newValue?.maximumTaskLimit
 })
 
-const isMaxTasksValid = computed(() => {
-  return (
-    isLimitEnabled.value !==
-      globalSettingStore.getCurrentGlobalSetting.limitMaximumTask ||
-    maxTasks.value !==
-      globalSettingStore.getCurrentGlobalSetting.maximumTaskLimit
-  )
-})
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  },
-  task: {
-    type: Object,
-    default: () => ({
-      id: "",
-      title: "",
-      description: "",
-      assignees: "",
-      status: 1
-    })
-  },
   mode: {
     type: String,
     default: "add"
   }
 })
 
-const emit = defineEmits(["close", "taskSaved"])
 const editedTask = ref({
   id: "",
   title: "",
@@ -63,7 +40,6 @@ const editedTask = ref({
   status: 1
 })
 
-const titleError = ref("")
 const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
 const isDescriptionTooLong = computed(
   () => editedTask.value?.description?.length > 500
@@ -105,26 +81,21 @@ watch(
           }, 3000)
         } else {
           const data = await response.json()
-          // console.log(data)
+
           const statusId = statusStore.getStatusByName(data.status)?.id
-          editedTask.value = { ...data, status: statusId || 1 }
-          originalTask.value = { ...data, status: statusId || 1 }
-          titleError.value = ""
+          editedTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
+          originalTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
         }
       } catch (error) {
         console.error("Error fetching task:", error)
         editedTask.value = null
       }
-    } else {
-      // existing code
-    }
+    } 
   },
   { immediate: true }
 )
 
-onMounted(async () => {
-  await statusStore.fetchAllStatuses()
-})
+
 
 function resetForm() {
   editedTask.value = {
@@ -136,13 +107,8 @@ function resetForm() {
 }
 
 async function saveTask() {
-  if (!isTitleValid.value) {
-    titleError.value = "Title is required."
-    return
-  }
-
   try {
-    errorMessage.value = "" // Reset the error message
+    errorMessage.value = "" 
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
@@ -159,8 +125,7 @@ async function saveTask() {
       const taskId = router.currentRoute.value.params.id
       if (taskId) {
         await taskStore.updateTask(taskId, updatedTask)
-        await taskStore.fetchAllTasks()
-        emit("taskSaved")
+        fetchTaskAndStatus()
         modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
         console.error("The task does not exist.")
@@ -177,7 +142,7 @@ async function saveTask() {
           status: editedTask.value.status
       }
       await taskStore.addTask(newTask)
-      await taskStore.fetchAllTasks()
+      fetchTaskAndStatus()
       router.push("/")
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
@@ -189,30 +154,13 @@ async function saveTask() {
       closeModal()
     }
     router.push("/")
-    await taskStore.fetchAllTasks()
+    fetchTaskAndStatus()
+
   } catch (error) {
-    // console.error("Error saving task:", error);
     errorMessage.value = error.message
   }
 }
 const errorMessage = ref("")
-async function handleErrorResponse(error) {
-  if (error.status === 422) {
-    try {
-      const response = await error.json()
-      errorMessage.value = response.message // Set the error message from the JSON response
-    } catch (jsonError) {
-      console.error("Error parsing JSON response:", jsonError)
-      errorMessage.value = "An error occurred while saving the task."
-    }
-  } else {
-    // Handle other error cases
-    console.error("Error saving task:", error)
-  }
-}
-async function parseErrorResponse(error) {
-  return await error.json()
-}
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const parseAndFormatDate = (dateString) => {
@@ -225,8 +173,6 @@ const parseAndFormatDate = (dateString) => {
 
 const formatStatus = (status) => {
   return status
-  // .toUpperCase()
-  // .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase())
 }
 
 function closeModal() {
@@ -234,6 +180,7 @@ function closeModal() {
   resetForm()
   taskStore.fetchAllTasks()
 }
+
 
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find((s) => s.id === statusId)
@@ -248,6 +195,14 @@ const getStatusUsage = (statusId) => {
   }
   return "0/0 tasks"
 }
+
+const fetchTaskAndStatus = async () => {
+  await statusStore.fetchAllStatuses()
+  await taskStore.fetchAllTasks()
+}
+onMounted(async () => {
+  fetchStatus()
+})
 </script>
 
 <template>
@@ -276,8 +231,8 @@ const getStatusUsage = (statusId) => {
                   v-model="editedTask.title"
                   class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                 ></textarea>
-                <p v-if="!isTitleValid" class="text-red-500 text-sm mt-1">
-                  {{ titleError }}
+                <p v-if="!editedTask.title" class="text-red-500 text-sm mt-1">
+                  Title is required.
                 </p>
                 <p
                   class="text-gray-500 text-sm mt-1"
@@ -467,7 +422,7 @@ const getStatusUsage = (statusId) => {
           <button
             type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click=";(errorMessage = ''), emit('close')"
+            @click="errorMessage = ''"
           >
             OK
           </button>
