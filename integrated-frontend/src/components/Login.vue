@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { postItem } from '../utils/fetch';  // Update with the correct path to fetch.js
 
 const name = ref('');
 const password = ref('');
@@ -27,35 +28,71 @@ const validateForm = () => {
   return valid;
 };
 
+
+
 const handleLogin = async () => {
   if (validateForm()) {
     try {
-      // Simulate API call
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: name.value, password: password.value }),
-      });
+      // Use the postItem function from fetch.js
+      const response = await postItem('/api/login', { name: name.value, password: password.value });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+      // Handle the response from the API
+      if (response.success) {
+        // On success, redirect to the home page
+        router.push({ name: 'home' });
+      } else {
+        // Handle any additional error messages from the API
+        loginError.value = response.message || 'Invalid name or password.';
       }
 
-      // On success, redirect to a different page
-      router.push({ name: 'home' });
-
     } catch (error) {
-      loginError.value = 'Invalid name or password.';
+      loginError.value = error.message || 'Invalid name or password.';
     }
   }
 };
+
+
+// const handleLogin = async () => {
+//   if (validateForm()) {
+//     try {
+//       // Simulate API call
+//       const response = await fetch('/api/login', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ name: name.value, password: password.value }),
+//       });
+
+//       if (!response.ok) {
+//         throw new Error('Login failed');
+//       }
+
+//       // On success, redirect to a different page
+//       router.push({ name: 'home' });
+
+//     } catch (error) {
+//       loginError.value = 'Invalid name or password.';
+//     }
+//   }
+// };
+// //test
+// const handleLogin = async () => {
+//   if (validateForm()) {
+//     // Simple authentication check
+//     if (name.value === 'abd' && password.value === '123') {
+//       // Redirect to the /task route after successful login
+//       router.push({ path: '/task' });
+//     } else {
+//       loginError.value = 'Invalid name or password.';
+//     }
+//   }
+// };
 </script>
 
 <template>
     <div class="login-container">
-      <h2 class="justify-center text-center text-2xl" >Login</h2>
+      <h2 class="justify-center text-center my-3 text-2xl" >Login</h2>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="name">Name</label>
@@ -108,6 +145,7 @@ const handleLogin = async () => {
   label {
     display: block;
     margin-bottom: 5px;
+    font-weight: bold;
   }
   
   input[type="text"],

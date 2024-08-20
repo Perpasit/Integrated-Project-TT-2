@@ -1,6 +1,6 @@
 <template>
     <div class="signup-container">
-      <h2>Create Account</h2>
+      <h2 class="justify-center text-center my-3 text-2xl">Create Account</h2>
       <form @submit.prevent="handleSignup">
         <div class="form-group">
           <label for="name">Name</label>
@@ -26,19 +26,37 @@
           <span v-if="errors.password" class="error">{{ errors.password }}</span>
         </div>
   
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            v-model="confirmPassword"
+            required
+            placeholder="Confirm your password"
+          />
+          <span v-if="errors.confirmPassword" class="error">{{ errors.confirmPassword }}</span>
+        </div>
+  
         <button type="submit">Create Account</button>
       </form>
       <p v-if="signupError" class="signup-error">{{ signupError }}</p>
+      <p class="login">
+        Already have account? 
+        <router-link to="/login">Login</router-link>
+      </p>
     </div>
   </template>
   
   <script setup lang="ts">
   import { ref } from 'vue';
   import { useRouter } from 'vue-router';
+  import { postItem } from '../utils/fetch';  // Update with the correct path to fetch.js
   
   const name = ref('');
   const password = ref('');
-  const errors = ref({ name: '', password: '' });
+  const confirmPassword = ref('');
+  const errors = ref({ name: '', password: '', confirmPassword: '' });
   const signupError = ref('');
   const router = useRouter();
   
@@ -58,30 +76,33 @@
       errors.value.password = '';
     }
   
+    if (password.value !== confirmPassword.value) {
+      errors.value.confirmPassword = 'Passwords do not match.';
+      valid = false;
+    } else {
+      errors.value.confirmPassword = '';
+    }
+  
     return valid;
   };
   
   const handleSignup = async () => {
     if (validateForm()) {
       try {
-        // Simulate API call
-        const response = await fetch('/api/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: name.value, password: password.value }),
-        });
+        // Use the postItem function from fetch.js
+        const response = await postItem('/api/signup', { name: name.value, password: password.value });
   
-        if (!response.ok) {
-          throw new Error('Signup failed');
+        // Handle the response from the API
+        if (response.success) {
+          // On success, redirect to the login page
+          router.push({ name: 'login' });
+        } else {
+          // Handle any additional error messages from the API
+          signupError.value = response.message || 'Failed to create account.';
         }
   
-        // On success, redirect to login page
-        router.push({ name: 'Login' });
-  
       } catch (error) {
-        signupError.value = 'Failed to create account.';
+        signupError.value = error.message || 'Failed to create account.';
       }
     }
   };
@@ -90,13 +111,66 @@
   <style scoped>
   .signup-container {
     max-width: 400px;
-    margin: 0 auto;
+    margin: 11lh auto;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #fff;
   }
   
-  /* Similar styles as Login.vue */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  .error {
+    color: red;
+    font-size: 12px;
+  }
+  
+  .signup-error {
+    margin-top: 15px;
+    color: red;
+    font-size: 14px;
+  }
+  .login {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .login a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .login a:hover {
+    text-decoration: underline;
+  }
   </style>
   
