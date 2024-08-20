@@ -5,10 +5,12 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Qualifier("loginDataSource")
 public class UserDTO {
     @NotEmpty(message = "Username cannot be empty")
     @Size(max = 50, message = "Username cannot be longer than 50 characters")
