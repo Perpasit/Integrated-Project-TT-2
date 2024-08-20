@@ -3,6 +3,7 @@ package sit.int221.integratedapi.services;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -11,27 +12,36 @@ import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.*;
-import sit.int221.integratedapi.repositories.StatusRepository;
-import sit.int221.integratedapi.repositories.TaskRepository;
+import sit.int221.integratedapi.repositories.primary.StatusRepository;
+import sit.int221.integratedapi.repositories.primary.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Qualifier("primaryDataSource")
 @Service
 public class StatusService {
-    @Autowired
-    private StatusRepository statusRepository;
-    @Autowired
-    private TaskRepository taskRepository;
-    @Autowired
-    private GlobalSettingService globalSettingService;
-    @Autowired
-    private ListMapper listMapper;
-    @Autowired
-    private ModelMapper modelMapper;
 
+    private final StatusRepository statusRepository;
+
+    private final TaskRepository taskRepository;
+
+    private final GlobalSettingService globalSettingService;
+
+    private final ListMapper listMapper;
+
+    private final ModelMapper modelMapper;
+
+    @Autowired
+    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper){
+        this.statusRepository = statusRepository;
+        this.taskRepository = taskRepository;
+        this.globalSettingService = globalSettingService;
+        this.listMapper = listMapper;
+        this.modelMapper = modelMapper;
+    }
 
     public List<StatusDTO> getAllStatuses() {
         List<Status> statuses = statusRepository.findAll();

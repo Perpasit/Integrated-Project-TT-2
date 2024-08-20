@@ -1,4 +1,4 @@
-package sit.int221.integratedapi.repositories;
+package sit.int221.integratedapi.repositories.login;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +10,6 @@ import sit.int221.integratedapi.entities.User;
 import java.util.List;
 
 @Repository
-@Qualifier("loginDataSource")
 public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u.password FROM User u WHERE u.username = :username")
     String findPasswordByUsername(@Param("username") String username);

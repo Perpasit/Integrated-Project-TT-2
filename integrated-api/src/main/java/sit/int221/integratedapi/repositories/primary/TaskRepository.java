@@ -1,4 +1,4 @@
-package sit.int221.integratedapi.repositories;
+package sit.int221.integratedapi.repositories.primary;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Sort;
@@ -8,7 +8,6 @@ import sit.int221.integratedapi.entities.Task;
 import java.util.List;
 
 @Repository
-@Qualifier("primaryDataSource")
 public interface TaskRepository extends JpaRepository<Task, Integer> {
     List<Task> findByStatusId(Integer statusId);
     List<Task> findByStatusNameIn(List<String> statusNames, Sort sort);

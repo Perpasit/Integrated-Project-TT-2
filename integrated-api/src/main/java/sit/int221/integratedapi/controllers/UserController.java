@@ -9,13 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.UserDTO;
-import sit.int221.integratedapi.exceptions.AuthenticationException;
 import sit.int221.integratedapi.services.UserService;
-import sit.int221.integratedapi.repositories.UserRepository;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 
 import java.util.List;
 
-@Qualifier("loginDataSource")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
