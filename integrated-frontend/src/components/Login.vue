@@ -43,10 +43,11 @@ const handleLogin = async () => {
         router.push({ name: "home" })
       } else {
         // Handle any additional error messages from the API
-        loginError.value = response.message || "Invalid name or password."
+        loginError.value =
+          response.message || "Username or Password is incorrect."
       }
     } catch (error) {
-      loginError.value = error.message || "Invalid name or password."
+      loginError.value = error.message || "Username or Password is incorrect."
     }
   }
 }
@@ -96,8 +97,8 @@ const handleLogin = async () => {
     <div class="login-container">
       <h2 class="justify-center text-center my-3 text-2xl">Login</h2>
       <form @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="name">Name</label>
+        <div class="itbkk-username">
+          <label for="name">Username</label>
           <input
             type="text"
             id="name"
@@ -108,7 +109,7 @@ const handleLogin = async () => {
           <span v-if="errors.name" class="error">{{ errors.name }}</span>
         </div>
 
-        <div class="form-group">
+        <div class="itbkk-password">
           <label for="password">Password</label>
           <input
             type="password"
@@ -122,9 +123,9 @@ const handleLogin = async () => {
           }}</span>
         </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" class="itbkk-button-signin">Sign In</button>
       </form>
-      <p v-if="loginError" class="login-error">{{ loginError }}</p>
+      <p v-if="loginError" class="itbkk-message">{{ loginError }}</p>
       <p class="signup">
         Don't have an account?
         <router-link to="/signup">Create a new account</router-link>
