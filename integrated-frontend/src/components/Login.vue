@@ -35,7 +35,7 @@ const handleSubmit = () => {
     <div class="w-full max-w-md">
       <form @submit.prevent="handleSubmit" class="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
         <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to ITB-KK</h2>
-        <div v-if="errorMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <div v-if="errorMessage" class="itbkk-message bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
           <p>{{ errorMessage }}</p>
         </div>
         <div class="mb-4">
@@ -49,7 +49,7 @@ const handleSubmit = () => {
               </svg>
             </div>
             <input v-model="username" @input="clearErrorMessage"
-              class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="itbkk-username shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
               id="username" type="text" placeholder="Enter your username">
           </div>
         </div>
@@ -64,7 +64,7 @@ const handleSubmit = () => {
               </svg>
             </div>
             <input v-model="password" @input="clearErrorMessage"
-              class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="itbkk-password shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
               id="password" type="password" placeholder="Enter your password">
           </div>
         </div>
@@ -72,7 +72,7 @@ const handleSubmit = () => {
           <button
             :disabled="!isFormValid"
             :class="[
-              'font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transform transition-all duration-300 ease-in-out',
+              'itbkk-button-signin','font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transform transition-all duration-300 ease-in-out',
               isFormValid 
                 ? 'bg-blue-500 hover:bg-blue-700 text-white hover:scale-105' 
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
