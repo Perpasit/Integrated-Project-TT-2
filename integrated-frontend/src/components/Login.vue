@@ -64,7 +64,7 @@ const handleSubmit = () => {
               </svg>
             </div>
             <input v-model="password" @input="clearErrorMessage"
-              class="itbkk-password shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="itbkk-password shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
               id="password" type="password" placeholder="Enter your password">
           </div>
         </div>
