@@ -13,14 +13,15 @@ import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Qualifier("loginDataSource")
 public class UserService {
-
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final Argon2 argon2;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -32,7 +33,8 @@ public class UserService {
     // Method to hash password
     public String hashPassword(String password) {
         try {
-            String hashedPassword = argon2.hash(12, 65536, 1, password); // Update parameters here if needed
+            String hashedPassword = argon2.hash(12, 65536, 1, password);
+            // Update parameters here if needed
             logger.info("Generated Hashed Password: {}", hashedPassword);
             return hashedPassword;
         } catch (Exception e) {
@@ -58,4 +60,55 @@ public class UserService {
         logger.debug("Users fetched from repository: {}", users);
         return ListMapper.mapList(users, UserDTO.class);
     }
+
+    public UserDTO getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user != null) {
+            return new UserDTO(user.getOid(), user.getUsername());
+        } else {
+            logger.warn("User not found for username: {}", username);
+            return null;
+        }
+    }
+
+//    public void createUser(UserDTO userDTO) {
+//        User user = User.builder()
+//                .oid(userDTO.getOid())
+//                .username(userDTO.getUsername())
+//                .name(userDTO.getName())
+//                .email(userDTO.getEmail())
+//                .password(hashPassword(userDTO.getPassword()))
+//                .role(userDTO.getRole())
+//                .build();
+//        userRepository.save(user);
+//        logger.info("User created successfully: {}", user);
+//    }
+
+//    public void updateUser(UserDTO userDTO) {
+//        Optional<User> userOptional = userRepository.findByUsername(userDTO.getUsername());
+//        if (userOptional.isPresent()) {
+//            User user = userOptional.get();
+//            user.setName(userDTO.getName());
+//            user.setEmail(userDTO.getEmail());
+//            user.setRole(userDTO.getRole());
+//            if (userDTO.getPassword() != null) {
+//                user.setPassword(hashPassword(userDTO.getPassword()));
+//            }
+//            userRepository.save(user);
+//            logger.info("User updated successfully: {}", user);
+//        } else {
+//            logger.warn("User not found for update: {}", userDTO.getUsername());
+//        }
+//    }
+//
+//    public void deleteUser(String username) {
+//        Optional<User> userOptional = userRepository.findByUsername(username);
+//        if (userOptional.isPresent()) {
+//            User user = userOptional.get();
+//            userRepository.delete(user);
+//            logger.info("User deleted successfully: {}", user);
+//        } else {
+//            logger.warn("User not found for deletion: {}", username);
+//        }
+//    }
 }

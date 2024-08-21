@@ -1,69 +1,91 @@
 package sit.int221.integratedapi.controllers;
 
-import jakarta.validation.Valid;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import sit.int221.integratedapi.dtos.JwtRequestUser;
 import sit.int221.integratedapi.dtos.UserDTO;
 import sit.int221.integratedapi.services.UserService;
-import sit.int221.integratedapi.repositories.login.UserRepository;
+import sit.int221.integratedapi.services.JwtTokenUtil;
+import sit.int221.integratedapi.services.JwtUserDetailsService;
 
-import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserService userService;
 
     @Autowired
-    private UserRepository userRepository;
+    private JwtUserDetailsService jwtUserDetailsService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody UserDTO userDTO) {
-        try {
-            // Retrieve the hashed password from the repository
-            String storedHashedPassword = userRepository.findPasswordByUsername(userDTO.getUsername());
+    public ResponseEntity<Object> login(@RequestBody JwtRequestUser jwtRequestUser) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtTokenUtil.generateToken(userDetails);
+        return ResponseEntity.ok(token);
+    }
 
-            if (storedHashedPassword == null) {
-                logger.warn("Login attempt with non-existent username: {}", userDTO.getUsername());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username or Password is incorrect");
+    @GetMapping("/validate-token")
+    public ResponseEntity<Object> validateToken(@RequestHeader("Authorization") String requestTokenHeader) {
+        Claims claims = null;
+        String jwtToken = null;
+        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            jwtToken = requestTokenHeader.substring(7);
+            try {
+                claims = jwtTokenUtil.getAllClaimsFromToken(jwtToken);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            } catch (ExpiredJwtException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
             }
+        } else {
+            throw new ResponseStatusException(HttpStatus.EXPECTATION_FAILED, "JWT Token does not begin with Bearer String");
+        }
+        return ResponseEntity.ok(claims);
+    }
 
-            // Log retrieved hashed password for debugging (be cautious in production)
-            logger.debug("Retrieved Hashed Password from DB: {}", storedHashedPassword);
-            logger.debug("Password Provided: {}", userDTO.getPassword());
-
-            // Validate the password
-            boolean isPasswordValid = userService.verifyPassword(userDTO.getPassword(), storedHashedPassword);
-
-            if (isPasswordValid) {
-                logger.info("Login successful for user: {}", userDTO.getUsername());
-                return ResponseEntity.ok("Login successful");
-            } else {
-                logger.warn("Failed login attempt for user: {}", userDTO.getUsername());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username or Password is incorrect");
-            }
-        } catch (Exception e) {
-            logger.error("Error during login process", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
+    @GetMapping("/{username}")
+    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable("username") String username) {
+        UserDTO user = userService.getUserByUsername(username);
+        if (user != null) {
+            logger.info("User fetched successfully for username: {}", username);
+            return ResponseEntity.ok(user);
+        } else {
+            logger.warn("User not found for username: {}", username);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 
-
-
-
     @GetMapping("")
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<UserDTO> users = userService.getAllUsers();
-        logger.info("Users fetched from repository: {}", users);
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Object> getAllUsers() {
+        try {
+            return ResponseEntity.ok(userService.getAllUsers());
+        } catch (Exception e) {
+            logger.error("Error fetching all users", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }
