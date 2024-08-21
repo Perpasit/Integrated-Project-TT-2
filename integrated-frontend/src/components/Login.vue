@@ -35,8 +35,8 @@ const handleSubmit = () => {
     <div class="w-full max-w-md">
       <form @submit.prevent="handleSubmit" class="bg-white shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
         <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to ITB-KK</h2>
-        <div v-if="errorMessage" class="itbkk-message bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-          <p>{{ errorMessage }}</p>
+        <div v-if="errorMessage" class=" bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+          <p class="itbkk-message">{{ errorMessage }}</p>
         </div>
         <div class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
