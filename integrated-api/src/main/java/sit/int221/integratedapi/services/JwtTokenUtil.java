@@ -2,12 +2,15 @@ package sit.int221.integratedapi.services;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,16 +18,14 @@ import java.util.function.Function;
 
 @Component
 public class JwtTokenUtil implements Serializable {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
+
+    private final Key SIGNING_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
     @Value("${jwt.token-validity-in-minutes}")
     private int jwtTokenValidityInMinutes;
 
     @Value("${jwt.issuer}")
     private String JWT_ISSUER;
-
-    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
     private long JWT_TOKEN_VALIDITY;
 
@@ -46,7 +47,11 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public Claims getAllClaimsFromToken(String token) {
-        Claims claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(SIGNING_KEY)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
         return claims;
     }
 
@@ -69,12 +74,13 @@ public class JwtTokenUtil implements Serializable {
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setHeaderParam("typ", "JWT")
+        return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
-                .signWith(signatureAlgorithm, SECRET_KEY)
+                .signWith(SIGNING_KEY)
                 .compact();
     }
 
