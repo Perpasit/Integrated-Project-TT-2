@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
@@ -34,7 +34,7 @@ const handleSubmit = async () => {
         username: username.value,
         password: password.value,
       });
-      console.log(response)
+
       if (response) {
         errorMessage.value = "";
         router.push({ name: "home" });
@@ -45,9 +45,6 @@ const handleSubmit = async () => {
   } else {
     errorMessage.value = "Please fill in the required fields correctly.";
   }
-
-  console.log(username.value)
-  console.log(password.value)
   
 };
 
