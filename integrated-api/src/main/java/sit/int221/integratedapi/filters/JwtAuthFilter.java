@@ -1,11 +1,15 @@
 package sit.int221.integratedapi.filters;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +22,7 @@ import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
 
 import java.io.IOException;
-
+import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
@@ -26,6 +30,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @PostConstruct
+    public void initJwtSecret() {
+        jwtSecret = Keys.secretKeyFor(SignatureAlgorithm.HS512).toString();
+    }
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response, FilterChain chain)
@@ -34,7 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String username = null;
         String jwtToken = null;
         if (requestTokenHeader != null) {
-            if (requestTokenHeader.startsWith("Bearer ")) {
+            if (requestTokenHeader.startsWith("Bearer")) {
                 jwtToken = requestTokenHeader.substring(7);
                 try {
                     username = jwtTokenUtil.getUsernameFromToken(jwtToken);

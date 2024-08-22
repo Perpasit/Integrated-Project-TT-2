@@ -40,13 +40,19 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody JwtRequestUser jwtRequestUser) {
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(token);
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String token = jwtTokenUtil.generateToken(userDetails);
+            return ResponseEntity.ok(token);
+        } catch (Exception e) {
+            logger.error("Login error: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed");
+        }
     }
+
 
     @GetMapping("/validate-token")
     public ResponseEntity<Object> validateToken(@RequestHeader("Authorization") String requestTokenHeader) {
