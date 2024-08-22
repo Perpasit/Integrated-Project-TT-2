@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.integratedapi.dtos.JwtRequestUser;
 import sit.int221.integratedapi.dtos.UserDTO;
+import sit.int221.integratedapi.entities.User;
+import sit.int221.integratedapi.exceptions.AuthenticationException;
 import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
@@ -43,6 +45,13 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
+            // Check if the username exists first
+            User user = userService.getUserByUsername(jwtRequestUser.getUsername());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("The username or password is incorrect.");
+            }
+            // Now check the password
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
@@ -51,12 +60,16 @@ public class UserController {
             return ResponseEntity.ok(token);
         } catch (BadCredentialsException e) {
             logger.error("Login error: ", e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("The username or password is incorrect.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("The username or password is incorrect.");
         } catch (Exception e) {
             logger.error("Login error: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("There is a problem. Please try again later.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("There is a problem. Please try again later.");
         }
     }
+
+
 
 
 
@@ -80,17 +93,23 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable("username") String username) {
-        UserDTO user = userService.getUserByUsername(username);
-        if (user != null) {
-            logger.info("User fetched successfully for username: {}", username);
-            return ResponseEntity.ok(user);
-        } else {
-            logger.warn("User not found for username: {}", username);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    public ResponseEntity<Object> getUserByUsername(@PathVariable("username") String username) {
+        try {
+            User user = userService.getUserByUsername(username);
+            if (user != null) {
+                logger.info("User fetched successfully for username: {}", username);
+                return ResponseEntity.ok(new UserDTO(user.getOid(), user.getUsername()));
+            } else {
+                logger.warn("User not found for username: {}", username);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("The user '" + username + "' does not exist.");
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching user by username: {}", username, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("There is a problem. Please try again later.");
         }
     }
-
     @GetMapping("")
     public ResponseEntity<Object> getAllUsers() {
         try {
