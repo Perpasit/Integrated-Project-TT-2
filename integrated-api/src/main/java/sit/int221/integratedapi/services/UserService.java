@@ -70,6 +70,16 @@ public class UserService {
         }
     }
 
+    public String getNameByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user != null) {
+            return user.getName();
+        } else {
+            logger.warn("User not found for username: {}", username);
+            return null;
+        }
+    }
+
     public boolean validateUserCredentials(String username, String password) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
