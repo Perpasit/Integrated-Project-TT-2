@@ -95,10 +95,10 @@ public class UserController {
     @GetMapping("/{username}")
     public ResponseEntity<Object> getUserByUsername(@PathVariable("username") String username) {
         try {
-            User user = userService.getUserByUsername(username);
-            if (user != null) {
+            String name = userService.getNameByUsername(username);
+            if (name != null) {
                 logger.info("User fetched successfully for username: {}", username);
-                return ResponseEntity.ok(new UserDTO(user.getOid(), user.getUsername()));
+                return ResponseEntity.ok(name);
             } else {
                 logger.warn("User not found for username: {}", username);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
