@@ -2,12 +2,14 @@ package sit.int221.integratedapi.controllers;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,7 +41,7 @@ public class UserController {
     private AuthenticationManager authenticationManager;
 
     @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody JwtRequestUser jwtRequestUser) {
+    public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
@@ -47,11 +49,15 @@ public class UserController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtTokenUtil.generateToken(userDetails);
             return ResponseEntity.ok(token);
+        } catch (BadCredentialsException e) {
+            logger.error("Login error: ", e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("The username or password is incorrect.");
         } catch (Exception e) {
             logger.error("Login error: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("There is a problem. Please try again later.");
         }
     }
+
 
 
     @GetMapping("/validate-token")
