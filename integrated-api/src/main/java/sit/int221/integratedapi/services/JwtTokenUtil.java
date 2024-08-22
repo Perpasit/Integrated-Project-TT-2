@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static java.lang.System.currentTimeMillis;
+
 @Component
 public class JwtTokenUtil implements Serializable {
 
@@ -27,16 +29,11 @@ public class JwtTokenUtil implements Serializable {
     private final Key SIGNING_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
     @Value("${jwt.token-validity-in-minutes}")
-    private int jwtTokenValidityInMinutes;
+    private long jwtTokenValidityInMinutes;
 
     @Value("${jwt.issuer}")
     private String JWT_ISSUER;
 
-    private long JWT_TOKEN_VALIDITY;
-
-    public JwtTokenUtil() {
-        JWT_TOKEN_VALIDITY = jwtTokenValidityInMinutes * 60 * 1000;
-    }
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -69,13 +66,10 @@ public class JwtTokenUtil implements Serializable {
         String username = userDetails.getUsername();
         User user = userService.getUserByUsername(username);
 
-        long issuedAt = System.currentTimeMillis();
-        long expirationTime = issuedAt + (jwtTokenValidityInMinutes * 60 * 1000);
-
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", JWT_ISSUER);
-        claims.put("iat", issuedAt);
-        claims.put("exp", expirationTime);
+        claims.put("iat", currentTimeMillis());
+        claims.put("exp", currentTimeMillis());
         claims.put("name", user.getName());
         claims.put("oid", user.getOid());
         claims.put("email", user.getEmail());
@@ -84,13 +78,14 @@ public class JwtTokenUtil implements Serializable {
 
         return doGenerateToken(claims, username);
     }
+
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
+                .setIssuedAt(new Date(currentTimeMillis()))
+                .setExpiration(new Date(currentTimeMillis() + jwtTokenValidityInMinutes * 60 * 1000))
                 .signWith(SIGNING_KEY)
                 .compact();
     }
