@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed ,provide , reactive} from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
 
@@ -10,6 +10,7 @@ const router = useRouter();
 const username = ref("");
 const password = ref("");
 const errorMessage = ref("");
+
 
 // Computed property to validate the form
 const isFormValid = computed(() => {
@@ -45,7 +46,7 @@ const handleSubmit = async () => {
   } else {
     errorMessage.value = "Please fill in the required fields correctly.";
   }
-  
+
 };
 
 

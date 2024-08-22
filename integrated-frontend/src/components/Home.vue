@@ -3,6 +3,7 @@
 import { ref } from "vue"
 import TaskTable from "./TaskTable.vue"
 import Header from "./Header.vue"
+import UserAccount from "./UserAccount.vue"
 import { useModalStore } from "../stores/useModalStore"
 
 const modalStore = useModalStore()
@@ -14,6 +15,7 @@ const modalStore = useModalStore()
     id="app"
     class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen"
   >
+    <UserAccount />
     <Header  />
     <TaskTable />
 

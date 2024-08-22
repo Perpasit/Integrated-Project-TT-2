@@ -78,6 +78,7 @@ const addStatus = () => {
       >
         ADD STATUS
       </button>
+     
     </div>
   </div>
 </template>
