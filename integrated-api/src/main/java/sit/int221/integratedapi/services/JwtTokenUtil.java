@@ -5,9 +5,11 @@ import io.jsonwebtoken.Jwts;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import sit.int221.integratedapi.entities.User;
 
 import java.io.Serializable;
 import java.security.Key;
@@ -18,6 +20,9 @@ import java.util.function.Function;
 
 @Component
 public class JwtTokenUtil implements Serializable {
+
+    @Autowired
+    private UserService userService;
 
     private final Key SIGNING_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
@@ -61,18 +66,24 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public String generateToken(UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        User user = userService.getUserByUsername(username);
+
+        long issuedAt = System.currentTimeMillis();
+        long expirationTime = issuedAt + (jwtTokenValidityInMinutes * 60 * 1000);
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", JWT_ISSUER);
-        claims.put("iat", System.currentTimeMillis());
-        claims.put("exp", System.currentTimeMillis() + JWT_TOKEN_VALIDITY);
-        claims.put("name", userDetails.getUsername());
-        claims.put("oid", userDetails.getUsername());
-        claims.put("email", userDetails.getUsername() + "@example.com");
-        claims.put("role", "USER");
+        claims.put("iat", issuedAt);
+        claims.put("exp", expirationTime);
+        claims.put("name", user.getName());
+        claims.put("oid", user.getOid());
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRole());
+        claims.put("sub", username);
 
-        return doGenerateToken(claims, userDetails.getUsername());
+        return doGenerateToken(claims, username);
     }
-
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")

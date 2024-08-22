@@ -34,7 +34,6 @@ public class UserService {
     public String hashPassword(String password) {
         try {
             String hashedPassword = argon2.hash(12, 65536, 1, password);
-            // Update parameters here if needed
             logger.info("Generated Hashed Password: {}", hashedPassword);
             return hashedPassword;
         } catch (Exception e) {
@@ -61,54 +60,32 @@ public class UserService {
         return ListMapper.mapList(users, UserDTO.class);
     }
 
-    public UserDTO getUserByUsername(String username) {
+    public User getUserByUsername(String username) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
-            return new UserDTO(user.getOid(), user.getUsername());
+            return user;
         } else {
             logger.warn("User not found for username: {}", username);
             return null;
         }
     }
 
-//    public void createUser(UserDTO userDTO) {
-//        User user = User.builder()
-//                .oid(userDTO.getOid())
-//                .username(userDTO.getUsername())
-//                .name(userDTO.getName())
-//                .email(userDTO.getEmail())
-//                .password(hashPassword(userDTO.getPassword()))
-//                .role(userDTO.getRole())
-//                .build();
-//        userRepository.save(user);
-//        logger.info("User created successfully: {}", user);
-//    }
+    public boolean validateUserCredentials(String username, String password) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            logger.warn("User not found for username: {}", username);
+            return false;
+        }
 
-//    public void updateUser(UserDTO userDTO) {
-//        Optional<User> userOptional = userRepository.findByUsername(userDTO.getUsername());
-//        if (userOptional.isPresent()) {
-//            User user = userOptional.get();
-//            user.setName(userDTO.getName());
-//            user.setEmail(userDTO.getEmail());
-//            user.setRole(userDTO.getRole());
-//            if (userDTO.getPassword() != null) {
-//                user.setPassword(hashPassword(userDTO.getPassword()));
-//            }
-//            userRepository.save(user);
-//            logger.info("User updated successfully: {}", user);
-//        } else {
-//            logger.warn("User not found for update: {}", userDTO.getUsername());
-//        }
-//    }
-//
-//    public void deleteUser(String username) {
-//        Optional<User> userOptional = userRepository.findByUsername(username);
-//        if (userOptional.isPresent()) {
-//            User user = userOptional.get();
-//            userRepository.delete(user);
-//            logger.info("User deleted successfully: {}", user);
-//        } else {
-//            logger.warn("User not found for deletion: {}", username);
-//        }
-//    }
+        boolean isPasswordValid = verifyPassword(password, user.getPassword());
+        if (isPasswordValid) {
+            logger.info("User credentials validated successfully for username: {}", username);
+        } else {
+            logger.warn("Invalid password for username: {}", username);
+        }
+
+        return isPasswordValid;
+    }
+
+    // Other methods (createUser, updateUser, deleteUser) can be uncommented as needed
 }
