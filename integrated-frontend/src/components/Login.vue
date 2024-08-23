@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed ,provide , reactive} from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
 import { useUserStore } from "../stores/userStore"; 

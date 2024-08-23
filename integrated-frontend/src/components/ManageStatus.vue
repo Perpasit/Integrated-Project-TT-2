@@ -3,6 +3,7 @@
 import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import Header from "./Header.vue"
+import UserAccount from "./UserAccount.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
@@ -166,9 +167,11 @@ onMounted(async () => {
 </script>
 
 <template>
+  
   <div
     class="manage-status-page bg-gradient-to-t from-[#ffc3ee] to-[#A9C9FF] min-h-screen"
   >
+  <UserAccount />
     <Header
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
