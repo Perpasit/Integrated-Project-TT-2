@@ -1,16 +1,15 @@
 <script setup>
+import { useUserStore } from "../stores/userStore";
 
+const userStore = useUserStore();
+const accountName = computed(() => userStore.accountName);
 </script>
-
 
 <template>
   <header class="p-4 flex justify-between items-center">
-    <!-- Logo -->
     <div class="flex items-center invisible">
       test
     </div>
-
-    <!-- Account Name -->
     <div class="flex items-center space-x-4">
       <span class="text-gray-700 font-medium">Hello, {{ accountName }}</span>
       <img
@@ -21,5 +20,3 @@
     </div>
   </header>
 </template>
-
-<style scoped></style>
