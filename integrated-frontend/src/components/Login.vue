@@ -2,7 +2,7 @@
 import { ref, computed ,provide , reactive} from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
-import { useUserStore } from "../stores/useUserStore"; 
+import { useUserStore } from "../stores/userStore"; 
 
 // Setup router
 const router = useRouter();

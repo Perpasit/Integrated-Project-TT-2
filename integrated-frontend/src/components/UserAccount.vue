@@ -1,5 +1,5 @@
 <script setup>
-import { useUserStore } from "../";
+import { useUserStore } from "../stores/userStore";
 
 const userStore = useUserStore();
 const accountName = computed(() => userStore.accountName);
