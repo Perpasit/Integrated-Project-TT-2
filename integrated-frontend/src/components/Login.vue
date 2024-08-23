@@ -2,10 +2,12 @@
 import { ref, computed ,provide , reactive} from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
-import { useUserStore } from "../stores/userStore"; 
+import { useUserStore } from "../stores/useUserStore"; 
 
 // Setup router
 const router = useRouter();
+const userStore = useUserStore(); // Initialize the store
+
 
 // Form state
 const username = ref("");
@@ -39,7 +41,7 @@ const handleSubmit = async () => {
 
       if (response) {
         errorMessage.value = "";
-        userStore.setAccountName(username.value);
+        userStore.setAccountName(username.value); 
         router.push({ name: "home" });
       }
     } catch (error) {
