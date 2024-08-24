@@ -9,20 +9,30 @@ import ManageStatus from "../components/ManageStatus.vue"
 import AddEditStatus from "../components/AddEditStatus.vue"
 import ModalStatus from "../components/ModalStatus.vue"
 import Login from "../components/Login.vue"
-import Signup from "../components/Signup.vue"
+import TaskTable from "../components/TaskTable.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
-      redirect: "/task",
+      redirect: "/login",
+    },
+    {
+      path: "/login",
+      name: "Login", 
+      component: Login,
+    },
+    {
+      path: "/tasks",
+      name: "TaskTable", 
+      component: TaskTable,
     },
     {
       path: "/task",
       name: "home",
       component: Home,
-      
+
       children: [
         {
           path: "/task/:taskId",
@@ -77,33 +87,13 @@ const router = createRouter({
         },
       ]
     },
+
     {
-      path: "/:pathMatch(.*)*",
+      path: "/:pathMatch(.)",
       name: "NotFound",
       component: Error,
     },
-    {
-      path: "/login",
-      name: "login",
-      component: Login,
-    },
-    {
-      path: "/signup",
-      name: "signup",
-      component: Signup,
-    },
   ],
 })
-
-// router.beforeEach(function (to, from, next) {
-//   console.log('beforeEach', to.path + ' - Auth: ' + auth.user.authenticated)
-//   if ((to.path !== '/login' && to.path !== 'login') && !auth.user.authenticated) {
-//     next({ path: '/login' })
-//   } else if ((to.path === '/login' || to.path === 'login') && auth.user.authenticated) {
-//     next({ path: '/' })
-//   } else {
-//     next()
-//   }
-// })
 
 export default router

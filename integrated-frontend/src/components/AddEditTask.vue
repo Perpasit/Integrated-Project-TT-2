@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
@@ -24,12 +23,11 @@ watch(generalSetting, (newValue) => {
   maxTasks.value = newValue?.maximumTaskLimit
 })
 
-
 const props = defineProps({
   mode: {
     type: String,
-    default: "add"
-  }
+    default: "add",
+  },
 })
 
 const editedTask = ref({
@@ -37,7 +35,7 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: 1
+  status: 1,
 })
 
 const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
@@ -61,7 +59,7 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status)))
-          )
+  )
 })
 
 const originalTask = ref(null)
@@ -83,32 +81,40 @@ watch(
           const data = await response.json()
 
           const statusId = statusStore.getStatusByName(data.status)?.id
-          editedTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
-          originalTask.value = { ...data,description: data.description || "",assignees:data.assignees || "", status: statusId || 1 }
+          editedTask.value = {
+            ...data,
+            description: data.description || "",
+            assignees: data.assignees || "",
+            status: statusId || 1,
+          }
+          originalTask.value = {
+            ...data,
+            description: data.description || "",
+            assignees: data.assignees || "",
+            status: statusId || 1,
+          }
         }
       } catch (error) {
         console.error("Error fetching task:", error)
         editedTask.value = null
       }
-    } 
+    }
   },
   { immediate: true }
 )
-
-
 
 function resetForm() {
   editedTask.value = {
     title: "",
     description: "",
     assignees: "",
-    status: 1
+    status: 1,
   }
 }
 
 async function saveTask() {
   try {
-    errorMessage.value = "" 
+    errorMessage.value = ""
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
@@ -118,7 +124,7 @@ async function saveTask() {
       assignees: editedTask.value.assignees
         ? editedTask.value.assignees.trim()
         : "",
-        status: { id: editedTask.value.status }
+      status: { id: editedTask.value.status },
     }
 
     if (props.mode === "edit") {
@@ -139,11 +145,11 @@ async function saveTask() {
         assignees: editedTask.value.assignees
           ? editedTask.value.assignees.trim()
           : "",
-          status: editedTask.value.status
+        status: editedTask.value.status,
       }
       await taskStore.addTask(newTask)
       fetchTaskAndStatus()
-      router.push("/")
+      router.push("/task")
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
@@ -153,9 +159,8 @@ async function saveTask() {
 
       closeModal()
     }
-    router.push("/")
+    router.push("/task")
     fetchTaskAndStatus()
-
   } catch (error) {
     errorMessage.value = error.message
   }
@@ -176,11 +181,10 @@ const formatStatus = (status) => {
 }
 
 function closeModal() {
-  router.push("/")
+  router.push("/task")
   resetForm()
   taskStore.fetchAllTasks()
 }
-
 
 const getStatusUsage = (statusId) => {
   const status = statusStore.statuses.find((s) => s.id === statusId)
@@ -343,7 +347,7 @@ onMounted(async () => {
             :class="{
               'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                 isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid
+              'bg-gray-300 cursor-not-allowed': !isTitleValid,
             }"
             @click="saveTask"
             :disabled="
