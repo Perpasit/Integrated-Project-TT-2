@@ -3,7 +3,6 @@
 import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import Header from "./Header.vue"
-import UserAccount from "./UserAccount.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
