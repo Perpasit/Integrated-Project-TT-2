@@ -3,7 +3,6 @@
 import { ref } from "vue"
 import TaskTable from "./TaskTable.vue"
 import Header from "./Header.vue"
-import UserAccount from "./UserAccount.vue"
 import { useModalStore } from "../stores/useModalStore"
 
 const modalStore = useModalStore()
