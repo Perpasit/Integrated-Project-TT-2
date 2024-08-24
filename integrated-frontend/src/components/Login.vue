@@ -41,7 +41,7 @@ const handleSubmit = async () => {
 
       if (response) {
         errorMessage.value = "";
-        userStore.setAccountName(username.value); 
+        await userStore.fetchAndSetAccountName(username.value);
         router.push({ name: "home" });
       }
     } catch (error) {
