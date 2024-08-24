@@ -34,7 +34,7 @@ const clearErrorMessage = () => {
 const handleSubmit = async () => {
   if (isFormValid.value) {
     try {
-      const response = await postItem(`${import.meta.env.VITE_API_ENDPOINT2}/api/users/login`, {
+      const response = await postItem(`${import.meta.env.VITE_API_ENDPOINT2}/users/login`, {
         userName: username.value,
         password: password.value,
       });
