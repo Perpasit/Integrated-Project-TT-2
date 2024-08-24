@@ -35,7 +35,7 @@ const handleSubmit = async () => {
   if (isFormValid.value) {
     try {
       const response = await postItem(`${import.meta.env.VITE_API_ENDPOINT2}/api/users/login`, {
-        username: username.value,
+        userName: username.value,
         password: password.value,
       });
 
