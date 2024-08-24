@@ -1,15 +1,21 @@
 package sit.int221.integratedapi.exceptions;
 
-public class AuthenticationException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-    private final String message;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-    public AuthenticationException(String message) {
-        super(message);
-        this.message = message;
-    }
+public class AuthenticationException {
+    public static ResponseEntity<Object> getMessage(String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", ZonedDateTime.now().toString());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("message", message);
+        body.put("errors", Collections.emptyList());
 
-    public String getMessage() {
-        return message;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 }

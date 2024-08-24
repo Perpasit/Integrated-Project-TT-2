@@ -27,7 +27,7 @@ const parseAndFormatDate = (dateString) => {
 }
 
 const goBack = () => {
-  router.push("/")
+  router.push("/task")
 }
 
 
