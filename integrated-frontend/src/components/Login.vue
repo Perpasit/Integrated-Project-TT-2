@@ -45,7 +45,8 @@ const handleSubmit = async () => {
         router.push({ name: "home" });
       }
     } catch (error) {
-      errorMessage.value = error.message || "Username or Password is incorrect.";
+      // errorMessage.value = error.message || "Username or Password is incorrect.";
+      errorMessage.value = "Username or Password is incorrect";
     }
   } else {
     errorMessage.value = "Please fill in the required fields correctly.";
@@ -85,6 +86,7 @@ const handleSubmit = async () => {
               id="username"
               type="text"
               placeholder="Enter your username"
+              maxlength="50"
             />
           </div>
         </div>
@@ -107,6 +109,7 @@ const handleSubmit = async () => {
               id="password"
               type="password"
               placeholder="Enter your password"
+              maxlength="14"
             />
           </div>
         </div>
@@ -119,7 +122,7 @@ const handleSubmit = async () => {
               'itbkk-button-signin','font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transform transition-all duration-300 ease-in-out',
               isFormValid 
                 ? 'bg-blue-500 hover:bg-blue-700 text-white hover:scale-105' 
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed disabled'
             ]"
             type="submit"
           >

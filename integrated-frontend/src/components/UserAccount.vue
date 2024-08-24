@@ -22,7 +22,7 @@ const toggleDropdown = () => {
   <header class="p-4 flex justify-between items-center">
     <div class="flex items-center invisible">test</div>
     <div class="flex items-center space-x-4 relative">
-      <span class="text-gray-700 font-medium">{{ accountName }}</span>
+      <span class="itbkk-fullname text-gray-700 font-medium ">{{ accountName }}</span>
       <div
         class="border border-black p-1 rounded-full cursor-pointer"
         @click="toggleDropdown"
