@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/v3/users")
+@RequestMapping("/login")
 @CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -45,7 +45,7 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @PostMapping("/login")
+    @PostMapping("")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
             User user = userService.getUserByUsername(jwtRequestUser.getUserName());

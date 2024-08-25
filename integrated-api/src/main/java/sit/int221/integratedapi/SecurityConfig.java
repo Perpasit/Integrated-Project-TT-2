@@ -40,7 +40,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/v3/users/**").permitAll()
+                        .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/v2/tasks/**").permitAll()
                         .requestMatchers("/v2/statuses/**").permitAll()
                         .requestMatchers("/v2/global-settings/**").permitAll()
