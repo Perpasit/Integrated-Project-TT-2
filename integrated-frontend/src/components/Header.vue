@@ -72,12 +72,12 @@ const toggleDropdown = () => {
     </div>
 
 
-    <div class="flex items-center space-x-4">
+    <div class="flex items-end space-x-4">
 
-      <div class="account p-4 pr-0 flex items-center">
-      <div class="flex items-center space-x-4 relative">
+      <div class="account px-4 pt-4 pr-3 flex items-center">
+      <div class="flex items-end space-x-4 relative">
         <span
-          class="itbkk-fullname bg-gradient-to-r from-red-500 via-pink-500 to-purple-400 bg-clip-text text-transparent font-medium">
+          class="itbkk-fullname  text-blue-600 text-xl items-end font-medium">
           {{ accountName }}</span>
         <div
           class="border border-gradient-to-r from-blue-400 via-purple-500 to-red-500 p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
