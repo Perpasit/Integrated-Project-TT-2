@@ -80,9 +80,9 @@ const toggleDropdown = () => {
           class="itbkk-fullname  text-blue-600 text-xl items-end font-medium">
           {{ accountName }}</span>
         <div
-          class="border border-gradient-to-r from-blue-400 via-purple-500 to-red-500 p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
+          class="border   p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200 ease-in-out"
           @click="toggleDropdown">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24"
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500 " fill="none" viewBox="0 0 24 24"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
