@@ -13,7 +13,7 @@ export const useUserStore = defineStore('user', {
 
     async fetchAndSetAccountName(username) {
       try {
-        const userDetails = await getItems(`http://localhost:8080/api/users/${username}`);
+        const userDetails = await getItems(`${import.meta.env.VITE_API_ENDPOINT2}/users/${username}`);
         if (userDetails) {
           this.setAccountName(userDetails); 
         }
