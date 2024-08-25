@@ -51,39 +51,33 @@ const toggleDropdown = () => {
 
 <template>
   <div class="container mx-auto px-0 pt-5 flex flex-row justify-around items-center">
+    <div class="flex">
     <h1
-      class="cursor-default text-5xl font-bold font-italiana pt-2 text-lime-100 mr-96 hover:scale-110 transition-all duration-200 ease-in-out"
+      class="cursor-default text-6xl font-bold font-italiana pt-2 text-lime-100  hover:scale-110 transition-all duration-200 ease-in-out mr-4"
       @click="goHome">
       Kanban
     </h1>
-    <div class="flex items-center space-x-4">
-      <span :class="[
-        'itbkk-button-home text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
+    <span :class="[
+        'itbkk-button-home text-2xl block cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
         isHomePage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goHome">
         Home
       </span>
       <span :class="[
-        'itbkk-manage-status text-xl block cursor-pointer py-2 px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out',
+        'itbkk-manage-status text-2xl block cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
         isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goToManageStatus">
         Manage Status
       </span>
-      <button v-show="isTaskPage" @click="addTask"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded">
-        + NEW TASK
-      </button>
-      <button v-show="isManageStatusPage" @click="addStatus"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded">
-        ADD STATUS
-      </button>
-
     </div>
 
-    <header class="absolute right-0 p-4 flex items-center">
+
+    <div class="flex items-center space-x-4">
+
+      <div class="account p-4 pr-0 flex items-center">
       <div class="flex items-center space-x-4 relative">
         <span
-          class="itbkk-fullname bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent font-medium">
+          class="itbkk-fullname bg-gradient-to-r from-red-500 via-pink-500 to-purple-400 bg-clip-text text-transparent font-medium">
           {{ accountName }}</span>
         <div
           class="border border-gradient-to-r from-blue-400 via-purple-500 to-red-500 p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
@@ -96,20 +90,37 @@ const toggleDropdown = () => {
         </div>
 
         <div v-if="showDropdown" class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2">
+        
+          <button @click="goToProfile"
+            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left ">
+            Profile
+          </button>
+          <button @click="goToSettings"
+            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
+            Settings
+          </button>
           <button @click="logout"
             class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
             Logout
           </button>
-          <button @click="goToProfile"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left mt-2">
-            Profile
-          </button>
-          <button @click="goToSettings"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left mt-2">
-            Settings
-          </button>
         </div>
       </div>
-    </header>
+    </div>
+
+
+      
+      <button v-show="isTaskPage" @click="addTask"
+        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded">
+        + NEW TASK
+      </button>
+      <button v-show="isManageStatusPage" @click="addStatus"
+        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded">
+        ADD STATUS
+      </button>
+
+    </div>
+
+   
+
   </div>
 </template>
