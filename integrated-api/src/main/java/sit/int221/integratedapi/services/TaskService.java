@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Qualifier("primaryDataSource")
@@ -193,4 +194,14 @@ public class TaskService {
         }
         task.setUpdatedOn(ZonedDateTime.now());
     }
+
+    @Transactional
+    public List<TaskRDTO> getTasksByBoardId(Integer boardId) {
+        List<Task> tasks = taskRepository.findTasksByBoardId(boardId);
+        return tasks.stream()
+                .map(task -> modelMapper.map(task, TaskRDTO.class))
+                .collect(Collectors.toList());
+    }
+
+
 }
