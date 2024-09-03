@@ -10,6 +10,7 @@ import AddEditStatus from "../components/AddEditStatus.vue"
 import ModalStatus from "../components/ModalStatus.vue"
 import Login from "../components/Login.vue"
 import TaskTable from "../components/TaskTable.vue"
+import Board from "../components/Board.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,11 @@ const router = createRouter({
       path: "/login",
       name: "Login", 
       component: Login,
+    },
+    {
+      path: "/board",
+      name: "Board", 
+      component: Board,
     },
     {
       path: "/tasks",

@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', {
    
 
     logout() {
-      this.userInfo = null;
+      this.userInfo = {};
       this.isAuthenticated = false;
       localStorage.removeItem('userStore');
       localStorage.removeItem('isLimitEnabled');
