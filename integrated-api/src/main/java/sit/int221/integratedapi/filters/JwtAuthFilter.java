@@ -52,7 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
                 } catch (ExpiredJwtException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT Token has expired");
                 }
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "JWT Token does not begin with Bearer String");
@@ -68,4 +68,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         chain.doFilter(request, response);
     }
+
 }
