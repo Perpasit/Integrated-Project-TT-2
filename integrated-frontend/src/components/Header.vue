@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref } from "vue"
+import { computed, ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const isHomePage = computed(() => {
   return router.currentRoute.value.path === "/task"
@@ -11,13 +12,11 @@ const isHomePage = computed(() => {
 
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.startsWith("/status/manage")
-
 })
 
 const isTaskPage = computed(() => {
   return router.currentRoute.value.path.startsWith("/task")
 })
-
 
 const addTask = () => {
   router.push({ name: "AddTask" })
@@ -35,18 +34,24 @@ const addStatus = () => {
   router.push({ name: "AddStatus" })
 }
 
-const userStore = useUserStore()
-const accountName = computed(() => userStore.accountName)
+const accountName = computed(() => userStore.getAccountName)
 const showDropdown = ref(false)
 
 const logout = () => {
-  userStore.reset()
+  userStore.logout()
   router.push({ name: "Login" })
 }
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
 }
+
+onMounted(() => {
+  // Ensure the store is initialized with data from localStorage
+  if (!userStore.getIsAuthenticated) {
+    router.push({ name: "Login" })
+  }
+})
 </script>
 
 <template>

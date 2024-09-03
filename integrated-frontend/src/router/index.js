@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../components/Home.vue"
-import { useTaskStore } from "../stores/task"
-import { useStatusStore } from "../stores/status"
+import { useUserStore } from "../stores/userStore"
 import Error from "../components/Error.vue"
 import Modal from "../components/Modal.vue"
 import AddEditTask from "../components/AddEditTask.vue"
@@ -10,6 +9,7 @@ import AddEditStatus from "../components/AddEditStatus.vue"
 import ModalStatus from "../components/ModalStatus.vue"
 import Login from "../components/Login.vue"
 import TaskTable from "../components/TaskTable.vue"
+import Board from "../components/Board.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +22,11 @@ const router = createRouter({
       path: "/login",
       name: "Login", 
       component: Login,
+    },
+    {
+      path: "/board",
+      name: "Board", 
+      component: Board,
     },
     {
       path: "/tasks",
@@ -95,5 +100,7 @@ const router = createRouter({
     },
   ],
 })
+
+
 
 export default router
