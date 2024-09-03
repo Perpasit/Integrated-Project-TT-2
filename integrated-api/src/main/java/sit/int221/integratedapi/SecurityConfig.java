@@ -41,9 +41,6 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/login/**").permitAll()
-                        .requestMatchers("/v2/tasks/**").permitAll()
-                        .requestMatchers("/v2/statuses/**").permitAll()
-                        .requestMatchers("/v2/global-settings/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
