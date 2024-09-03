@@ -36,6 +36,10 @@ public class Task {
     @Column(name = "updatedOn", nullable = false)
     private ZonedDateTime updatedOn;
 
+    @ManyToOne
+    @JoinColumn(name = "boards_id", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
+    private Board board;
+
     @PrePersist
     protected void onCreate() {
         createdOn = ZonedDateTime.now();
