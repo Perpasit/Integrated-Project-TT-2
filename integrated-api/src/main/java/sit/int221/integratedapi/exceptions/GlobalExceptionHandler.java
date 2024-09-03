@@ -1,5 +1,8 @@
 package sit.int221.integratedapi.exceptions;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -154,6 +157,42 @@ public class GlobalExceptionHandler  {
                 ZonedDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<CustomErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token has expired",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(MalformedJwtException.class)
+    public ResponseEntity<CustomErrorResponse> handleMalformedJwtException(MalformedJwtException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token is malformed",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<CustomErrorResponse> handleSignatureException(SignatureException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token signature is invalid",
                 request.getDescription(false).replace("uri=", ""),
                 Collections.emptyList()
         );
