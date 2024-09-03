@@ -23,10 +23,13 @@ import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/login")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -42,33 +45,33 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @PostMapping("/login")
+    @PostMapping("")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
-            // Check if the username exists first
-            User user = userService.getUserByUsername(jwtRequestUser.getUsername());
+            User user = userService.getUserByUsername(jwtRequestUser.getUserName());
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("The username or password is incorrect.");
+                return AuthenticationException.getMessage("The Username or Password is incorrect.");
             }
-            // Now check the password
             UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(jwtRequestUser.getUsername(), jwtRequestUser.getPassword());
+                    new UsernamePasswordAuthenticationToken(jwtRequestUser.getUserName(), jwtRequestUser.getPassword());
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
+
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtTokenUtil.generateToken(userDetails);
-            return ResponseEntity.ok(token);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("access_token", token);
+
+            return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             logger.error("Login error: ", e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("The username or password is incorrect.");
+            return AuthenticationException.getMessage("The Username or Password is incorrect.");
         } catch (Exception e) {
             logger.error("Login error: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("There is a problem. Please try again later.");
         }
     }
-
 
 
 
