@@ -29,10 +29,11 @@ public class BoardController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Board>> getAllBoards() {
-        List<Board> boards = boardService.getAllBoards();
-        return ResponseEntity.ok(boards);
+    public ResponseEntity<Object> getAllBoards() {
+        List<BoardDTO> boardDTOs = boardService.getAllBoards();
+        return ResponseEntity.ok(boardDTOs);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Board> getBoardById(@PathVariable int id) {
