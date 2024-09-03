@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.BoardDTO;
+import sit.int221.integratedapi.dtos.OwnerDTO;
 import sit.int221.integratedapi.entities.Board;
+import sit.int221.integratedapi.entities.User;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +32,9 @@ public class BoardService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public Board createBoard(BoardDTO boardDTO) {
         Board board = new Board();
         return boardRepository.save(board);
@@ -35,9 +42,23 @@ public class BoardService {
 
     public List<BoardDTO> getAllBoards() {
         List<Board> boards = boardRepository.findAll();
-        return boards.stream()
-                .map(board -> modelMapper.map(board, BoardDTO.class))
-                .collect(Collectors.toList());
+        List<BoardDTO> boardDTOs = new ArrayList<>();
+
+        for (Board board : boards) {
+            Optional<User> userOptional = userRepository.findById(board.getUsersOid());
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                OwnerDTO ownerDTO = new OwnerDTO(user.getOid(), user.getName());
+                BoardDTO boardDTO = new BoardDTO();
+                boardDTO.setBoardId(board.getId());
+                boardDTO.setName(board.getName());
+                boardDTO.setOwner(ownerDTO);
+
+                boardDTOs.add(boardDTO);
+            }
+        }
+
+        return boardDTOs;
     }
 
 
@@ -51,14 +72,14 @@ public class BoardService {
     }
 
     // Update a board
-    public Board updateBoard(int id, BoardDTO boardDTO) {
-        Optional<Board> existingBoard = boardRepository.findById(id);
-        if (existingBoard.isPresent()) {
-            Board board = existingBoard.get();
-            board.setName(boardDTO.getName());
-            board.setUsersOid(boardDTO.getUsersOid());
-            return boardRepository.save(board);
-        }
-        return null;
-    }
+//    public Board updateBoard(int id, BoardDTO boardDTO) {
+//        Optional<Board> existingBoard = boardRepository.findById(id);
+//        if (existingBoard.isPresent()) {
+//            Board board = existingBoard.get();
+//            board.setName(boardDTO.getName());
+//            board.setUsersOid(boardDTO.getUsersOid());
+//            return boardRepository.save(board);
+//        }
+//        return null;
+//    }
 }

@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class BoardDTO {
     private Integer boardId;
     private String name;
-    private String usersOid;
+    private OwnerDTO owner;
 }
