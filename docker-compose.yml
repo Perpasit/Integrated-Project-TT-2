@@ -36,7 +36,7 @@ services:
       - integrated-network
 
   proxy:
-    container_name: integrated-proxy
+    container_name: proxy
     build:
       context: ./integrated-proxy
       dockerfile: Dockerfile

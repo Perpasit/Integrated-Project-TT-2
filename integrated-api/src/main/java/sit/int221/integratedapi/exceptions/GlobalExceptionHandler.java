@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.context.request.WebRequest;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -146,6 +147,21 @@ public class GlobalExceptionHandler  {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<CustomErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+
+
 }
 
 

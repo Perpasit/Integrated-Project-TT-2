@@ -1,5 +1,6 @@
-package sit.int221.integratedapi.repositories;
+package sit.int221.integratedapi.repositories.primary;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

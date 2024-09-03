@@ -166,9 +166,11 @@ onMounted(async () => {
 </script>
 
 <template>
+  
   <div
     class="manage-status-page bg-gradient-to-t from-[#ffc3ee] to-[#A9C9FF] min-h-screen"
   >
+
     <Header
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />

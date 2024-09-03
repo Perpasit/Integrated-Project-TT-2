@@ -61,7 +61,7 @@ watch(
     if (props.mode === "edit") {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
-        console.log(response)
+        // console.log(response)
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
@@ -154,9 +154,7 @@ const fetchStatus = async () => {
   await statusStore.fetchAllStatuses()
 }
 
-onMounted(async () => {
-  fetchStatus()
-})
+
 </script>
 
 <template>

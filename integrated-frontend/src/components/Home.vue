@@ -14,10 +14,10 @@ const modalStore = useModalStore()
     id="app"
     class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen"
   >
+  
     <Header  />
     <TaskTable />
 
-/>
 
     <div
       v-if="modalStore.showTaskSuccessModal"
