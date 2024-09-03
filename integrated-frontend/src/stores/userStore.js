@@ -54,8 +54,16 @@ export const useUserStore = defineStore('user', {
         const parsedData = JSON.parse(storedData);
         this.userInfo = parsedData.userInfo;
         this.isAuthenticated = parsedData.isAuthenticated;
-      
+    
+        if (this.isTokenExpired()) {
+          this.logout();
+        }
       }
+    },
+    isTokenExpired() {
+      if (!this.userInfo.exp) return true;
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      return currentTime > this.userInfo.exp;
     },
   },
 });

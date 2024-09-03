@@ -11,7 +11,7 @@ const addTask = () => {
 };
 
 const goHome = () => {
-  router.push({ name: "Board" });
+  router.push({ name: "home" });
 };
 
 const accountName = computed(() => userStore.getAccountName);

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../components/Home.vue"
-import { useTaskStore } from "../stores/task"
-import { useStatusStore } from "../stores/status"
+import { useUserStore } from "../stores/userStore"
 import Error from "../components/Error.vue"
 import Modal from "../components/Modal.vue"
 import AddEditTask from "../components/AddEditTask.vue"
@@ -101,5 +100,7 @@ const router = createRouter({
     },
   ],
 })
+
+
 
 export default router
