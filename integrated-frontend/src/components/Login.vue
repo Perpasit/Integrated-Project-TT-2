@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { postItem } from "../utils/fetch"
 import { useUserStore } from "../stores/userStore"; 
+import * as jwtDecode from "jwt-decode";
 
 // Setup router
 const router = useRouter();
@@ -41,17 +42,27 @@ const handleSubmit = async () => {
 
       if (response) {
         errorMessage.value = "";
-        await userStore.fetchAndSetAccountName(username.value);
+        
+        // Decode the JWT token
+        const decodedToken = jwtDecode.jwtDecode(response.access_token); // Updated usage
+
+        
+        // Store the extracted information in the user store or local storage
+        userStore.setUserInfo(decodedToken);
+        
+        userStore.setAccountName(decodedToken.name); //set name
+
+
+        console.log(decodedToken)
+        // Navigate to home page
         router.push({ name: "home" });
       }
     } catch (error) {
-      // errorMessage.value = error.message || "Username or Password is incorrect.";
       errorMessage.value = "Username or Password is incorrect";
     }
   } else {
     errorMessage.value = "Please fill in the required fields correctly.";
   }
-
 };
 
 

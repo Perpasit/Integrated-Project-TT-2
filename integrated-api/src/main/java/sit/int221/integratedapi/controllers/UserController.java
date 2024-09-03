@@ -2,6 +2,8 @@ package sit.int221.integratedapi.controllers;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,22 +80,27 @@ public class UserController {
 
     @GetMapping("/validate-token")
     public ResponseEntity<Object> validateToken(@RequestHeader("Authorization") String requestTokenHeader) {
-        Claims claims = null;
-        String jwtToken = null;
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            jwtToken = requestTokenHeader.substring(7);
+            String jwtToken = requestTokenHeader.substring(7);
             try {
-                claims = jwtTokenUtil.getAllClaimsFromToken(jwtToken);
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+                Claims claims = jwtTokenUtil.getAllClaimsFromToken(jwtToken);
+                return ResponseEntity.ok(claims);
             } catch (ExpiredJwtException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT token has expired", e);
+            } catch (MalformedJwtException e) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT token is malformed", e);
+            } catch (SignatureException e) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT token has been tampered with", e);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token", e);
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.EXPECTATION_FAILED, "JWT Token does not begin with Bearer String");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "JWT Token does not begin with Bearer String");
         }
-        return ResponseEntity.ok(claims);
     }
+
+
+
 
     @GetMapping("/{username}")
     public ResponseEntity<Object> getUserByUsername(@PathVariable("username") String username) {
