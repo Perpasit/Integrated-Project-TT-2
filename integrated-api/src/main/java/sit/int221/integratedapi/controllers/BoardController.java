@@ -29,7 +29,7 @@ public class BoardController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> getAllBoards() {
+    public ResponseEntity<List<BoardDTO>> getAllBoards() {
         List<BoardDTO> boardDTOs = boardService.getAllBoards();
         return ResponseEntity.ok(boardDTOs);
     }
@@ -41,15 +41,15 @@ public class BoardController {
         return board.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Board> updateBoard(@PathVariable int id, @RequestBody BoardDTO boardDTO) {
-        Board updatedBoard = boardService.updateBoard(id, boardDTO);
-        if (updatedBoard != null) {
-            return ResponseEntity.ok(updatedBoard);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Board> updateBoard(@PathVariable int id, @RequestBody BoardDTO boardDTO) {
+//        Board updatedBoard = boardService.updateBoard(id, boardDTO);
+//        if (updatedBoard != null) {
+//            return ResponseEntity.ok(updatedBoard);
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
