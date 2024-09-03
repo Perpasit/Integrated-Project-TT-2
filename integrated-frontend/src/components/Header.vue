@@ -40,7 +40,7 @@ const accountName = computed(() => userStore.accountName)
 const showDropdown = ref(false)
 
 const logout = () => {
-  userStore.reset()
+  userStore.logout()
   router.push({ name: "Login" })
 }
 
