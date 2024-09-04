@@ -27,7 +27,6 @@ const toggleDropdown = () => {
 };
 
 onMounted(() => {
-  // Ensure the store is initialized with data from localStorage
   if (!userStore.getIsAuthenticated) {
     router.push({ name: "Login" });
   }
@@ -36,7 +35,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="container mx-auto px-0 pt-5 flex flex-row justify-around items-center"
+    class="container mx-auto px-0  pt-5 flex flex-row justify-around items-center"
   >
     <div class="flex">
       <h1
@@ -100,13 +99,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-
-      <button
-        @click="addTask"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded"
-      >
-        + ADD BOARD
-      </button>
     </div>
   </div>
 </template>

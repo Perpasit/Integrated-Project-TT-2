@@ -7,7 +7,7 @@ import BoardTable from "./BoardTable.vue";
 <template>
   <div
     id="app"
-    class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen"
+    class="bg-gradient-to-br from-[#c4e4e0] to-[#9ad4d3] min-h-screen"
   >
     <HeaderBoard />
     <BoardTable />

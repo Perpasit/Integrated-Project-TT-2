@@ -63,13 +63,13 @@ onMounted(() => {
       Kanban
     </h1>
     <span :class="[
-        'itbkk-button-home text-2xl block cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
+        'itbkk-button-home text-2xl  cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
         isHomePage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goHome">
         Home
       </span>
       <span :class="[
-        'itbkk-manage-status text-2xl block cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
+        'itbkk-manage-status text-2xl cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
         isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goToManageStatus">
         Manage Status
