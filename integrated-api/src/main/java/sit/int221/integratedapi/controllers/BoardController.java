@@ -34,18 +34,24 @@ public class BoardController {
         return ResponseEntity.ok(newBoard);
     }
 
-    @GetMapping
-    public ResponseEntity<List<BoardDTO>> getAllBoards() {
-        List<BoardDTO> boardDTOs = boardService.getAllBoards();
+    @GetMapping("")
+    public ResponseEntity<List<BoardDTO>> getAllBoards(@RequestHeader("Authorization") String token) {
+        // Extract the OID from the token
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        // Retrieve boards based on the OID
+        List<BoardDTO> boardDTOs = boardService.getAllBoards(oidFromToken);
+
         return ResponseEntity.ok(boardDTOs);
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Board> getBoardById(@PathVariable int id) {
-        Optional<Board> board = boardService.getBoardById(id);
-        return board.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
+
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Board> getBoardById(@PathVariable int id) {
+//        Optional<Board> board = boardService.getBoardById(id);
+//        return board.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+//    }
 
 //    @PutMapping("/{id}")
 //    public ResponseEntity<Board> updateBoard(@PathVariable int id, @RequestBody BoardDTO boardDTO) {
