@@ -1,6 +1,7 @@
 package sit.int221.integratedapi.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.BoardDTO;
@@ -13,6 +14,8 @@ import sit.int221.integratedapi.services.TaskService;
 import java.util.List;
 import java.util.Optional;
 
+import sit.int221.integratedapi.services.JwtTokenUtil;
+
 @RestController
 @RequestMapping("/v3/boards")
 public class BoardController {
@@ -21,6 +24,9 @@ public class BoardController {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping
     public ResponseEntity<Board> createBoard(@RequestBody BoardDTO boardDTO) {
@@ -58,11 +64,22 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}/tasks")
-    public ResponseEntity<List<TaskRDTO>> getTasksByBoardNo(@PathVariable Integer boardId) {
+    public ResponseEntity<List<TaskRDTO>> getTasksByBoardNo(
+            @PathVariable Integer boardId,
+            @RequestHeader("Authorization") String token) {
+        
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        if (!taskService.isBoardOwnedByOid(boardId, oidFromToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<TaskRDTO> tasks = taskService.getTasksByBoardId(boardId);
         if (tasks.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
         return ResponseEntity.ok(tasks);
     }
+
 }
