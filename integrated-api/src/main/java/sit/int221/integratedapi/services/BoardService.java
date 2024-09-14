@@ -56,7 +56,7 @@ public class BoardService {
 
                 // Create and populate BoardDTO
                 BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setBoardId(board.getId());
+                boardDTO.setId(board.getId());
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoardDTO {
-    private Integer boardId;
+    private Integer id;
     private String name;
     private OwnerDTO owner;
 }

@@ -16,10 +16,12 @@ import sit.int221.integratedapi.dtos.TaskUDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.exceptions.*;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskRepository;
+import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.time.ZonedDateTime;
@@ -45,6 +47,8 @@ public class TaskService {
     private StatusService statusService;
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    TaskUserRepository taskUserRepository;
 
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
@@ -200,18 +204,75 @@ public class TaskService {
         task.setUpdatedOn(ZonedDateTime.now());
     }
 
-    @Transactional
-    public List<TaskRDTO> getTasksByBoardId(Integer boardId) {
-        List<Task> tasks = taskRepository.findTasksByBoardId(boardId);
-        return tasks.stream()
-                .map(task -> modelMapper.map(task, TaskRDTO.class))
-                .collect(Collectors.toList());
+    public ResponseEntity<Object> getTasksByBoardId(Integer boardId, String sortBy, List<String> filterStatuses) {
+        // Return an empty list if any status contains '#'
+        if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        // Determine sorting direction based on the sortBy parameter
+        Sort sort;
+        if (sortBy != null && sortBy.equalsIgnoreCase("asc")) {
+            sort = Sort.by(Sort.Direction.ASC, "status.name");
+        } else if (sortBy != null && sortBy.equalsIgnoreCase("desc")) {
+            sort = Sort.by(Sort.Direction.DESC, "status.name");
+        } else {
+            sort = Sort.by("createdOn").ascending();  // Default sorting by creation date
+        }
+
+        // Retrieve tasks by boardId with optional status filtering
+        List<Task> tasks;
+        List<String> statusNames = null;
+        if (filterStatuses != null && !filterStatuses.isEmpty()) {
+            statusNames = extractStatusNames(filterStatuses);
+            tasks = taskRepository.findByStatusNameIn(statusNames, sort);
+        } else {
+            tasks = taskRepository.findByBoardIdAndStatusNameIn(boardId, statusNames, sort);
+        }
+
+        // Return the result
+        return ResponseEntity.ok(tasks);
     }
 
-    public boolean isBoardOwnedByOid(Integer boardId, String oid) {
-        Optional<Board> board = boardRepository.findById(boardId);
-        return board.isPresent() && board.get().getTasks().equals(oid);
+
+    public boolean isBoardOwnedByOid(Integer boardId, String oidFromToken) {
+        // Fetch the board by ID
+        Optional<Board> boardOptional = boardRepository.findById(boardId);
+
+        // If board is not found, return false
+        if (!boardOptional.isPresent()) {
+            return false;
+        }
+
+        Board board = boardOptional.get();
+
+        // Fetch the TaskUser associated with the board's taskusersOid
+        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getTaskusersOid()));
+
+        // If the taskUser is found, check if it matches the OID
+        return taskUserOptional.isPresent() && taskUserOptional.get().getOid().equals(oidFromToken);
     }
+
+
+    // Method to fetch tasks by boardId
+    public List<TaskRDTO> getTasksByBoardId(Integer boardId) {
+        // Fetch tasks by boardId (directly, without Optional)
+        List<Task> tasks = taskRepository.findByBoardId(boardId);
+
+        // Convert to TaskRDTOs
+        List<TaskRDTO> taskRDTOs = new ArrayList<>();
+        for (Task task : tasks) {
+            TaskRDTO taskRDTO = new TaskRDTO();
+            taskRDTO.setTitle(task.getTitle());
+            taskRDTO.setDescription(task.getDescription());
+            taskRDTO.setStatus(String.valueOf(task.getStatus()));
+            // Populate other TaskRDTO fields as necessary
+            taskRDTOs.add(taskRDTO);
+        }
+
+        return taskRDTOs;
+    }
+
 
 
 }
