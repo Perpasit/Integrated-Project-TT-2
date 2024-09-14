@@ -75,10 +75,10 @@ public class TaskController {
         return taskService.removeTask(id);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> updateTask(@Valid @RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
-        return taskService.updateTask(id, updatedTaskDTO);
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Object> updateTask(@Valid @RequestBody TaskUDTO updatedTaskDTO, @PathVariable Integer id) {
+//        return taskService.updateTask(id, updatedTaskDTO);
+//    }
 
 
 }
