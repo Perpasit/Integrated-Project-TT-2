@@ -91,43 +91,6 @@ public class TaskService {
         return statusNames;
     }
 
-//    @Transactional
-//    public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
-//        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-//
-//        if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
-//            validationErrors.addError("title", "must not be null");
-//        }
-//
-//        if (!validationErrors.getErrors().isEmpty()) {
-//            throw validationErrors;
-//        }
-//
-//        Status status = getDefaultStatus();
-//        if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
-//            try {
-//                status = statusRepository.findById(Integer.valueOf(taskCDTO.getStatus()))
-//                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + taskCDTO.getStatus() + " does not exist!"));
-//            } catch (NoSuchElementException e) {
-//                validationErrors.addError("status", "does not exist");
-//                throw validationErrors;
-//            }
-//        }
-//
-//        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-//            throw new StatusLimitReachedException("The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
-//        }
-//
-//        Task task = new Task();
-//        task.setTitle(taskCDTO.getTitle().trim());
-//        task.setStatus(status);
-//        task.setDescription(taskCDTO.getDescription() != null && !taskCDTO.getDescription().trim().isEmpty() ? taskCDTO.getDescription().trim() : null);
-//        task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
-//        setDefaultValuesForTask(task);
-//        Task createdTask = taskRepository.save(task);
-//        TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
-//    }
 
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO) {
@@ -181,59 +144,27 @@ public class TaskService {
 
 
     @Transactional
-    public ResponseEntity<TaskDDTO> removeTask(Integer taskId) {
+    public ResponseEntity<TaskDDTO> removeTask(Integer boardId, Integer taskId) {
+        // Fetch the task from the repository
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ItemNotFoundException("Task " + taskId + " does not exist !!!!"));
+                .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist!"));
+
+        // Verify that the task belongs to the specified board
+        if (task.getBoard() == null || !Objects.equals(task.getBoard().getId(), boardId)) {
+            throw new ItemNotFoundException("Task with id " + taskId + " does not belong to board with id " + boardId + " or does not exist.");
+        }
+
+        // Delete the task
         taskRepository.delete(task);
+
+        // Map the deleted task to DTO
         TaskDDTO taskDDTO = modelMapper.map(task, TaskDDTO.class);
+
+        // Return a response with the details of the deleted task
         return ResponseEntity.ok(taskDDTO);
     }
 
-//    @Transactional
-//    public ResponseEntity<Object> updateTask(Integer taskId, TaskUDTO updatedTaskDTO) {
-//        Task existingTask = getTaskById(taskId);
-//
-//        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
-//
-//        if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
-//            validationErrors.addError("title", "must not be null");
-//        }
-//
-//
-//        if (!validationErrors.getErrors().isEmpty()) {
-//            throw validationErrors;
-//        }
-//
-//        Status status = getDefaultStatus();
-//        if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().isEmpty()) {
-//            try {
-//                status = statusRepository.findById(Integer.valueOf(updatedTaskDTO.getStatus()))
-//                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + updatedTaskDTO.getStatus() + " does not exist!"));
-//            } catch (NoSuchElementException e) {
-//                validationErrors.addError("status", "does not exist");
-//                throw validationErrors;
-//            }
-//        }
-//
-//        if (status.getGlobalSetting().isLimitMaximumTask() && taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-//            throw new StatusLimitReachedException("The status " + status.getName() + " will have too many tasks. Please make progress and update the status of existing tasks first.");
-//        }
-//
-//        if (!validationErrors.getErrors().isEmpty()) {
-//            throw validationErrors;
-//        }
-//
-//        setDefaultValuesForTask(existingTask);
-//        existingTask.setStatus(status);
-//        existingTask.setTitle(updatedTaskDTO.getTitle().trim());
-//        existingTask.setDescription(updatedTaskDTO.getDescription() != null && !updatedTaskDTO.getDescription().trim().isEmpty() ? updatedTaskDTO.getDescription().trim() : null);
-//        existingTask.setAssignees(updatedTaskDTO.getAssignees() != null && !updatedTaskDTO.getAssignees().trim().isEmpty() ? updatedTaskDTO.getAssignees().trim() : null);
-//        existingTask.setUpdatedOn(ZonedDateTime.now());
-//
-//        Task updatedTask = taskRepository.save(existingTask);
-//        TaskUDTO updatedTaskCDTO = modelMapper.map(updatedTask, TaskUDTO.class);
-//        return ResponseEntity.ok(updatedTaskCDTO);
-//    }
+
 
     @Transactional
     public ResponseEntity<Object> updateTask(Integer boardId, Integer taskId, TaskUDTO updatedTaskDTO) {
