@@ -44,8 +44,8 @@ const handleSubmit = async () => {
 
         // Decode the JWT token
         const decodedToken = jwtDecode.jwtDecode(response.access_token);
-        userStore.setUserInfo(decodedToken);
-        router.push({ name: "Board" });
+        userStore.setUserInfo(decodedToken,response.access_token);
+        router.push({ name: "home" });
       }
     } catch (error) {
       errorMessage.value = "Username or Password is incorrect";
@@ -58,7 +58,7 @@ const handleSubmit = async () => {
 onMounted(() => {
   userStore.loadFromLocalStorage();
   if (userStore.isAuthenticated) {
-    router.push({ name: "Board" });
+    router.push({ name: "home" });
   }
 });
 </script>

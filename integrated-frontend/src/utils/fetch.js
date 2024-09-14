@@ -21,7 +21,7 @@ export const fetch = async (url, options) => {
 
 export const getItems = async (url) => {
   try {
-    return await fetch(url);
+    return await fetch(url,);
   } catch (error) {
     // console.error("Error:", error);
     throw error;
