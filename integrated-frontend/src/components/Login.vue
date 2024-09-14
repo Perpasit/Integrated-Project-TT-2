@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { postItem } from "../utils/fetch";
+import { postItemLogin } from "../utils/fetch";
 import { useUserStore } from "../stores/userStore";
 import * as jwtDecode from "jwt-decode";
 
@@ -31,7 +31,7 @@ const clearErrorMessage = () => {
 const handleSubmit = async () => {
   if (isFormValid.value) {
     try {
-      const response = await postItem(
+      const response = await postItemLogin(
         `${import.meta.env.VITE_API_ENDPOINT2}/login`,
         {
           userName: username.value,

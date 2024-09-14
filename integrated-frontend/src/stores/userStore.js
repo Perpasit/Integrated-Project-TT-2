@@ -1,51 +1,52 @@
 import { defineStore } from 'pinia';
 
-
 export const useUserStore = defineStore('user', {
   state: () => ({
     userInfo: {
-      sub: "",
-      role: "",
-      iss: "",
-      name: "",
-      oid: "",
-      exp: "",
-      iat: "",
-      email: "",
+      sub: '',
+      role: '',
+      iss: '',
+      name: '',
+      oid: '',
+      exp: '',
+      iat: '',
+      email: '',
     },
     isAuthenticated: false,
-    token: "", // เพิ่ม token ใน state
+    token: '',
   }),
 
   getters: {
     getUserInfo: (state) => state.userInfo,
     getAccountName: (state) => state.userInfo.name,
     getIsAuthenticated: (state) => state.isAuthenticated,
-    getToken: (state) => state.token, // Getter สำหรับ token
+    getToken: (state) => state.token,
   },
 
   actions: {
     setUserInfo(info, token) {
       this.userInfo = info;
-      this.token = token; // กำหนดค่า token
+      this.token = token;
       this.isAuthenticated = true;
       this.saveToLocalStorage();
     },
 
     logout() {
       this.userInfo = {};
-      this.token = ""; // ล้างค่า token เมื่อ logout
       this.isAuthenticated = false;
+      this.token = '';
       localStorage.removeItem('userStore');
-      localStorage.removeItem('isLimitEnabled');
     },
 
     saveToLocalStorage() {
-      localStorage.setItem('userStore', JSON.stringify({
-        userInfo: this.userInfo,
-        isAuthenticated: this.isAuthenticated,
-        token: this.token, // บันทึก token ลง localStorage
-      }));
+      localStorage.setItem(
+        'userStore',
+        JSON.stringify({
+          userInfo: this.userInfo,
+          isAuthenticated: this.isAuthenticated,
+          token: this.token,
+        })
+      );
     },
 
     loadFromLocalStorage() {
@@ -54,7 +55,7 @@ export const useUserStore = defineStore('user', {
         const parsedData = JSON.parse(storedData);
         this.userInfo = parsedData.userInfo;
         this.isAuthenticated = parsedData.isAuthenticated;
-        this.token = parsedData.token; // โหลด token จาก localStorage
+        this.token = parsedData.token;
 
         if (this.isTokenExpired()) {
           this.logout();
@@ -64,11 +65,12 @@ export const useUserStore = defineStore('user', {
 
     isTokenExpired() {
       if (!this.userInfo.exp) return true;
-      const currentTime = Math.floor(Date.now() / 1000); // เวลาในปัจจุบันเป็นวินาที
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
       return currentTime > this.userInfo.exp;
     },
   },
 });
+
 
 
 
