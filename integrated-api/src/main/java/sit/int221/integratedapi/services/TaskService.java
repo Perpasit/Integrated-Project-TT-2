@@ -13,9 +13,11 @@ import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDDTO;
 import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
+import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.*;
+import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
@@ -24,6 +26,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
@@ -40,6 +43,8 @@ public class TaskService {
     private ModelMapper modelMapper;
     @Autowired
     private StatusService statusService;
+    @Autowired
+    private BoardRepository boardRepository;
 
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
@@ -201,6 +206,11 @@ public class TaskService {
         return tasks.stream()
                 .map(task -> modelMapper.map(task, TaskRDTO.class))
                 .collect(Collectors.toList());
+    }
+
+    public boolean isBoardOwnedByOid(Integer boardId, String oid) {
+        Optional<Board> board = boardRepository.findById(boardId);
+        return board.isPresent() && board.get().getUsersOid().equals(oid);
     }
 
 
