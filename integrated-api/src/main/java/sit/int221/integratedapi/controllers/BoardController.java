@@ -5,10 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sit.int221.integratedapi.dtos.BoardDTO;
-import sit.int221.integratedapi.dtos.TaskCDTO;
-import sit.int221.integratedapi.dtos.TaskDTO;
-import sit.int221.integratedapi.dtos.TaskUDTO;
+import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.services.BoardService;
@@ -99,10 +96,9 @@ public class BoardController {
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
-        boardService.deleteBoardById(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/{boardId}/tasks/{taskId}")
+    public ResponseEntity<TaskDDTO> deleteTask(@PathVariable Integer boardId, @PathVariable Integer taskId) {
+        return taskService.removeTask(boardId, taskId);
     }
 
 
