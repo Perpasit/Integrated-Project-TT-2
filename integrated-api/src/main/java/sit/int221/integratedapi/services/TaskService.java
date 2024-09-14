@@ -210,7 +210,7 @@ public class TaskService {
 
     public boolean isBoardOwnedByOid(Integer boardId, String oid) {
         Optional<Board> board = boardRepository.findById(boardId);
-        return board.isPresent() && board.get().getUsersOid().equals(oid);
+        return board.isPresent() && board.get().getTasks().equals(oid);
     }
 
 

@@ -22,8 +22,8 @@ public class Board {
     @Column(name = "name", nullable = false, length = 45)
     private String name;
 
-    @Column(name = "users_oid", nullable = false, length = 255)
-    private String usersOid;
+    @Column(name = "taskusers_oid", nullable = false, length = 255)
+    private String taskusersOid;
 
     @OneToMany(mappedBy = "board")
     private Set<Task> tasks;
