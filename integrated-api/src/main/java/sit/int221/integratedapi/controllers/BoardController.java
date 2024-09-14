@@ -11,6 +11,7 @@ import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.services.BoardService;
 import sit.int221.integratedapi.services.TaskService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,17 +69,18 @@ public class BoardController {
         boardService.deleteBoardById(id);
         return ResponseEntity.noContent().build();
     }
-
     @GetMapping("/{boardId}/tasks")
     public ResponseEntity<List<TaskRDTO>> getTasksByBoardNo(
             @PathVariable Integer boardId,
             @RequestHeader("Authorization") String token) {
-        
+
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
 
         if (!taskService.isBoardOwnedByOid(boardId, oidFromToken)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.ok(new ArrayList<>());
+//            return ResponseEntity.ok().build();
         }
+
 
         List<TaskRDTO> tasks = taskService.getTasksByBoardId(boardId);
         if (tasks.isEmpty()) {
@@ -87,5 +89,8 @@ public class BoardController {
 
         return ResponseEntity.ok(tasks);
     }
+
+
+
 
 }
