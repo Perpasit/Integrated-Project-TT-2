@@ -42,6 +42,10 @@ public class BoardService {
         return boardRepository.save(board);
     }
 
+    public boolean existsById(Integer boardId) {
+        return boardRepository.existsById(boardId);
+    }
+
     public List<BoardDTO> getAllBoards(String oid) {
         // Retrieve all boards where the task user's oid matches the given oid
         List<Board> boards = boardRepository.findByTaskusersOid(oid);

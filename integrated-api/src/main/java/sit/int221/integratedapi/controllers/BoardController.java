@@ -1,11 +1,14 @@
 package sit.int221.integratedapi.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.BoardDTO;
+import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDTO;
+import sit.int221.integratedapi.dtos.TaskUDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.services.BoardService;
@@ -32,10 +35,20 @@ public class BoardController {
     @Autowired
     private ListMapper listMapper;
 
-    @PostMapping
-    public ResponseEntity<Board> createBoard(@RequestBody BoardDTO boardDTO) {
-        Board newBoard = boardService.createBoard(boardDTO);
-        return ResponseEntity.ok(newBoard);
+    @PostMapping("/{boardId}/tasks")
+    public ResponseEntity<Object> addNewTask(
+            @PathVariable Integer boardId,
+            @Valid @RequestBody TaskCDTO taskCDTO) {
+        taskCDTO.setBoardId(boardId);
+        return taskService.createNewTask(taskCDTO);
+    }
+
+    @PutMapping("/{boardId}/tasks/{taskId}")
+    public ResponseEntity<Object> updateTask(
+            @PathVariable Integer boardId,
+            @PathVariable Integer taskId,
+            @Valid @RequestBody TaskUDTO updatedTaskDTO) {
+        return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
     @GetMapping("")
@@ -45,11 +58,7 @@ public class BoardController {
         return ResponseEntity.ok(boardDTOs);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
-        boardService.deleteBoardById(id);
-        return ResponseEntity.noContent().build();
-    }
+
     @GetMapping("/{boardId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(
             @PathVariable Integer boardId,
@@ -90,7 +99,11 @@ public class BoardController {
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
+        boardService.deleteBoardById(id);
+        return ResponseEntity.noContent().build();
+    }
 
 
 
