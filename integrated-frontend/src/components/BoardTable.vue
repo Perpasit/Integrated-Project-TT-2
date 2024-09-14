@@ -14,10 +14,7 @@ const showNotFoundModal = ref(false);
 const showCreateBoardModal = ref(false);
 const newBoardName = ref("");
 
-const fetchBoards = async () => {
-  await boardStore.fetchAllBoards();
-  boards.value = boardStore.boards;
-};
+
 
 const editBoard = (board) => {
   if (board && board.id) {
@@ -62,9 +59,6 @@ const cancelDelete = () => {
   showDeleteConfirmation.value = false;
 };
 
-onMounted(async () => {
-  fetchBoards();
-});
 
 const createPersonalBoard = () => {
   console.log("Create Personal Board clicked");
@@ -92,6 +86,23 @@ const saveNewBoard = async () => {
   }
 };
 
+
+const fetchBoards = async () => {
+  try {
+    await boardStore.fetchAllBoards(); 
+    boards.value = boardStore.getBoards;
+    
+    if (boards.value.length > 1) {
+      router.push({ name: "home" });
+  }
+  } catch (error) {
+    console.error('Error fetching boards:', error);
+  }
+};
+
+onMounted(async () => {
+  await fetchBoards(); 
+});
 </script>
 
 <template>
@@ -163,7 +174,7 @@ const saveNewBoard = async () => {
             <td class="px-4 py-2">
               <p class="itbkk-title truncate">{{ board.name }}</p>
             </td>
-            <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
+            <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
               <button class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                 @click="editBoard(board)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"

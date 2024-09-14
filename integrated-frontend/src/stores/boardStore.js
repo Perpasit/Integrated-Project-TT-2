@@ -1,85 +1,86 @@
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia"
+import { getItems, postItem, putItem, deleteItem } from "../utils/fetch"
 
-export const useBoardStore = defineStore('board', {
+export const useBoardStore = defineStore("board", {
   state: () => ({
-    boards: []
+    boards: [],
   }),
 
   getters: {
-    getBoards: (state) => state.boards
+    getBoards: (state) => state.boards,
   },
 
   actions: {
     async fetchAllBoards() {
       try {
-        const response = await fetch('/api/boards')
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-        const data = await response.json()
+        const data = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards`
+        )
+        
         this.boards = data
       } catch (error) {
-        console.error('Error fetching boards:', error)
+        console.error("Error fetching boards:", error)
+        // Optionally handle the error more comprehensively here
       }
     },
 
     async addBoard(boardData) {
       try {
-        const response = await fetch('/api/boards', {
-          method: 'POST',
+        const response = await fetch("/api/boards", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(boardData)
+          body: JSON.stringify(boardData),
         })
         if (!response.ok) {
-          throw new Error('Network response was not ok')
+          throw new Error("Network response was not ok")
         }
         const newBoard = await response.json()
         this.boards.push(newBoard)
       } catch (error) {
-        console.error('Error adding board:', error)
+        console.error("Error adding board:", error)
       }
     },
 
     async updateBoard(id, updatedData) {
       try {
         const response = await fetch(`/api/boards/${id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(updatedData)
+          body: JSON.stringify(updatedData),
         })
         if (!response.ok) {
-          throw new Error('Network response was not ok')
+          throw new Error("Network response was not ok")
         }
         const updatedBoard = await response.json()
-        const index = this.boards.findIndex(board => board.id === id)
+        const index = this.boards.findIndex((board) => board.id === id)
         if (index !== -1) {
           this.boards[index] = updatedBoard
         }
       } catch (error) {
-        console.error('Error updating board:', error)
+        console.error("Error updating board:", error)
       }
     },
 
     async deleteBoard(id) {
       try {
         const response = await fetch(`/api/boards/${id}`, {
-          method: 'DELETE'
+          method: "DELETE",
         })
         if (!response.ok) {
-          throw new Error('Network response was not ok')
+          throw new Error("Network response was not ok")
         }
-        this.boards = this.boards.filter(board => board.id !== id)
+        this.boards = this.boards.filter((board) => board.id !== id)
       } catch (error) {
-        console.error('Error deleting board:', error)
+        console.error("Error deleting board:", error)
       }
     },
 
     getBoardById(id) {
-      return this.boards.find(board => board.id === id)
-    }
-  }
+      return this.boards.find((board) => board.id === id)
+    },
+  },
 })

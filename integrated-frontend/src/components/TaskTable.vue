@@ -186,7 +186,6 @@ const toggleStatusFilter = (statusName) => {
 }
 
 onMounted(async () => {
-  fetchTasksAndStatus()
 
   const sortByFromUrl = route.query.sortBy
   if (
