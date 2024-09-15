@@ -20,11 +20,11 @@ public class StatusController {
         this.listMapper = listMapper;
     }
 
-    @GetMapping("")
-    public ResponseEntity<List<StatusDTO>> getStatuses() {
-        List<StatusDTO> statusDTOs = statusService.getAllStatuses();
-        return ResponseEntity.ok(statusDTOs);
-    }
+//    @GetMapping("")
+//    public ResponseEntity<List<StatusDTO>> getStatuses() {
+//        List<StatusDTO> statusDTOs = statusService.getAllStatuses();
+//        return ResponseEntity.ok(statusDTOs);
+//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {

@@ -43,8 +43,8 @@ public class StatusService {
         this.modelMapper = modelMapper;
     }
 
-    public List<StatusDTO> getAllStatuses() {
-        List<Status> statuses = statusRepository.findAll();
+    public List<StatusDTO> getStatusesByBoardId(Integer boardId) {
+        List<Status> statuses = statusRepository.findByBoardId(boardId);
         List<StatusDTO> statusDTOs = new ArrayList<>();
         for (Status status : statuses) {
             StatusDTO statusDTO = modelMapper.map(status, StatusDTO.class);
