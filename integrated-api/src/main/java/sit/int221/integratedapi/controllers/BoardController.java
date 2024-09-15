@@ -45,6 +45,14 @@ public class BoardController {
         return ResponseEntity.ok(boardDTOs);
     }
 
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable Integer boardId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
+        return ResponseEntity.ok(boardDTO);
+    }
+
+
     @PostMapping("")
     public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token, @RequestBody BoardCDTO boardCDTO) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
