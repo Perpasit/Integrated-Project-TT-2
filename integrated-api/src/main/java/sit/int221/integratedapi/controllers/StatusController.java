@@ -48,15 +48,15 @@ public class StatusController {
         return statusService.deleteTransferStatus(id,newId);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
-        return statusService.updateStatus(id, statusUDTO);
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
+//        return statusService.updateStatus(id, statusUDTO);
+//    }
 
-    @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
-        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
-        return ResponseEntity.ok(taskDTOs);
-    }
+//    @GetMapping("/{id}/tasks")
+//    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
+//        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
+//        return ResponseEntity.ok(taskDTOs);
+//    }
 
 }
