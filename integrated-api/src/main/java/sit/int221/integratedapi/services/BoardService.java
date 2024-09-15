@@ -4,17 +4,22 @@ import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sit.int221.integratedapi.dtos.BoardCDTO;
 import sit.int221.integratedapi.dtos.BoardDTO;
 import sit.int221.integratedapi.dtos.OwnerDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
+import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
+import sit.int221.integratedapi.exceptions.BoardOwnershipException;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,10 +42,7 @@ public class BoardService {
     @Autowired
     private TaskUserRepository taskUserRepository;
 
-    public Board createBoard(BoardDTO boardDTO) {
-        Board board = new Board();
-        return boardRepository.save(board);
-    }
+
 
     public boolean existsById(Integer boardId) {
         return boardRepository.existsById(boardId);
@@ -72,41 +74,47 @@ public class BoardService {
         return boardDTOs;
     }
 
+    public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
+        // Initialize ValidationErrorException
+        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
+        // Validate BoardCDTO fields
+        if (boardCDTO.getName() == null) {
+            validationErrors.addError("name", "must not be null");
+        } else if (boardCDTO.getName().isEmpty()) {
+            validationErrors.addError("name", "must not be empty");
+        } else if (boardCDTO.getName().length() > 45) {
+            validationErrors.addError("name", "must not exceed 45 characters");
+        }
 
-//    @Transactional
-//    public List<BoardDTO> getBoardsByOid(String oid) {
-//        // ตรวจสอบว่า oid ไม่เป็น null หรือว่างเปล่า
-//        if (oid == null || oid.trim().isEmpty()) {
-//            throw new IllegalArgumentException("OID must not be null or empty");
-//        }
-//
-//        // ดึงข้อมูล Board จากฐานข้อมูลตาม OID
-//        List<Board> boards = boardRepository.findBoardsByTaskusers_oid(oid);
-//
-//
-//
-//        // แปลงข้อมูล Board เป็น BoardDTO
-//        return boards.stream()
-//                .map(board -> modelMapper.map(board, BoardDTO.class))
-//                .collect(Collectors.toList());
-//    }
+        // Check for board ownership
+        boolean boardExists = doesBoardExistForUser(oid);
+        if (boardExists) {
+            throw new BoardOwnershipException("User can only own one board.");
+        }
 
+        // Throw validation errors if any
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
+        }
 
-    // Delete a board by ID
-    public void deleteBoardById(int id) {
-        boardRepository.deleteById(id);
+        // Create and save new board
+        Board board = new Board();
+        board.setName(boardCDTO.getName());
+        board.setTaskusersOid(oid);
+        boardRepository.save(board);
+
+        return new BoardCDTO(board.getId(), board.getName());
     }
 
-    // Update a board
-//    public Board updateBoard(int id, BoardDTO boardDTO) {
-//        Optional<Board> existingBoard = boardRepository.findById(id);
-//        if (existingBoard.isPresent()) {
-//            Board board = existingBoard.get();
-//            board.setName(boardDTO.getName());
-//            board.setUsersOid(boardDTO.getUsersOid());
-//            return boardRepository.save(board);
-//        }
-//        return null;
-//    }
+
+
+
+    public boolean doesBoardExistForUser(String taskusersOid) {
+        // Check if a board already exists for the given taskusers_oid
+        return boardRepository.existsByTaskusersOid(taskusersOid);
+    }
+
+
+
 }
