@@ -112,6 +112,12 @@ public class BoardController {
         return ResponseEntity.ok(statusDTOs);
     }
 
+    @GetMapping("/{boardId}/statuses/{statusId}")
+    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer boardId, @PathVariable Integer statusId) {
+        StatusRDTO statusRDTO = statusService.getStatusByBoardIdAndStatusId(boardId, statusId);
+        return ResponseEntity.ok(statusRDTO);
+    }
+
 
 
 

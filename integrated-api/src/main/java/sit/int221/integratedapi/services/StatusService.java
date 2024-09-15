@@ -66,16 +66,29 @@ public class StatusService {
         return listMapper.mapList(tasks, TaskDTO.class);
     }
 
-    public StatusRDTO getStatusById(Integer id) {
-        Status status = statusRepository.findById(id).orElse(null);
+//    public StatusRDTO getStatusById(Integer id) {
+//        Status status = statusRepository.findById(id).orElse(null);
+//        if (status != null) {
+//            StatusRDTO statusRDTO = modelMapper.map(status, StatusRDTO.class);
+//            statusRDTO.setGlobalSettingId(status.getGlobalSetting().getId());
+//            statusRDTO.setNoOfTasks(getNoOfTasksByStatusId(id));
+//            return statusRDTO;
+//        }
+//        throw new ItemNotFoundException("Status " + id + " does not exist!");
+//    }
+
+    public StatusRDTO getStatusByBoardIdAndStatusId(Integer boardId, Integer statusId) {
+        // Find the status by statusId and boardId
+        Status status = statusRepository.findByIdAndBoardId(statusId, boardId).orElse(null);
         if (status != null) {
             StatusRDTO statusRDTO = modelMapper.map(status, StatusRDTO.class);
             statusRDTO.setGlobalSettingId(status.getGlobalSetting().getId());
-            statusRDTO.setNoOfTasks(getNoOfTasksByStatusId(id));
+            statusRDTO.setNoOfTasks(getNoOfTasksByStatusId(statusId));
             return statusRDTO;
         }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
+        throw new ItemNotFoundException("Status with id " + statusId + " for board " + boardId + " does not exist!");
     }
+
 
     @Transactional
     public ResponseEntity<Object> createStatus(StatusCDTO statusCDTO) {
