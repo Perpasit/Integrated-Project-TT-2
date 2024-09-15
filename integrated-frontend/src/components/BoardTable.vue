@@ -1,11 +1,15 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useBoardStore } from "../stores/boardStore";
+import { useUserStore } from "../stores/userStore";
+
 
 const router = useRouter();
 const boardStore = useBoardStore();
 const boards = ref([]);
+const userStore = useUserStore();
+
 
 const showDeleteConfirmation = ref(false);
 let selectedBoardToDelete = null;
@@ -13,6 +17,10 @@ const showSuccessModal = ref(false);
 const showNotFoundModal = ref(false);
 const showCreateBoardModal = ref(false);
 const newBoardName = ref("");
+const accountName = computed(() => userStore.getAccountName);
+
+const defaultBoardName = computed(() => `${accountName.value} personal board`);
+const boardName = ref(defaultBoardName.value);
 
 const fetchBoards = async () => {
   await boardStore.fetchAllBoards();
@@ -70,27 +78,29 @@ const createPersonalBoard = () => {
   console.log("Create Personal Board clicked");
 };
 
-const openCreateBoardModal = () => {
-  showCreateBoardModal.value = true;
-  newBoardName.value = ""; 
-};
-
 const closeCreateBoardModal = () => {
   showCreateBoardModal.value = false;
-  newBoardName.value = ""; 
+  boardName.value = defaultBoardName.value;
+};
+
+const openCreateBoardModal = () => {
+  showCreateBoardModal.value = true;
+  boardName.value = defaultBoardName.value;
 };
 
 const saveNewBoard = async () => {
-  if (newBoardName.value.trim()) {
+  if (boardName.value.trim()) {
     try {
-      await boardStore.createBoard(newBoardName.value.trim());
+      await boardStore.createBoard(boardName.value.trim());
       closeCreateBoardModal();
-      fetchBoards(); 
+      fetchBoards();
     } catch (error) {
       console.error("Error creating new board:", error);
     }
   }
 };
+
+
 
 </script>
 
@@ -122,18 +132,19 @@ const saveNewBoard = async () => {
                   <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">New Board</h3>
                   <div class="mb-4">
                     <label for="boardName" class="block text-sm font-bold mb-2">Name</label>
-                    <input type="text" id="boardName" v-model="newBoardName"
-                      class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md"
-                      placeholder="Enter board name">
+                    <input type="text" id="boardName" v-model="boardName"
+                      class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md">
                   </div>
+
+
                 </div>
               </div>
             </div>
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button @click="saveNewBoard" :class="{
-                'bg-gray-300 text-gray-500 cursor-not-allowed': !newBoardName,
-                'bg-indigo-600 text-white hover:bg-indigo-700': newBoardName
-              }" :disabled="!newBoardName"
+                'bg-gray-300 text-gray-500 cursor-not-allowed': !boardName.trim(),
+                'bg-indigo-600 text-white hover:bg-indigo-700': boardName.trim()
+              }" :disabled="!boardName.trim()"
                 class="itbkk-button-ok w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
                 Save
               </button>
