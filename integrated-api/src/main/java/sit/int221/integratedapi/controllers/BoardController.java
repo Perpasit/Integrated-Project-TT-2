@@ -141,8 +141,16 @@ public class BoardController {
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
 
+    @DeleteMapping("/{boardId}/statuses/{statusId}")
+    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer boardId, @PathVariable Integer statusId) {
+        return statusService.removeStatus(boardId, statusId);
+    }
 
-
-
-
+    @DeleteMapping("/{boardId}/statuses/{statusId}/{newId}")
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable Integer boardId,
+                                                             @PathVariable Integer statusId,
+                                                             @PathVariable Integer newId) {
+        return statusService.deleteTransferStatus(boardId, statusId, newId);
+    }
+    
 }

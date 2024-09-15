@@ -38,15 +38,15 @@ public class StatusController {
 //        return statusService.createStatus(status);
 //    }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
-        return statusService.removeStatus(id);
-    }
-
-    @DeleteMapping("/{id}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus( @PathVariable Integer id, @PathVariable Integer newId) {
-        return statusService.deleteTransferStatus(id,newId);
-    }
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
+//        return statusService.removeStatus(id);
+//    }
+//
+//    @DeleteMapping("/{id}/{newId}")
+//    public ResponseEntity<StatusTFDDTO> deleteTransferStatus( @PathVariable Integer id, @PathVariable Integer newId) {
+//        return statusService.deleteTransferStatus(id,newId);
+//    }
 
 //    @PutMapping("/{id}")
 //    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {

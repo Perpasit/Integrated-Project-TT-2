@@ -158,68 +158,67 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<StatusDDTO> removeStatus(Integer id) {
-        Status status = statusRepository.findById(id).orElse(null);
-        if (status != null) {
-            // Check if the status name is "No Status" or "Done"
-            if ("No Status".equalsIgnoreCase(status.getName()) || "Done".equalsIgnoreCase(status.getName())) {
-                throw new NotAllowedOperationException(status.getName() + " cannot be deleted.");
-            }
+    public ResponseEntity<StatusDDTO> removeStatus(Integer boardId, Integer statusId) {
+        // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
+        Status status = statusRepository.findByIdAndBoardId(statusId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
 
-            // Check if there are tasks associated with this status
-            int taskCount = taskRepository.countByStatusId(id);
-            if (taskCount > 0) {
-                // Send to transfer if tasks are associated with this status
-                throw new TransferTasksRequiredException("destination status for task transfer not specified.");
-            }
-
-            // Proceed with the deletion logic if no tasks are associated
-            statusRepository.delete(status);
-            StatusDDTO statusDDTO = ListMapper.mapObject(status, StatusDDTO.class);
-            return ResponseEntity.ok(statusDDTO);
+        // ตรวจสอบว่าสถานะคือ "No Status" หรือ "Done" หรือไม่
+        if ("No Status".equalsIgnoreCase(status.getName()) || "Done".equalsIgnoreCase(status.getName())) {
+            throw new NotAllowedOperationException(status.getName() + " cannot be deleted.");
         }
-        throw new ItemNotFoundException("Status " + id + " does not exist!");
+
+        // ตรวจสอบว่ามีงาน (tasks) ที่เชื่อมโยงกับสถานะนี้หรือไม่
+        int taskCount = taskRepository.countByStatusId(statusId);
+        if (taskCount > 0) {
+            // โยนข้อผิดพลาดเพื่อระบุให้โอนงานไปยังสถานะอื่น
+            throw new TransferTasksRequiredException("Destination status for task transfer not specified.");
+        }
+
+        // ลบสถานะหากไม่มีงานที่เชื่อมโยง
+        statusRepository.delete(status);
+        StatusDDTO statusDDTO = listMapper.mapObject(status, StatusDDTO.class);
+        return ResponseEntity.ok(statusDDTO);
     }
 
     @Transactional
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer id, Integer newId) {
-        Status statusToDelete = statusRepository.findById(id)
-                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status " + id + " does not exist!"));
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer boardId, Integer statusId, Integer newId) {
+        // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
+        Status statusToDelete = statusRepository.findByIdAndBoardId(statusId, boardId)
+                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status " + statusId + " does not exist in board " + boardId));
 
-        validateStatusNotDeletable(statusToDelete);
+        // ตรวจสอบว่าสถานะใหม่อยู่ในบอร์ดเดียวกันหรือไม่
+        Status newStatus = statusRepository.findByIdAndBoardId(newId, boardId)
+                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "The specified status for task transfer does not exist in board " + boardId));
 
-        // Retrieve the new status to transfer tasks to
-        Status newStatus = statusRepository.findById(newId)
-                .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "the specified status for task transfer does not exist"));
-
-        // Check if the source and destination status are the same
+        // ตรวจสอบว่าสถานะต้นทางและปลายทางต่างกันหรือไม่
         if (statusToDelete.equals(newStatus)) {
-            throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status", "the specified status for task transfer does not exist");
-
+            throw new InvalidTransferStatusException("Destination status for task transfer must be different from current status",
+                    "The specified status for task transfer does not exist.");
         }
 
-        // Check if there are tasks associated with the status to delete
-        int deletingStatusTaskCount = taskRepository.countByStatusId(id);
+        // ตรวจสอบงานที่เชื่อมโยงกับสถานะต้นทาง
+        int deletingStatusTaskCount = taskRepository.countByStatusId(statusId);
 
-        // Check if the destination status is transferrable
+        // โอนงานไปยังสถานะใหม่ถ้ามีงานที่เชื่อมโยงกับสถานะนี้
         if (deletingStatusTaskCount > 0) {
-            // Transfer tasks to the new status before deleting
-            List<Task> tasksToUpdate = taskRepository.findByStatusId(id);
+            List<Task> tasksToUpdate = taskRepository.findByStatusId(statusId);
             for (Task task : tasksToUpdate) {
                 task.setStatus(newStatus);
             }
 
-            // Check if the destination status is over the task limit
+            // ตรวจสอบว่าสถานะปลายทางเกินขีดจำกัดของงานหรือไม่
             validateStatusNotTransferrable(newStatus, deletingStatusTaskCount + taskRepository.countByStatusId(newId));
         }
 
-        // Delete the status
+        // ลบสถานะต้นทาง
         statusRepository.delete(statusToDelete);
 
-        // Map the deleted status to DTO for response
+        // ส่งคืน DTO ของสถานะที่ถูกลบ
         StatusTFDDTO statusTFDDTO = modelMapper.map(statusToDelete, StatusTFDDTO.class);
         return ResponseEntity.ok(statusTFDDTO);
     }
+
 
 
 
