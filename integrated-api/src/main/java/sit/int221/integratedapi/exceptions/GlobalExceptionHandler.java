@@ -199,6 +199,21 @@ public class GlobalExceptionHandler  {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
+    @ExceptionHandler(BoardOwnershipException.class)
+    public ResponseEntity<CustomErrorResponse> handleBoardOwnershipException(BoardOwnershipException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
+
+
 
 
 }
