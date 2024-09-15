@@ -123,6 +123,25 @@ public class BoardController {
         return statusService.createStatus(boardId, status);
     }
 
+    @GetMapping("/{boardId}/statuses/{statusId}/tasks")
+    public ResponseEntity<List<TaskDTO>> getTasksByBoardAndStatusId(
+            @PathVariable Integer boardId,
+            @PathVariable Integer statusId) {
+
+        List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
+        return ResponseEntity.ok(taskDTOs);
+    }
+
+    @PutMapping("/{boardId}/statuses/{statusId}")
+    public ResponseEntity<Object> updateStatus(
+            @Valid @RequestBody StatusUDTO statusUDTO,
+            @PathVariable Integer boardId,
+            @PathVariable Integer statusId) {
+
+        return statusService.updateStatus(boardId, statusId, statusUDTO);
+    }
+
+
 
 
 

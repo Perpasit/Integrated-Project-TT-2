@@ -63,13 +63,26 @@ public class StatusService {
         return taskRepository.countByStatusId(statusId);
     }
 
-    public List<TaskDTO> getTasksByStatusId(Integer statusId) {
-        Status status = statusRepository.findById(statusId)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist!"));
+//    public List<TaskDTO> getTasksByStatusId(Integer statusId) {
+//        Status status = statusRepository.findById(statusId)
+//                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist!"));
+//
+//        List<Task> tasks = taskRepository.findByStatusId(statusId);
+//        return listMapper.mapList(tasks, TaskDTO.class);
+//    }
 
+    public List<TaskDTO> getTasksByBoardAndStatusId(Integer boardId, Integer statusId) {
+        // ตรวจสอบว่า status นั้นอยู่ในบอร์ดที่กำหนดหรือไม่
+        Status status = statusRepository.findByIdAndBoardId(statusId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
+
+        // ดึงรายการงานที่เกี่ยวข้องกับสถานะนี้
         List<Task> tasks = taskRepository.findByStatusId(statusId);
+
+        // แปลง Task เป็น TaskDTO ก่อนส่งกลับ
         return listMapper.mapList(tasks, TaskDTO.class);
     }
+
 
 //    public StatusRDTO getStatusById(Integer id) {
 //        Status status = statusRepository.findById(id).orElse(null);
@@ -211,28 +224,29 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<Object> updateStatus(Integer id, StatusUDTO statusUDTO) {
-        Status existingStatus = statusRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Status " + id + " does not exist!"));
+    public ResponseEntity<Object> updateStatus(Integer boardId, Integer statusId, StatusUDTO statusUDTO) {
+        // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
+        Status existingStatus = statusRepository.findByIdAndBoardId(statusId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
 
         ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
 
-        // Validate statusUDTO fields
+        // ตรวจสอบฟิลด์ name ของ statusUDTO
         if (statusUDTO.getName() == null) {
             validationError.addError("name", "must not be null");
             throw validationError;
         } else if (statusUDTO.getName().trim().isEmpty()) {
             validationError.addError("name", "Name must not be empty");
         } else {
-            Status existingStatusWithName = statusRepository.findByNameIgnoreCase(statusUDTO.getName().trim()).orElse(null);
-            if (existingStatusWithName != null && !existingStatusWithName.getId().equals(id)) {
+            // ตรวจสอบชื่อว่าซ้ำหรือไม่ในบอร์ดนี้
+            Status existingStatusWithName = statusRepository.findByNameIgnoreCaseAndBoardId(statusUDTO.getName().trim(), boardId).orElse(null);
+            if (existingStatusWithName != null && !existingStatusWithName.getId().equals(statusId)) {
                 validationError.addError("name", "must be unique");
-                validationError.addError("message", "Status name '" + statusUDTO.getName().trim() + "' already exists");
+                validationError.addError("message", "Status name '" + statusUDTO.getName().trim() + "' already exists in board " + boardId);
             }
         }
 
-
-        // Check if the status name is "No Status" or "Done"
+        // ตรวจสอบว่าชื่อสถานะเป็น "No Status" หรือ "Done" ซึ่งไม่อนุญาตให้แก้ไข
         if ("No Status".equalsIgnoreCase(existingStatus.getName()) || "Done".equalsIgnoreCase(existingStatus.getName())) {
             throw new NotAllowedOperationException(existingStatus.getName() + " cannot be modified.");
         }
@@ -241,10 +255,8 @@ public class StatusService {
             throw validationError;
         }
 
-        // Update status fields
-        if (statusUDTO.getName() != null) {
-            existingStatus.setName(statusUDTO.getName().trim());
-        }
+        // อัปเดตฟิลด์ของสถานะ
+        existingStatus.setName(statusUDTO.getName().trim());
         existingStatus.setDescription(statusUDTO.getDescription() != null && !statusUDTO.getDescription().trim().isEmpty() ? statusUDTO.getDescription().trim() : null);
         if (statusUDTO.getColorCode() != null) {
             existingStatus.setColorCode(statusUDTO.getColorCode());
@@ -254,6 +266,7 @@ public class StatusService {
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
+
 
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {
