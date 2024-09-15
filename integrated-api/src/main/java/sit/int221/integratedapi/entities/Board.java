@@ -1,6 +1,8 @@
 package sit.int221.integratedapi.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.Set;
@@ -19,7 +21,8 @@ public class Board {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "name", nullable = false, length = 45)
+    @NotBlank(message = "Board name cannot be null or empty.")
+    @Size(max = 45, message = "Board name exceeds maximum length of 45 characters.")
     private String name;
 
     @Column(name = "taskusers_oid", nullable = false, length = 255)

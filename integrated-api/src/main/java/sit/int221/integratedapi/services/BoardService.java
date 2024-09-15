@@ -14,6 +14,7 @@ import sit.int221.integratedapi.dtos.OwnerDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
+import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
@@ -41,10 +42,7 @@ public class BoardService {
     @Autowired
     private TaskUserRepository taskUserRepository;
 
-    public Board createBoard(BoardDTO boardDTO) {
-        Board board = new Board();
-        return boardRepository.save(board);
-    }
+
 
     public boolean existsById(Integer boardId) {
         return boardRepository.existsById(boardId);
@@ -77,12 +75,30 @@ public class BoardService {
     }
 
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
+        // Initialize ValidationErrorException
+        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
+
+        // Validate BoardCDTO fields
+        if (boardCDTO.getName() == null) {
+            validationErrors.addError("name", "must not be null");
+        } else if (boardCDTO.getName().isEmpty()) {
+            validationErrors.addError("name", "must not be empty");
+        } else if (boardCDTO.getName().length() > 45) {
+            validationErrors.addError("name", "must not exceed 45 characters");
+        }
+
+        // Check for board ownership
         boolean boardExists = doesBoardExistForUser(oid);
         if (boardExists) {
             throw new BoardOwnershipException("User can only own one board.");
         }
 
-        // Logic to create board
+        // Throw validation errors if any
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
+        }
+
+        // Create and save new board
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setTaskusersOid(oid);
@@ -90,6 +106,7 @@ public class BoardService {
 
         return new BoardCDTO(board.getId(), board.getName());
     }
+
 
 
 
