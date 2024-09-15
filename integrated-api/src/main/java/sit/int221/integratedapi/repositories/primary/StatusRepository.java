@@ -15,4 +15,6 @@ public interface StatusRepository extends JpaRepository<Status, Integer> {
     List<Status> findByBoardId(Integer boardId);
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Status s WHERE LOWER(s.name) = LOWER(:name)")
     boolean existsByNameIgnoreCase(@Param("name") String name);
+
+    Optional<Status> findByIdAndBoardId(Integer statusId, Integer boardId);
 }

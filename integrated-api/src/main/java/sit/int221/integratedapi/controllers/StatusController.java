@@ -26,11 +26,11 @@ public class StatusController {
 //        return ResponseEntity.ok(statusDTOs);
 //    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {
-        StatusRDTO statusRDTO = statusService.getStatusById(id);
-        return ResponseEntity.ok(statusRDTO);
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {
+//        StatusRDTO statusRDTO = statusService.getStatusById(id);
+//        return ResponseEntity.ok(statusRDTO);
+//    }
 
     @PostMapping("")
     public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
