@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
@@ -41,6 +43,13 @@ public class BoardController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         List<BoardDTO> boardDTOs = boardService.getAllBoards(oidFromToken);
         return ResponseEntity.ok(boardDTOs);
+    }
+
+    @PostMapping("")
+    public ResponseEntity<?> createBoard(@RequestHeader("Authorization") String token, @RequestBody BoardCDTO boardCDTO) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        BoardCDTO createdBoard = boardService.createBoard(boardCDTO, oidFromToken);
+        return ResponseEntity.ok(createdBoard);
     }
 
 
