@@ -109,6 +109,26 @@ public class BoardService {
         return boardRepository.existsByTaskusersOid(taskusersOid);
     }
 
+    public BoardDTO getBoardById(Integer boardId, String oid) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
+
+        if (!board.getTaskusersOid().equals(oid)) {
+            throw new BoardOwnershipException("User does not own this board.");
+        }
+
+        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        
+        TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
+
+        OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+        boardDTO.setOwner(ownerDTO);
+
+        return boardDTO;
+    }
+
+
     public BoardCDTO updateBoard(Integer boardId, BoardCDTO boardCDTO, String oid) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
