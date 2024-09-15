@@ -32,11 +32,11 @@ public class StatusController {
 //        return ResponseEntity.ok(statusRDTO);
 //    }
 
-    @PostMapping("")
-    public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
-
-        return statusService.createStatus(status);
-    }
+//    @PostMapping("")
+//    public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
+//
+//        return statusService.createStatus(status);
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){

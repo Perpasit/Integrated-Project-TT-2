@@ -8,10 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.*;
+import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.*;
+import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskRepository;
 import sit.int221.integratedapi.utils.ListMapper;
@@ -34,13 +36,16 @@ public class StatusService {
 
     private final ModelMapper modelMapper;
 
+    private final BoardRepository boardRepository;
+
     @Autowired
-    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper){
+    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper,BoardRepository boardRepository){
         this.statusRepository = statusRepository;
         this.taskRepository = taskRepository;
         this.globalSettingService = globalSettingService;
         this.listMapper = listMapper;
         this.modelMapper = modelMapper;
+        this.boardRepository = boardRepository;
     }
 
     public List<StatusDTO> getStatusesByBoardId(Integer boardId) {
@@ -91,7 +96,11 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<Object> createStatus(StatusCDTO statusCDTO) {
+    public ResponseEntity<Object> createStatus(Integer boardId, StatusCDTO statusCDTO) {
+        // ตรวจสอบค่า boardId ว่ามีอยู่จริงหรือไม่
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
         ValidationErrorException validationError = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation Error");
         if (statusCDTO.getName() == null || statusCDTO.getName().trim().isEmpty()) {
             validationError.addError("name", "Name must not be null or empty");
@@ -99,6 +108,7 @@ public class StatusService {
         if (!validationError.getErrors().isEmpty()) {
             throw validationError;
         }
+
         if (statusCDTO.getId() != null) {
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
@@ -119,14 +129,19 @@ public class StatusService {
             if (status.getDescription() != null) {
                 status.setDescription(status.getDescription().trim());
             }
-            status.setName(status.getName().trim());
+
+            // เชื่อมโยง Status ใหม่กับ Board ที่กำหนด
+            status.setBoard(board);
+
             status.setDescription(status.getDescription() != null && !status.getDescription().trim().isEmpty() ? status.getDescription().trim() : null);
             setDefaultValuesForStatus(status, "General");
+
             Status createdStatus = statusRepository.save(status);
             StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
         }
     }
+
 
 
     @Transactional

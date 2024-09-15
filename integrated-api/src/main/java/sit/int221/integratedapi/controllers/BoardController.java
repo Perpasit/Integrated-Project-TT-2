@@ -118,6 +118,11 @@ public class BoardController {
         return ResponseEntity.ok(statusRDTO);
     }
 
+    @PostMapping("/{boardId}/statuses")
+    public ResponseEntity<Object> addNewStatus(@PathVariable Integer boardId, @Valid @RequestBody StatusCDTO status) {
+        return statusService.createStatus(boardId, status);
+    }
+
 
 
 
