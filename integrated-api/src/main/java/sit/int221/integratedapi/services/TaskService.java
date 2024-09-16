@@ -52,8 +52,13 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public TaskRDTO getTaskDetailsById(Integer id) {
-        Task task = getTaskById(id);
+    public TaskRDTO getTaskDetailsById(Integer boardId, Integer taskId) {
+        Task task = getTaskById(taskId);
+
+        if (!Objects.equals(boardId, task.getBoard().getId())) {
+            throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
+        }
+
         return modelMapper.map(task, TaskRDTO.class);
     }
 
