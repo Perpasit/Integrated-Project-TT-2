@@ -45,11 +45,36 @@ public class BoardController {
         return ResponseEntity.ok(boardDTOs);
     }
 
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable Integer boardId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
+        return ResponseEntity.ok(boardDTO);
+    }
+
+
     @PostMapping("")
     public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token, @RequestBody BoardCDTO boardCDTO) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         BoardCDTO createdBoard = boardService.createBoard(boardCDTO, oidFromToken);
         return ResponseEntity.ok(createdBoard);
+    }
+
+    @PutMapping("/{boardId}")
+    public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
+                                         @PathVariable Integer boardId,
+                                         @RequestBody BoardCDTO boardCDTO) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
+        return ResponseEntity.ok(updatedBoard);
+
+    }
+
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader("Authorization") String token, @PathVariable Integer boardId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        BoardDTO deletedBoard = boardService.deleteBoard(boardId, oidFromToken);
+        return ResponseEntity.ok(deletedBoard);
     }
 
 
@@ -93,6 +118,9 @@ public class BoardController {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
 
+
+
+
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
             @PathVariable Integer boardId,
@@ -108,6 +136,8 @@ public class BoardController {
             @Valid @RequestBody TaskUDTO updatedTaskDTO) {
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
+
+
 
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
