@@ -4,9 +4,11 @@ import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
+import { getItems } from "../utils/fetch"
 
 const router = useRouter()
+const route = useRoute()
 const taskStore = useTaskStore()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
@@ -22,7 +24,7 @@ watch(generalSetting, (newValue) => {
   isLimitEnabled.value = newValue?.limitMaximumTask
   maxTasks.value = newValue?.maximumTaskLimit
 })
-
+const boardId = parseInt(route.params.boardId);
 const props = defineProps({
   mode: {
     type: String,
@@ -69,8 +71,8 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+        const response = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
         )
         if (response.status === 404) {
           editedTask.value = null
@@ -78,7 +80,7 @@ watch(
             closeModal()
           }, 3000)
         } else {
-          const data = await response.json()
+          const data = await response
 
           const statusId = statusStore.getStatusByName(data.status)?.id
           editedTask.value = {
@@ -130,7 +132,7 @@ async function saveTask() {
     if (props.mode === "edit") {
       const taskId = router.currentRoute.value.params.id
       if (taskId) {
-        await taskStore.updateTask(taskId, updatedTask)
+        await taskStore.updateTask(boardId,taskId, updatedTask)
         fetchTaskAndStatus()
         modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
@@ -147,9 +149,9 @@ async function saveTask() {
           : "",
         status: editedTask.value.status,
       }
-      await taskStore.addTask(newTask)
+      await taskStore.addTask(boardId,newTask)
       fetchTaskAndStatus()
-      router.push("/task")
+      router.push({name:"home"})
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
@@ -159,7 +161,7 @@ async function saveTask() {
 
       closeModal()
     }
-    router.push("/task")
+    router.push({name:"home"})
     fetchTaskAndStatus()
   } catch (error) {
     errorMessage.value = error.message
@@ -181,9 +183,9 @@ const formatStatus = (status) => {
 }
 
 function closeModal() {
-  router.push("/task")
+  router.push({name:"home"})
   resetForm()
-  taskStore.fetchAllTasks()
+  taskStore.fetchAllTasks(boardId)
 }
 
 const getStatusUsage = (statusId) => {
@@ -201,8 +203,8 @@ const getStatusUsage = (statusId) => {
 }
 
 const fetchTaskAndStatus = async () => {
-  await statusStore.fetchAllStatuses()
-  await taskStore.fetchAllTasks()
+  await statusStore.fetchAllStatuses(boardId)
+  await taskStore.fetchAllTasks(boardId)
 }
 onMounted(async () => {
   fetchTaskAndStatus()

@@ -34,20 +34,22 @@ export const useStatusStore = defineStore("status", {
   },
 
   actions: {
-    async fetchAllStatuses() {
+    async fetchAllStatuses(boardId) {
       try {
         const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`
+          
         )
+        console.log(boardId)
         this.statuses = data || []
       } catch (error) {
         console.error("Error fetching statuses:", error)
       }
     },
-    async deleteStatusTransfer(id, newId) {
+    async deleteStatusTransfer(boardId,id, newId) {
       try {
         const deletedStatus = await deleteItem(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/${newId}`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/${newId}`
         )
         this.statuses = this.statuses.filter((status) => status.id !== id)
         return deletedStatus
@@ -56,7 +58,7 @@ export const useStatusStore = defineStore("status", {
         throw error
       }
     },
-    async createStatus(newStatus) {
+    async createStatus(boardId,newStatus) {
       try {
         const formattedStatus = {
           name: newStatus.name,
@@ -64,7 +66,7 @@ export const useStatusStore = defineStore("status", {
           colorCode: newStatus.colorCode
         }
         const createdStatus = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`,
           formattedStatus
         )
         this.statuses.push(createdStatus)
@@ -74,7 +76,7 @@ export const useStatusStore = defineStore("status", {
         throw error
       }
     },
-    async updateStatus(id, updatedStatus) {
+    async updateStatus(boardId,id, updatedStatus) {
       try {
         const formattedStatus = {
           name: updatedStatus.name,
@@ -82,7 +84,7 @@ export const useStatusStore = defineStore("status", {
           colorCode: updatedStatus.colorCode
         }
         const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`,
           formattedStatus
         )
         const index = this.statuses.findIndex((status) => status.id === id)
@@ -95,9 +97,9 @@ export const useStatusStore = defineStore("status", {
         throw error
       }
     },
-    async deleteStatus(id) {
+    async deleteStatus(boardId,id) {
       try {
-        const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/tasks` );
+        const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/tasks` );
     
         if (!response.ok) {
           // If the status is not found, display the "Status Not Found" modal
@@ -115,7 +117,7 @@ export const useStatusStore = defineStore("status", {
           return { needsTransfer: true, statusId: id };
         } else {
           // If no tasks, proceed with the deletion
-          const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`);
+          const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`);
           this.statuses = this.statuses.filter((status) => status.id !== id);
           return deleteStatus;
         }
