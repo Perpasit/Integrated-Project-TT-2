@@ -39,14 +39,15 @@ public class GlobalExceptionHandler  {
     public ResponseEntity<Object> handleItemNotFoundException(ItemNotFoundException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.NOT_FOUND.value(), 
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", ""),
                 Collections.emptyList()
         );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
 
     @ExceptionHandler(DuplicateStatusException.class)
     public ResponseEntity<Object> handleDuplicateStatusException(DuplicateStatusException ex, WebRequest request) {
