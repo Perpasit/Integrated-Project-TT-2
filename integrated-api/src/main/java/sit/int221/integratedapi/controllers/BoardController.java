@@ -136,9 +136,9 @@ public class BoardController {
     public ResponseEntity<Object> addNewTask(
             @PathVariable Integer boardId,
             @Valid @RequestBody TaskCDTO taskCDTO) {
-        taskCDTO.setBoardId(boardId);
-        return taskService.createNewTask(taskCDTO);
+        return taskService.createNewTask(taskCDTO, boardId);
     }
+
 
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(

@@ -20,4 +20,5 @@ public interface StatusRepository extends JpaRepository<Status, Integer> {
 
     Optional<Status> findByNameIgnoreCaseAndBoardId(String name, Integer boardId);
     boolean existsByNameAndBoardId(String name, Integer boardId);
+
 }
