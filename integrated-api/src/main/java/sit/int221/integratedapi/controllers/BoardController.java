@@ -104,7 +104,7 @@ public class BoardController {
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses, allParams);
+        ResponseEntity<Object> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
             List<Task> tasks = (List<Task>) response.getBody();
             List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
@@ -113,6 +113,7 @@ public class BoardController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");

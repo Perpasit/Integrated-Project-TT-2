@@ -22,7 +22,8 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
 
 
     public List<Task> findByBoardIdAndStatusNameIn(Integer boardId, List<String> statusNames, Sort sort);
-
+    List<Task> findByStatusNameInAndBoardId(List<String> statusNames, Integer boardId, Sort sort);
+    List<Task> findByBoardId(Integer boardId, Sort sort);
 
 
 }
