@@ -86,6 +86,11 @@ const saveNewBoard = async () => {
   }
 };
 
+const navigateToTasks = (board) => {
+  if (board && board.id) {
+    router.push({ name: "home", params: { boardId: board.id } });
+  }
+};
 
 const fetchBoards = async () => {
   try {
@@ -93,8 +98,9 @@ const fetchBoards = async () => {
     boards.value = boardStore.getBoards;
 
     if (boards.value.length >= 1) {
-      router.push({ name: "home" , params :{boardId: boards.id = 1} });
-  }
+      const firstBoardId = boards.value[0].id; // Get the first board's ID
+      router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
+    }
 
   } catch (error) {
     console.error('Error fetching boards:', error);
@@ -105,11 +111,7 @@ onMounted(async () => {
   await fetchBoards();
 });
 
-const navigateToTasks = (board) => {
-  if (board && board.id) {
-    router.push({ name: "home", params: { boardId: board.id } });
-  }
-};
+
 
 </script>
 
