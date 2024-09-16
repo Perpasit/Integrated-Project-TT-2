@@ -118,6 +118,16 @@ public class BoardController {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
 
+    @GetMapping("/{boardId}/tasks/{id}")
+    public ResponseEntity<TaskRDTO> getTaskById(@RequestHeader("Authorization") String token,
+                                                @PathVariable Integer boardId,
+                                                @PathVariable Integer id) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id, oidFromToken);
+
+        return ResponseEntity.ok(taskRDTO);
+    }
 
 
 

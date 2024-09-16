@@ -59,16 +59,16 @@ public class TaskController {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
-        TaskRDTO taskRDTO = taskService.getTaskDetailsById(id);
-        return ResponseEntity.ok(taskRDTO);
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
+//        TaskRDTO taskRDTO = taskService.getTaskDetailsById(id);
+//        return ResponseEntity.ok(taskRDTO);
+//    }
 
-    @PostMapping("")
-    public ResponseEntity<Object> addNewTask(@Valid @RequestBody TaskCDTO taskCDTO) {
-        return taskService.createNewTask(taskCDTO);
-    }
+//    @PostMapping("")
+//    public ResponseEntity<Object> addNewTask(@Valid @RequestBody TaskCDTO taskCDTO) {
+//        return taskService.createNewTask(taskCDTO);
+//    }
 
 //    @DeleteMapping("/{id}")
 //    public ResponseEntity<TaskDDTO> removeTask(@PathVariable Integer id) {
