@@ -21,7 +21,7 @@ public class Status {
     @Column(name = "statusId")
     private Integer id;
 
-    @Column(name = "statusName", nullable = false, unique = true)
+    @Column(name = "statusName", nullable = false)
     private String name;
 
     @Column(name = "statusDescription")

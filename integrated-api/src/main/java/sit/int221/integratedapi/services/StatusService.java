@@ -122,11 +122,21 @@ public class StatusService {
             throw validationError;
         }
 
-        if (statusCDTO.getId() != null) {
+        // ตรวจสอบว่ามีสถานะที่มีชื่อเดียวกันในบอร์ดเดียวกันหรือไม่
+        if (statusCDTO.getId() == null) {
+            if (statusRepository.existsByNameAndBoardId(statusCDTO.getName().trim(), boardId)) {
+                throw new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status with name " + statusCDTO.getName() + " already exists in this board!");
+            }
+        } else {
+            // สำหรับการอัปเดตสถานะ ตรวจสอบว่ามีสถานะอื่นที่มีชื่อเดียวกันในบอร์ดเดียวกันหรือไม่
             Status existingStatus = statusRepository.findById(statusCDTO.getId())
                     .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusCDTO.getId() + " does not exist!"));
 
-            validateStatusName(statusCDTO.getName(), existingStatus.getId());
+            if (!existingStatus.getName().equals(statusCDTO.getName().trim()) &&
+                    statusRepository.existsByNameAndBoardId(statusCDTO.getName().trim(), boardId)) {
+                throw new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status with name " + statusCDTO.getName() + " already exists in this board!");
+            }
+
             existingStatus.setName(statusCDTO.getName().trim());
             existingStatus.setDescription(statusCDTO.getDescription() != null ? statusCDTO.getDescription().trim() : null);
             if (statusCDTO.getColorCode() != null) {
@@ -135,24 +145,23 @@ public class StatusService {
             Status updatedStatus = statusRepository.save(existingStatus);
             StatusCDTO updatedStatusCDTO = modelMapper.map(updatedStatus, StatusCDTO.class);
             return ResponseEntity.ok(updatedStatusCDTO);
-        } else {
-            validateStatusName(statusCDTO.getName(), null);
-            Status status = modelMapper.map(statusCDTO, Status.class);
-            status.setName(status.getName().trim());
-            if (status.getDescription() != null) {
-                status.setDescription(status.getDescription().trim());
-            }
-
-            // เชื่อมโยง Status ใหม่กับ Board ที่กำหนด
-            status.setBoard(board);
-
-            status.setDescription(status.getDescription() != null && !status.getDescription().trim().isEmpty() ? status.getDescription().trim() : null);
-            setDefaultValuesForStatus(status, "General");
-
-            Status createdStatus = statusRepository.save(status);
-            StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
         }
+
+        // สำหรับการสร้างสถานะใหม่
+        Status status = modelMapper.map(statusCDTO, Status.class);
+        status.setName(status.getName().trim());
+        if (status.getDescription() != null) {
+            status.setDescription(status.getDescription().trim());
+        }
+
+        // เชื่อมโยง Status ใหม่กับ Board ที่กำหนด
+        status.setBoard(board);
+        status.setDescription(status.getDescription() != null && !status.getDescription().trim().isEmpty() ? status.getDescription().trim() : null);
+        setDefaultValuesForStatus(status, "General");
+
+        Status createdStatus = statusRepository.save(status);
+        StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
     }
 
 

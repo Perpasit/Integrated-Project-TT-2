@@ -148,8 +148,6 @@ public class BoardController {
     }
 
 
-
-
     @DeleteMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<TaskDDTO> deleteTask(@PathVariable Integer boardId, @PathVariable Integer taskId) {
         return taskService.removeTask(boardId, taskId);
