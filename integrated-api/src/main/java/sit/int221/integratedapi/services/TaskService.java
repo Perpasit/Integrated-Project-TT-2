@@ -60,7 +60,7 @@ public class TaskService {
             throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
         }
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
@@ -324,7 +324,7 @@ public class TaskService {
         Board board = boardOptional.get();
 
         // Fetch the TaskUser associated with the board's taskusersOid
-        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getTaskusersOid()));
+        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getOwnerId()));
 
         // If the taskUser is found, check if it matches the OID
         return taskUserOptional.isPresent() && taskUserOptional.get().getOid().equals(oidFromToken);
