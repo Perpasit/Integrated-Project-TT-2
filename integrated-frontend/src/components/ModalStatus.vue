@@ -20,12 +20,12 @@ const parseAndFormatDate = (dateString) => {
   }
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
-
+const boardId = route.params.boardId
 onMounted(async () => {
   try {
     const id = route.params.statusId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
     )
     status.value = data
     // console.log(status)

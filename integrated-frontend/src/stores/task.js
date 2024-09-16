@@ -12,17 +12,19 @@ export const useTaskStore = defineStore("task", {
     getTaskById: (state) => (taskId) => state.tasks.find((task) => task.id === taskId)
   },
   actions: {
-    async fetchAllTasks() {
+    async fetchAllTasks(boardId) {
+      console.log(boardId)
       try {
         const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
         );
+        
         this.tasks = data || [];
       } catch (error) {
         throw error;
       }
     },
-    async addTask(newTask) {
+    async addTask(boardId, newTask) {
       try {
         const formattedTask = {
           title: newTask.title.trim(),
@@ -31,7 +33,7 @@ export const useTaskStore = defineStore("task", {
           status: newTask.status
         };
         const createdTask = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks`,
           formattedTask
         );
         this.tasks.push(createdTask);
@@ -39,7 +41,7 @@ export const useTaskStore = defineStore("task", {
         throw error;
       }
     },
-    async updateTask(id, updatedTask) {
+    async updateTask(boardId, id, updatedTask) {
       try {
         const formattedTask = {
           title: updatedTask.title.trim(),
@@ -48,7 +50,7 @@ export const useTaskStore = defineStore("task", {
           status: updatedTask.status.id
         };
         const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`,
           formattedTask
         );
         const index = this.tasks.findIndex((task) => task.id === id);
@@ -59,22 +61,24 @@ export const useTaskStore = defineStore("task", {
         throw error;
       }
     },
-    async deleteTask(id) {
+    async deleteTask(boardId, id) {
       try {
-        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`);
+        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`);
         this.tasks = this.tasks.filter((task) => task.id !== id);
         return response;
       } catch (error) {
         throw error;
       }
     },
-    setSortBy(sortBy) {
+    setSortBy(sortBy, boardId) {
       this.sortBy = sortBy;
-      this.fetchAllTasks();
+      this.fetchAllTasks(boardId);
     },
-    setFilterStatuses(filterStatuses) {
+    setFilterStatuses(filterStatuses,boardId) {
       this.filterStatuses = filterStatuses;
-      this.fetchAllTasks();
-    }
+      this.fetchAllTasks(boardId);
+    },
+    
   }
+  
 });

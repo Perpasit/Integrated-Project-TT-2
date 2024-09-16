@@ -1,7 +1,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue"
-import { useRouter } from "vue-router"
+import { useRouter,useRoute } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
@@ -11,6 +11,7 @@ const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
 const statusStore = useStatusStore()
 const router = useRouter()
+const route = useRoute()
 const statuses = computed(() => statusStore.getStatuses)
 const deleteResult = ref(null)
 const selectedStatus = ref(null)
@@ -24,6 +25,8 @@ const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
+
+
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
@@ -57,10 +60,11 @@ const saveStatus = (status) => {
   }
   selectedStatus.value = null
 }
+const boardId = parseInt(route.params.boardId);
 async function confirmDeleteStatus() {
   if (selectedStatusToDelete) {
     try {
-      const result = await statusStore.deleteStatus(selectedStatusToDelete.id)
+      const result = await statusStore.deleteStatus(boardId,selectedStatusToDelete.id)
 
       if (result.notFound) {
         showDeleteConfirmationModal.value = false
@@ -149,7 +153,7 @@ function closeDeleteModal() {
 }
 
 const fetchStatuses = async () => {
-  await statusStore.fetchAllStatuses()
+  await statusStore.fetchAllStatuses(boardId)
 }
 const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null

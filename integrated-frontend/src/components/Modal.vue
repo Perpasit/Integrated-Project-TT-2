@@ -25,7 +25,7 @@ const parseAndFormatDate = (dateString) => {
   }
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
-
+const boardId = route.params.boardId
 
 const goBack = () => {
   router.push({ name: "home" })
@@ -37,7 +37,7 @@ onMounted(async () => {
   } else {
     const id = route.params.taskId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
     )
     if (data.status == 404) {
       setTimeout(() => {
