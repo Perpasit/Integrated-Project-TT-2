@@ -97,10 +97,10 @@ const fetchBoards = async () => {
     await boardStore.fetchAllBoards();
     boards.value = boardStore.getBoards;
 
-    if (boards.value.length >= 1) {
-      const firstBoardId = boards.value[0].id; // Get the first board's ID
-      router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
-    }
+    // if (boards.value.length >= 1) {
+    //   const firstBoardId = boards.value[0].id; // Get the first board's ID
+    //   router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
+    // }
 
   } catch (error) {
     console.error('Error fetching boards:', error);

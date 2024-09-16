@@ -14,6 +14,10 @@ const goHome = () => {
   router.push({ name: "Board" });
 };
 
+const goToBoard = () => {
+  router.push("/board");
+};
+
 const accountName = computed(() => userStore.getAccountName);
 const showDropdown = ref(false);
 
@@ -35,7 +39,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="container mx-auto px-0  pt-5 flex flex-row justify-around items-center"
+    class="container mx-auto px-0 pt-5 flex flex-row justify-around items-center"
   >
     <div class="flex">
       <h1
@@ -78,6 +82,12 @@ onMounted(() => {
             v-if="showDropdown"
             class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2"
           >
+            <button
+              @click="goToBoard"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Board List
+            </button>
             <button
               @click="goToProfile"
               class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
