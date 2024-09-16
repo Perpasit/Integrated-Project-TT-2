@@ -71,7 +71,7 @@ watch(
     if (props.mode === "edit") {
       try {
         const response = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/tasks/${id}`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`
         )
         if (response.status === 404) {
           editedTask.value = null
@@ -150,7 +150,7 @@ async function saveTask() {
       }
       await taskStore.addTask(newTask)
       fetchTaskAndStatus()
-      router.push(" /task ")
+      router.push({name:"home"})
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
@@ -160,7 +160,7 @@ async function saveTask() {
 
       closeModal()
     }
-    router.push(" /task ")
+    router.push({name:"home"})
     fetchTaskAndStatus()
   } catch (error) {
     errorMessage.value = error.message
@@ -182,7 +182,7 @@ const formatStatus = (status) => {
 }
 
 function closeModal() {
-  router.push(" /task ")
+  router.push({name:"home"})
   resetForm()
   taskStore.fetchAllTasks()
 }

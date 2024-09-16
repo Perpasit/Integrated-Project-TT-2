@@ -36,7 +36,7 @@ onMounted(async () => {
   } else {
     const id = route.params.taskId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINTV3}/tasks/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`
     )
     if (data.status == 404) {
       setTimeout(() => {
