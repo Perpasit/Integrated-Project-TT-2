@@ -95,9 +95,7 @@ public class BoardController {
 
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
 
-        if (!taskService.isBoardOwnedByOid(boardId, oidFromToken)) {
-            return ResponseEntity.ok(new ArrayList<>());
-        }
+        taskService.validateBoardOwnership(boardId, oidFromToken);
 
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
@@ -120,6 +118,7 @@ public class BoardController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @GetMapping("/{boardId}/tasks/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@RequestHeader("Authorization") String token,
