@@ -119,12 +119,18 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}/tasks/{id}")
-    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer boardId, @PathVariable Integer id) {
-        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id);
+    public ResponseEntity<TaskRDTO> getTaskById(@RequestHeader("Authorization") String token,
+                                                @PathVariable Integer boardId,
+                                                @PathVariable Integer id) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id, oidFromToken);
+
         return ResponseEntity.ok(taskRDTO);
     }
 
-    
+
+
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
             @PathVariable Integer boardId,
