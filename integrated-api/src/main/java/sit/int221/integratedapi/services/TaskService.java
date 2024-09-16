@@ -67,7 +67,15 @@ public class TaskService {
         return modelMapper.map(task, TaskRDTO.class);
     }
 
+    public void validateBoardOwnership(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
+        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        }
+    }
     public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
@@ -101,6 +109,7 @@ public class TaskService {
         }
         return statusNames;
     }
+
 
 
     @Transactional
