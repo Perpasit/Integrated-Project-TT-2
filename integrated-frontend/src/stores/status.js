@@ -97,12 +97,7 @@ export const useStatusStore = defineStore("status", {
     },
     async deleteStatus(id) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/tasks`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/tasks` );
     
         if (!response.ok) {
           // If the status is not found, display the "Status Not Found" modal

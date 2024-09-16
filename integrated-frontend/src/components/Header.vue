@@ -1,34 +1,33 @@
 <script setup>
 import { computed, ref, onMounted } from "vue"
-import { useRouter } from "vue-router"
+import { useRouter , useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
-const isHomePage = computed(() => {
-  return router.currentRoute.value.path === "/task"
-})
 
 const isManageStatusPage = computed(() => {
-  return router.currentRoute.value.path.startsWith("/status/manage")
+  return router.currentRoute.value.path.includes("/status")
 })
 
 const isTaskPage = computed(() => {
-  return router.currentRoute.value.path.startsWith("/task")
+  return router.currentRoute.value.path.includes("/task")
 })
 
 const addTask = () => {
   router.push({ name: "AddTask" })
 }
-
+const boardId = parseInt(route.params.boardId);
 const goHome = () => {
-  router.push({ name: "home" })
+  router.push({ name: "home", params:{ boardId } })
 }
 
 const goToManageStatus = () => {
-  router.push({ name: "ManageStatus" })
+  router.push({ name: "ManageStatus",  params:{ boardId }})
 }
+
 
 const addStatus = () => {
   router.push({ name: "AddStatus" })
@@ -64,7 +63,7 @@ onMounted(() => {
     </h1>
     <span :class="[
         'itbkk-button-home text-2xl  cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
-        isHomePage ? 'text-white' : 'text-blue-600 hover:text-white'
+        isTaskPage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goHome">
         Home
       </span>

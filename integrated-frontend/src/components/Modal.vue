@@ -26,8 +26,9 @@ const parseAndFormatDate = (dateString) => {
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
 
+
 const goBack = () => {
-  router.push("/task")
+  router.push({ name: "home" })
 }
 
 onMounted(async () => {
@@ -40,7 +41,7 @@ onMounted(async () => {
     )
     if (data.status == 404) {
       setTimeout(() => {
-        router.push(" /task ")
+        router.push({ name: "home" })
       }, 3000)
     }
     editedTask.value = data

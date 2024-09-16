@@ -10,7 +10,7 @@ const loading = ref(true)
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const closeModal = () => {
-  router.push("/status/manage")
+  router.push({ name: "ManageStatus" })
 }
 
 const parseAndFormatDate = (dateString) => {

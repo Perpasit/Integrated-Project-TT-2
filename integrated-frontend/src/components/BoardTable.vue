@@ -93,7 +93,7 @@ const fetchBoards = async () => {
     boards.value = boardStore.getBoards;
     
     if (boards.value.length >= 1) {
-      router.push({ name: "home" });
+      router.push({ name: "home" , params :{boardId: boards.id = 1} });
   }
   } catch (error) {
     console.error('Error fetching boards:', error);

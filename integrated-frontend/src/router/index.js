@@ -29,23 +29,18 @@ const router = createRouter({
       component: Board,
     },
     {
-      path: "/tasks",
-      name: "TaskTable", 
-      component: TaskTable,
-    },
-    {
-      path: "/task",
+      path: "/board/:boardId/task",
       name: "home",
       component: Home,
 
       children: [
         {
-          path: "/task/:taskId",
+          path: "/board/:boardId/task/:taskId",
           name: "taskDetail",
           component: Modal,
         },
         {
-          path: "/task/add",
+          path: "/board/:boardId/task/add",
           name: "AddTask",
           component: AddEditTask,
           props: () => ({
@@ -53,7 +48,7 @@ const router = createRouter({
           }),
         },
         {
-          path: "/task/:id/edit",
+          path: "/board/:boardId/task/:id/edit",
           name: "EditTask",
           component: AddEditTask,
           props: () => {
@@ -65,17 +60,17 @@ const router = createRouter({
       ],
     },
     {
-      path: "/status/manage",
+      path: "/board/:boardId/status",
       name: "ManageStatus",
       component: ManageStatus,
       children:[
         {
-          path: "/status/manage/:statusId",
+          path: "/board/:boardId/status/:statusId",
           name: "statusDetail",
           component: ModalStatus
         },
         {
-          path: "/status/manage/add",
+          path: "/board/:boardId/status/add",
           name: "AddStatus",
           component: AddEditStatus,
           props: () => ({
@@ -83,7 +78,7 @@ const router = createRouter({
           }),
         },
         {
-          path: "/status/manage/:id/edit",
+          path: "/board/:boardId/status/:id/edit",
           name: "EditStatus",
           component: AddEditStatus,
           props: () => ({
