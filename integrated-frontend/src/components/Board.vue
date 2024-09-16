@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import HeaderBoard from "./HeaderBoard.vue";
 import BoardTable from "./BoardTable.vue";
+import { RouterView } from "vue-router";
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import BoardTable from "./BoardTable.vue";
   >
     <HeaderBoard />
     <BoardTable />
+    <RouterView />
   </div>
 </template>
 

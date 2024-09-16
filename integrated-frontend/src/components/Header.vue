@@ -45,6 +45,10 @@ const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
 }
 
+const goToBoard = () => {
+  router.push("/board");
+};
+
 onMounted(() => {
   // Ensure the store is initialized with data from localStorage
   if (!userStore.getIsAuthenticated) {
@@ -93,21 +97,35 @@ onMounted(() => {
           </svg>
         </div>
 
-        <div v-if="showDropdown" class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2">
-        
-          <button @click="goToProfile"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left ">
-            Profile
-          </button>
-          <button @click="goToSettings"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
-            Settings
-          </button>
-          <button @click="logout"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
-            Logout
-          </button>
-        </div>
+        <div
+            v-if="showDropdown"
+            class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2"
+          >
+            <button
+              @click="goToBoard"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Board List
+            </button>
+            <button
+              @click="goToProfile"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Profile
+            </button>
+            <button
+              @click="goToSettings"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Settings
+            </button>
+            <button
+              @click="logout"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Logout
+            </button>
+          </div>
       </div>
     </div>
 

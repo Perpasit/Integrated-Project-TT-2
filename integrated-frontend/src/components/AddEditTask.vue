@@ -5,7 +5,6 @@ import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
 import { useRouter } from "vue-router"
-import { getItems } from "../utils/fetch"
 
 const router = useRouter()
 const taskStore = useTaskStore()
@@ -70,8 +69,8 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
         )
         if (response.status === 404) {
           editedTask.value = null
@@ -79,7 +78,7 @@ watch(
             closeModal()
           }, 3000)
         } else {
-          const data = await response
+          const data = await response.json()
 
           const statusId = statusStore.getStatusByName(data.status)?.id
           editedTask.value = {
@@ -150,7 +149,7 @@ async function saveTask() {
       }
       await taskStore.addTask(newTask)
       fetchTaskAndStatus()
-      router.push({name:"home"})
+      router.push("/task")
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
@@ -160,7 +159,7 @@ async function saveTask() {
 
       closeModal()
     }
-    router.push({name:"home"})
+    router.push("/task")
     fetchTaskAndStatus()
   } catch (error) {
     errorMessage.value = error.message
@@ -182,7 +181,7 @@ const formatStatus = (status) => {
 }
 
 function closeModal() {
-  router.push({name:"home"})
+  router.push("/task")
   resetForm()
   taskStore.fetchAllTasks()
 }
