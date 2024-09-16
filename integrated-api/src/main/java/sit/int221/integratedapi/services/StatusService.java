@@ -48,17 +48,16 @@ public class StatusService {
         this.boardRepository = boardRepository;
     }
 
-    public List<StatusDTO> getStatusesByBoardId(Integer boardId) {
+    public List<StatusDTO> getStatusesByBoardId(String boardId) {
         List<Status> statuses = statusRepository.findByBoardId(boardId);
         List<StatusDTO> statusDTOs = new ArrayList<>();
         for (Status status : statuses) {
             StatusDTO statusDTO = modelMapper.map(status, StatusDTO.class);
-            statusDTO.setNoOfTasks(getNoOfTasksByStatusId(status.getId()));
+            statusDTO.setNoOfTasks(getNoOfTasksByStatusId(status.getId())); // Assuming you've changed 'id' to 'statusId'
             statusDTOs.add(statusDTO);
         }
         return statusDTOs;
     }
-
     public int getNoOfTasksByStatusId(Integer statusId) {
         return taskRepository.countByStatusId(statusId);
     }
@@ -71,7 +70,7 @@ public class StatusService {
 //        return listMapper.mapList(tasks, TaskDTO.class);
 //    }
 
-    public List<TaskDTO> getTasksByBoardAndStatusId(Integer boardId, Integer statusId) {
+    public List<TaskDTO> getTasksByBoardAndStatusId(String boardId, Integer statusId) {
         // ตรวจสอบว่า status นั้นอยู่ในบอร์ดที่กำหนดหรือไม่
         Status status = statusRepository.findByIdAndBoardId(statusId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
@@ -95,7 +94,7 @@ public class StatusService {
 //        throw new ItemNotFoundException("Status " + id + " does not exist!");
 //    }
 
-    public StatusRDTO getStatusByBoardIdAndStatusId(Integer boardId, Integer statusId) {
+    public StatusRDTO getStatusByBoardIdAndStatusId(String boardId, Integer statusId) {
         // Find the status by statusId and boardId
         Status status = statusRepository.findByIdAndBoardId(statusId, boardId).orElse(null);
         if (status != null) {
@@ -109,7 +108,7 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<Object> createStatus(Integer boardId, StatusCDTO statusCDTO) {
+    public ResponseEntity<Object> createStatus(String boardId, StatusCDTO statusCDTO) {
         // ตรวจสอบค่า boardId ว่ามีอยู่จริงหรือไม่
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
@@ -167,7 +166,7 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<StatusDDTO> removeStatus(Integer boardId, Integer statusId) {
+    public ResponseEntity<StatusDDTO> removeStatus(String boardId, Integer statusId) {
         // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
         Status status = statusRepository.findByIdAndBoardId(statusId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
@@ -191,7 +190,7 @@ public class StatusService {
     }
 
     @Transactional
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(Integer boardId, Integer statusId, Integer newId) {
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(String boardId, Integer statusId, Integer newId) {
         // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
         Status statusToDelete = statusRepository.findByIdAndBoardId(statusId, boardId)
                 .orElseThrow(() -> new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status " + statusId + " does not exist in board " + boardId));
@@ -232,7 +231,7 @@ public class StatusService {
 
 
     @Transactional
-    public ResponseEntity<Object> updateStatus(Integer boardId, Integer statusId, StatusUDTO statusUDTO) {
+    public ResponseEntity<Object> updateStatus(String boardId, Integer statusId, StatusUDTO statusUDTO) {
         // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
         Status existingStatus = statusRepository.findByIdAndBoardId(statusId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));

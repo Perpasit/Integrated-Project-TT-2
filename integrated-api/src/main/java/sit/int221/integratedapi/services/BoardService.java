@@ -13,7 +13,6 @@ import sit.int221.integratedapi.dtos.BoardDTO;
 import sit.int221.integratedapi.dtos.OwnerDTO;
 import sit.int221.integratedapi.dtos.StatusCDTO;
 import sit.int221.integratedapi.entities.Board;
-import sit.int221.integratedapi.entities.GlobalSetting;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
@@ -24,8 +23,6 @@ import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
 
-
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +37,7 @@ public class BoardService {
 
     @Autowired
     private ListMapper listMapper;
+
     @Autowired
     private ModelMapper modelMapper;
 
@@ -49,9 +47,7 @@ public class BoardService {
     @Autowired
     private StatusService statusService;
 
-
-
-    public boolean existsById(Integer boardId) {
+    public boolean existsById(String boardId) {
         return boardRepository.existsById(boardId);
     }
 
@@ -69,13 +65,13 @@ public class BoardService {
 
                 // Create and populate BoardDTO
                 BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setId(board.getId());
+                boardDTO.setBoardId(board.getId());
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 
                 boardDTOs.add(boardDTO);
             }
-            // If taskUser is null, you can choose to either skip or handle the board differently
+
         }
 
         return boardDTOs;
@@ -129,18 +125,12 @@ public class BoardService {
         return createdBoardCDTO;
     }
 
-
-
-
-
-
-
     public boolean doesBoardExistForUser(String taskusersOid) {
         // Check if a board already exists for the given taskusers_oid
         return boardRepository.existsByTaskusersOid(taskusersOid);
     }
 
-    public BoardDTO getBoardById(Integer boardId, String oid) {
+    public BoardDTO getBoardById(String boardId, String oid) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
@@ -149,7 +139,7 @@ public class BoardService {
         }
 
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
-        
+
         TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
 
@@ -159,8 +149,7 @@ public class BoardService {
         return boardDTO;
     }
 
-
-    public BoardCDTO updateBoard(Integer boardId, BoardCDTO boardCDTO, String oid) {
+    public BoardCDTO updateBoard(String boardId, BoardCDTO boardCDTO, String oid) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
@@ -179,7 +168,7 @@ public class BoardService {
         return new BoardCDTO(board.getId(), board.getName());
     }
 
-    public BoardDTO deleteBoard(Integer boardId, String oid) {
+    public BoardDTO deleteBoard(String boardId, String oid) {
 
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
@@ -203,7 +192,4 @@ public class BoardService {
 
         return boardDTO;
     }
-
-
-
 }

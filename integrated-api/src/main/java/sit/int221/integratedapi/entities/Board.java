@@ -18,8 +18,8 @@ import java.util.Set;
 public class Board {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "boardId", length = 10)
+    private String id;
 
     @NotBlank(message = "Board name cannot be null or empty.")
     @Size(max = 45, message = "Board name exceeds maximum length of 45 characters.")

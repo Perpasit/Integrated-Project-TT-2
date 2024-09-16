@@ -46,12 +46,11 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}")
-    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable Integer boardId) {
+    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
         return ResponseEntity.ok(boardDTO);
     }
-
 
     @PostMapping("")
     public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token, @RequestBody BoardCDTO boardCDTO) {
@@ -62,25 +61,27 @@ public class BoardController {
 
     @PutMapping("/{boardId}")
     public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
-                                         @PathVariable Integer boardId,
+                                         @PathVariable String boardId,
                                          @RequestBody BoardCDTO boardCDTO) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
         return ResponseEntity.ok(updatedBoard);
-
     }
 
     @DeleteMapping("/{boardId}")
-    public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader("Authorization") String token, @PathVariable Integer boardId) {
+    public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         BoardDTO deletedBoard = boardService.deleteBoard(boardId, oidFromToken);
         return ResponseEntity.ok(deletedBoard);
     }
 
+    private boolean isValidSortBy(String sortBy) {
+        return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
+    }
 
     @GetMapping("/{boardId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(
-            @PathVariable Integer boardId,
+            @PathVariable String boardId,
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses,
@@ -114,14 +115,9 @@ public class BoardController {
         }
     }
 
-
-    private boolean isValidSortBy(String sortBy) {
-        return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
-    }
-
     @GetMapping("/{boardId}/tasks/{id}")
     public ResponseEntity<TaskRDTO> getTaskById(@RequestHeader("Authorization") String token,
-                                                @PathVariable Integer boardId,
+                                                @PathVariable String boardId,
                                                 @PathVariable Integer id) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
 
@@ -130,50 +126,49 @@ public class BoardController {
         return ResponseEntity.ok(taskRDTO);
     }
 
-
-
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
-            @PathVariable Integer boardId,
+            @PathVariable String boardId,
             @Valid @RequestBody TaskCDTO taskCDTO) {
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
-
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(
-            @PathVariable Integer boardId,
+            @PathVariable String boardId,
             @PathVariable Integer taskId,
             @Valid @RequestBody TaskUDTO updatedTaskDTO) {
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
-
     @DeleteMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<TaskDDTO> deleteTask(@PathVariable Integer boardId, @PathVariable Integer taskId) {
+    public ResponseEntity<TaskDDTO> deleteTask(@PathVariable String boardId,
+                                               @PathVariable Integer taskId) {
         return taskService.removeTask(boardId, taskId);
     }
 
     @GetMapping("/{boardId}/statuses")
-    public ResponseEntity<List<StatusDTO>> getStatuses(@PathVariable Integer boardId) {
+    public ResponseEntity<List<StatusDTO>> getStatuses(@PathVariable String boardId) {
         List<StatusDTO> statusDTOs = statusService.getStatusesByBoardId(boardId);
         return ResponseEntity.ok(statusDTOs);
     }
 
     @GetMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer boardId, @PathVariable Integer statusId) {
+    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable String boardId,
+                                                    @PathVariable Integer statusId) {
         StatusRDTO statusRDTO = statusService.getStatusByBoardIdAndStatusId(boardId, statusId);
         return ResponseEntity.ok(statusRDTO);
     }
 
     @PostMapping("/{boardId}/statuses")
-    public ResponseEntity<Object> addNewStatus(@PathVariable Integer boardId, @Valid @RequestBody StatusCDTO status) {
+    public ResponseEntity<Object> addNewStatus(@PathVariable String boardId,
+                                               @Valid @RequestBody StatusCDTO status) {
         return statusService.createStatus(boardId, status);
     }
 
     @GetMapping("/{boardId}/statuses/{statusId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardAndStatusId(
-            @PathVariable Integer boardId,
+            @PathVariable String boardId, // เปลี่ยนจาก Integer เป็น String
             @PathVariable Integer statusId) {
 
         List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
@@ -183,22 +178,24 @@ public class BoardController {
     @PutMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<Object> updateStatus(
             @Valid @RequestBody StatusUDTO statusUDTO,
-            @PathVariable Integer boardId,
+            @PathVariable String boardId, // เปลี่ยนจาก Integer เป็น String
             @PathVariable Integer statusId) {
 
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer boardId, @PathVariable Integer statusId) {
+    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable String boardId,
+                                                   @PathVariable Integer statusId) {
         return statusService.removeStatus(boardId, statusId);
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable Integer boardId,
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable String boardId,
                                                              @PathVariable Integer statusId,
                                                              @PathVariable Integer newId) {
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
-    
+
+
 }
