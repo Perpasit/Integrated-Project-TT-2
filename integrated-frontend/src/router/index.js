@@ -35,6 +35,31 @@ const router = createRouter({
 
       children: [
         {
+          path: "/board/add",
+          name: "AddBoard", 
+          component: AddBoard,
+          props: () => ({
+            mode: "add", 
+          }),
+        },
+        {
+          path: "/board/:boardId/edit",
+          name: "EditBoard", 
+          component: AddBoard,
+          props: () => ({
+            mode: "edit",
+          }),
+        },
+      ],
+    },
+    
+    {
+      path: "/board/:boardId/task",
+      name: "home",
+      component: Home,
+
+      children: [
+        {
           path: "/board/:boardId/task/:taskId",
           name: "taskDetail",
           component: Modal,
@@ -51,11 +76,9 @@ const router = createRouter({
           path: "/board/:boardId/task/:id/edit",
           name: "EditTask",
           component: AddEditTask,
-          props: () => {
-            return {
-              mode: "edit"
-            }
-          },
+          props: () => ({
+            mode: "edit",
+          }),
         },
       ],
     },
