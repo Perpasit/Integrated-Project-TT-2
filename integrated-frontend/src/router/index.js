@@ -15,15 +15,7 @@ import AddEditBoard from "../components/AddEditBoard.vue"
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: "/",
-      redirect: "/login",
-    },
-    {
-      path: "/login",
-      name: "Login", 
-      component: Login,
-    },
+   
 
     {
       path: "/board",
@@ -107,7 +99,15 @@ const router = createRouter({
         },
       ]
     },
-
+    {
+      path: "/",
+      redirect: "/login",
+    },
+    {
+      path: "/login",
+      name: "Login", 
+      component: Login,
+    },
     {
       path: "/:pathMatch(.)",
       name: "NotFound",
