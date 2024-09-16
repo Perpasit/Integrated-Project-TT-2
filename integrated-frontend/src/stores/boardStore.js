@@ -12,20 +12,22 @@ export const useBoardStore = defineStore('board', {
   actions: {
     async fetchAllBoards() {
       try {
-        const response = await fetch('/api/boards')
+        const response = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINT2}/v3/boards}`
+        )
         if (!response.ok) {
           throw new Error('Network response was not ok')
         }
         const data = await response.json()
         this.boards = data
       } catch (error) {
-        console.error('Error fetching boards:', error)
+        // console.error('Error fetching boards:', error)
       }
     },
 
     async addBoard(boardData) {
       try {
-        const response = await fetch('/api/boards', {
+        const response = await fetch('/v3/boards', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -44,7 +46,7 @@ export const useBoardStore = defineStore('board', {
 
     async updateBoard(id, updatedData) {
       try {
-        const response = await fetch(`/api/boards/${id}`, {
+        const response = await fetch(`/v3/boards/${id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -66,7 +68,7 @@ export const useBoardStore = defineStore('board', {
 
     async deleteBoard(id) {
       try {
-        const response = await fetch(`/api/boards/${id}`, {
+        const response = await fetch(`/v3/boards/${id}`, {
           method: 'DELETE'
         })
         if (!response.ok) {

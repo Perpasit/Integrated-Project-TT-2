@@ -7,7 +7,6 @@ import { useUserStore } from "../stores/userStore";
 
 const router = useRouter();
 const boardStore = useBoardStore();
-const boards = ref([]);
 const userStore = useUserStore();
 
 
@@ -21,6 +20,11 @@ const accountName = computed(() => userStore.getAccountName);
 
 const defaultBoardName = computed(() => `${accountName.value} personal board`);
 const boardName = ref(defaultBoardName.value);
+
+const boards = ref({
+  boardid:"",
+  name:""
+})
 
 const fetchBoards = async () => {
   await boardStore.fetchAllBoards();
@@ -89,16 +93,31 @@ const openCreateBoardModal = () => {
 };
 
 const saveNewBoard = async () => {
+  
   if (boardName.value.trim()) {
     try {
-      await boardStore.createBoard(boardName.value.trim());
+      await boardStore.addBoard(boardName.value.trim());
       closeCreateBoardModal();
       fetchBoards();
     } catch (error) {
       console.error("Error creating new board:", error);
     }
+    closeModal()
+
   }
 };
+
+function closeModal() {
+  router.push("/board")
+  resetForm()
+  boardStore.fetchAllBoards()
+}
+
+function resetForm() {
+  boards.value = {
+    name:""
+  }
+}
 
 
 
@@ -172,7 +191,7 @@ const saveNewBoard = async () => {
             class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out">
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
-              <p class="itbkk-title truncate">{{ board.name }}</p>
+              <p class="itbkk-title truncate">{{ boardName }}</p>
             </td>
             <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
