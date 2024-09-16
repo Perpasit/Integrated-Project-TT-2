@@ -92,7 +92,7 @@ const fetchBoards = async () => {
     await boardStore.fetchAllBoards(); 
     boards.value = boardStore.getBoards;
     
-    if (boards.value.length > 1) {
+    if (boards.value.length >= 1) {
       router.push({ name: "home" });
   }
   } catch (error) {

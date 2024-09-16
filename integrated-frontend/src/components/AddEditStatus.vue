@@ -4,6 +4,7 @@ import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter } from "vue-router"
+import { getItems } from "../utils/fetch";
 
 const router = useRouter()
 const statusStore = useStatusStore()
@@ -60,15 +61,15 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
-        // console.log(response)
+        const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`)
+        console.log(response)
         if (response.status === 404) {
           setTimeout(() => {
             router.push("/status/manage")
           }, 3000)
           throw new Error("Status not found")
         } else {
-          const data = await response.json()
+          const data = await response
           editedStatus.value = {
             ...data,
             name: data.name || null, 

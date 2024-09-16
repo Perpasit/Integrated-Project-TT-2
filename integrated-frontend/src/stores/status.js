@@ -37,7 +37,7 @@ export const useStatusStore = defineStore("status", {
     async fetchAllStatuses() {
       try {
         const data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses`
         )
         this.statuses = data || []
       } catch (error) {
@@ -47,7 +47,7 @@ export const useStatusStore = defineStore("status", {
     async deleteStatusTransfer(id, newId) {
       try {
         const deletedStatus = await deleteItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/${newId}`
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/${newId}`
         )
         this.statuses = this.statuses.filter((status) => status.id !== id)
         return deletedStatus
@@ -64,7 +64,7 @@ export const useStatusStore = defineStore("status", {
           colorCode: newStatus.colorCode
         }
         const createdStatus = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses`,
           formattedStatus
         )
         this.statuses.push(createdStatus)
@@ -82,7 +82,7 @@ export const useStatusStore = defineStore("status", {
           colorCode: updatedStatus.colorCode
         }
         const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`,
           formattedStatus
         )
         const index = this.statuses.findIndex((status) => status.id === id)
@@ -97,7 +97,7 @@ export const useStatusStore = defineStore("status", {
     },
     async deleteStatus(id) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}/tasks`, {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}/tasks`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const useStatusStore = defineStore("status", {
           return { needsTransfer: true, statusId: id };
         } else {
           // If no tasks, proceed with the deletion
-          const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`);
+          const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`);
           this.statuses = this.statuses.filter((status) => status.id !== id);
           return deleteStatus;
         }

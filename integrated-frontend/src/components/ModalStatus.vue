@@ -25,7 +25,7 @@ onMounted(async () => {
   try {
     const id = route.params.statusId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/statuses/${id}`
     )
     status.value = data
     // console.log(status)

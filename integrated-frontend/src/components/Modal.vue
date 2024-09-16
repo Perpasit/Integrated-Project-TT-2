@@ -30,18 +30,17 @@ const goBack = () => {
   router.push("/task")
 }
 
-
 onMounted(async () => {
   if (route.state && route.state.task) {
     editedTask.value = route.state.task
   } else {
     const id = route.params.taskId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/tasks/${id}`
     )
     if (data.status == 404) {
       setTimeout(() => {
-        router.push("/task")
+        router.push(" /task ")
       }, 3000)
     }
     editedTask.value = data

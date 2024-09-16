@@ -31,7 +31,7 @@ export const useTaskStore = defineStore("task", {
           status: newTask.status
         };
         const createdTask = await postItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks`,
           formattedTask
         );
         this.tasks.push(createdTask);
@@ -48,7 +48,7 @@ export const useTaskStore = defineStore("task", {
           status: updatedTask.status.id
         };
         const updatedData = await putItem(
-          `${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`,
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`,
           formattedTask
         );
         const index = this.tasks.findIndex((task) => task.id === id);
@@ -61,7 +61,7 @@ export const useTaskStore = defineStore("task", {
     },
     async deleteTask(id) {
       try {
-        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINT}/tasks/${id}`);
+        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/1/tasks/${id}`);
         this.tasks = this.tasks.filter((task) => task.id !== id);
         return response;
       } catch (error) {
