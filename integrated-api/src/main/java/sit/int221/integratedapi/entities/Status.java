@@ -42,7 +42,7 @@ public class Status {
     private GlobalSetting globalSetting;
 
     @ManyToOne
-    @JoinColumn(name = "board_id", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
+    @JoinColumn(name = "boardId", nullable = false)
     private Board board;
 
     @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)

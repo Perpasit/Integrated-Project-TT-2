@@ -37,7 +37,7 @@ public class Task {
     private ZonedDateTime updatedOn;
 
     @ManyToOne
-    @JoinColumn(name = "boards_id", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
+    @JoinColumn(name = "boardId", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
     private Board board;
 
     @PrePersist
