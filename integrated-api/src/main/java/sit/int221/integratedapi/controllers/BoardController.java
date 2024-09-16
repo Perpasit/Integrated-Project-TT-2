@@ -133,22 +133,31 @@ public class BoardController {
 
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
+            @RequestHeader("Authorization") String token,
             @PathVariable String boardId,
             @Valid @RequestBody TaskCDTO taskCDTO) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        taskService.validateBoardOwnership(boardId,oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(
+            @RequestHeader("Authorization") String token,
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @Valid @RequestBody TaskUDTO updatedTaskDTO) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        taskService.validateBoardOwnership(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<TaskDDTO> deleteTask(@PathVariable String boardId,
+    public ResponseEntity<TaskDDTO> deleteTask(@RequestHeader("Authorization") String token,
+                                               @PathVariable String boardId,
                                                @PathVariable Integer taskId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        taskService.validateBoardOwnership(boardId,oidFromToken);
         return taskService.removeTask(boardId, taskId);
     }
 
