@@ -8,7 +8,7 @@ export const useBoardStore = defineStore("board", {
 
   getters: {
     getBoards: (state) => state.boards,
-
+    getBoardById: (state) => (boardId) => state.boards.find((board) => board.id === boardId)
   },
 
   actions: {
@@ -28,22 +28,21 @@ export const useBoardStore = defineStore("board", {
     async addBoard(newBoard) {
       try {
         const formattedBoard = {
-                name: newBoard.trim(),
-              };
-
-              const Board = await postItem(
-                `${import.meta.env.VITE_API_ENDPOINTV3}/boards`,
-                formattedBoard
-              );
+          name: newBoard.trim(),
+        };
+    
+        // Perform the POST request
+        const createdBoard = await postItem(
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards`,
+          formattedBoard
+        );
+        this.boards.push(createdBoard);
         
-        if (!response.ok) {
-          throw new Error("Network response was not ok")
-        }
-        this.boards.push(createdBoard)
       } catch (error) {
-        console.error("Error adding board:", error)
+        console.error("Error adding board:", error);
       }
     },
+    
 
 
 
@@ -70,23 +69,18 @@ export const useBoardStore = defineStore("board", {
     },
 
 
+
+
     
     async deleteBoard(id) {
       try {
-        const response = await fetch(`/api/boards/${id}`, {
-          method: "DELETE",
-        })
-        if (!response.ok) {
-          throw new Error("Network response was not ok")
-        }
+        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`)
         this.boards = this.boards.filter((board) => board.id !== id)
-      } catch (error) {
-        console.error("Error deleting board:", error)
+        return response
+      }catch (error) {
+        throw error;
       }
-    },
 
-    getBoardById(id) {
-      return this.boards.find((board) => board.id === id)
     },
   },
 })
