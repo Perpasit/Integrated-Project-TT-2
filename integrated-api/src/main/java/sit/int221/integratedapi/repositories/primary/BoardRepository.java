@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, String> {
-    List<Board> findByTaskusersOid(String taskusersOid);
-    boolean existsByTaskusersOid(String taskusersOid);
+    List<Board> findByOwnerId(String taskusersOid);
+    boolean existsByOwnerId(String taskusersOid);
 
 }

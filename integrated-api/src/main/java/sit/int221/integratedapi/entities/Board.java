@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.ZonedDateTime;
 import java.util.Set;
-
 
 @Entity
 @Getter
@@ -14,22 +14,39 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "boards")
+@Table(name = "boards", schema = "integrateddatabase")
 public class Board {
 
     @Id
-    @Column(name = "boardId", length = 10)
+    @Column(name = "id", length = 10)
     private String id;
 
     @NotBlank(message = "Board name cannot be null or empty.")
-    @Size(max = 45, message = "Board name exceeds maximum length of 45 characters.")
+    @Size(max = 120, message = "Board name exceeds maximum length of 120 characters.")
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "taskusers_oid", nullable = false, length = 255)
-    private String taskusersOid;
+    @Column(name = "owner_id", nullable = false, length = 36)
+    private String ownerId;
 
-    @OneToMany(mappedBy = "board")
+    @Column(name = "created_on", nullable = false)
+    private ZonedDateTime createdOn;
+
+    @Column(name = "updated_on", nullable = false)
+    private ZonedDateTime updatedOn;
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks;
 
+    // Set the timestamps automatically
+    @PrePersist
+    protected void onCreate() {
+        createdOn = ZonedDateTime.now();
+        updatedOn = createdOn;
+    }
 
+    @PreUpdate
+    protected void onUpdate() {
+        updatedOn = ZonedDateTime.now();
+    }
 }

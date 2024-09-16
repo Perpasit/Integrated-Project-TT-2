@@ -54,12 +54,12 @@ public class BoardService {
 
     public List<BoardDTO> getAllBoards(String oid) {
         // Retrieve all boards where the task user's oid matches the given oid
-        List<Board> boards = boardRepository.findByTaskusersOid(oid);
+        List<Board> boards = boardRepository.findByOwnerId(oid);
         List<BoardDTO> boardDTOs = new ArrayList<>();
 
         for (Board board : boards) {
             // Fetch TaskUser by oid directly (null check will be used instead of Optional)
-            TaskUser taskUser = taskUserRepository.findByOid(board.getTaskusersOid());
+            TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
 
             if (taskUser != null) {
                 OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
@@ -87,8 +87,8 @@ public class BoardService {
             validationErrors.addError("name", "must not be null");
         } else if (boardCDTO.getName().isEmpty()) {
             validationErrors.addError("name", "must not be empty");
-        } else if (boardCDTO.getName().length() > 45) {
-            validationErrors.addError("name", "must not exceed 45 characters");
+        } else if (boardCDTO.getName().length() > 120) {
+            validationErrors.addError("name", "must not exceed 120 characters");
         }
 
         // Check for board ownership
@@ -104,7 +104,7 @@ public class BoardService {
 
         Board board = new Board();
         board.setName(boardCDTO.getName());
-        board.setTaskusersOid(oid);
+        board.setOwnerId(oid);
         board.setId(NanoIdGenerator.generateNanoId(10)); // ใช้ NanoId generator
         board = boardRepository.save(board);
 
@@ -128,21 +128,21 @@ public class BoardService {
 
     public boolean doesBoardExistForUser(String taskusersOid) {
         // Check if a board already exists for the given taskusers_oid
-        return boardRepository.existsByTaskusersOid(taskusersOid);
+        return boardRepository.existsByOwnerId(taskusersOid);
     }
 
     public BoardDTO getBoardById(String boardId, String oid) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
-        TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
-                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
+        TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
         boardDTO.setOwner(ownerDTO);
@@ -156,7 +156,7 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
@@ -178,7 +178,7 @@ public class BoardService {
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
@@ -186,8 +186,8 @@ public class BoardService {
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
 
-        TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
-                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
+        TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
         boardDTO.setOwner(ownerDTO);
