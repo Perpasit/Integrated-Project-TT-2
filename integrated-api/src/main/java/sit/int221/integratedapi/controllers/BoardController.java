@@ -53,8 +53,14 @@ public class BoardController {
     }
 
     @PostMapping("")
-    public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token, @RequestBody BoardCDTO boardCDTO) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+    public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token,
+                                         @RequestBody(required = false) BoardCDTO boardCDTO) {
+        if (boardCDTO == null || boardCDTO.getName() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
         BoardCDTO createdBoard = boardService.createBoard(boardCDTO, oidFromToken);
         return ResponseEntity.ok(createdBoard);
     }
