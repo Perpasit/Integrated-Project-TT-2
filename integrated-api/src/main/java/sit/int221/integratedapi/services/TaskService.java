@@ -52,15 +52,21 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public TaskRDTO getTaskDetailsById(Integer boardId, Integer taskId) {
+    public TaskRDTO getTaskDetailsById(Integer boardId, Integer taskId, String oid) {
         Task task = getTaskById(taskId);
+        Board board = task.getBoard();
 
         if (!Objects.equals(boardId, task.getBoard().getId())) {
             throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
         }
 
+        if (!board.getTaskusersOid().equals(oid)) {
+            throw new BoardOwnershipException("User does not own this board.");
+        }
+
         return modelMapper.map(task, TaskRDTO.class);
     }
+
 
     public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
