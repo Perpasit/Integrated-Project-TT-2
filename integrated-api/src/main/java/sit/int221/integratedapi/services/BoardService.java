@@ -22,6 +22,7 @@ import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
+import sit.int221.integratedapi.utils.NanoIdGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +77,7 @@ public class BoardService {
 
         return boardDTOs;
     }
-
+    @Transactional
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
         // Initialize ValidationErrorException
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
@@ -101,10 +102,10 @@ public class BoardService {
             throw validationErrors;
         }
 
-        // Create and save new board
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setTaskusersOid(oid);
+        board.setId(NanoIdGenerator.generateNanoId(10)); // ใช้ NanoId generator
         board = boardRepository.save(board);
 
         // Define status data with boardId
@@ -149,6 +150,8 @@ public class BoardService {
         return boardDTO;
     }
 
+
+    @Transactional
     public BoardCDTO updateBoard(String boardId, BoardCDTO boardCDTO, String oid) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
@@ -168,6 +171,7 @@ public class BoardService {
         return new BoardCDTO(board.getId(), board.getName());
     }
 
+    @Transactional
     public BoardDTO deleteBoard(String boardId, String oid) {
 
         Board board = boardRepository.findById(boardId)
