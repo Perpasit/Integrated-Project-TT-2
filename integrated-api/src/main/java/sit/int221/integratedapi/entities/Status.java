@@ -41,6 +41,10 @@ public class Status {
     @JoinColumn(name = "global_settings_id", nullable = false)
     private GlobalSetting globalSetting;
 
+    @ManyToOne
+    @JoinColumn(name = "board_id", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
+    private Board board;
+
     @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)
     private List<Task> tasks = new ArrayList<>();
 

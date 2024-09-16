@@ -4,20 +4,24 @@ import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import sit.int221.integratedapi.dtos.BoardCDTO;
 import sit.int221.integratedapi.dtos.BoardDTO;
 import sit.int221.integratedapi.dtos.OwnerDTO;
 import sit.int221.integratedapi.entities.Board;
-import sit.int221.integratedapi.entities.User;
-import sit.int221.integratedapi.repositories.login.UserRepository;
+import sit.int221.integratedapi.entities.TaskUser;
+import sit.int221.integratedapi.exceptions.ItemNotFoundException;
+import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
+import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
+import sit.int221.integratedapi.exceptions.BoardOwnershipException;
+
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Qualifier("primaryDataSource")
@@ -33,53 +37,142 @@ public class BoardService {
     private ModelMapper modelMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private TaskUserRepository taskUserRepository;
 
-    public Board createBoard(BoardDTO boardDTO) {
-        Board board = new Board();
-        return boardRepository.save(board);
+
+
+    public boolean existsById(Integer boardId) {
+        return boardRepository.existsById(boardId);
     }
 
-    public List<BoardDTO> getAllBoards() {
-        List<Board> boards = boardRepository.findAll();
+    public List<BoardDTO> getAllBoards(String oid) {
+        // Retrieve all boards where the task user's oid matches the given oid
+        List<Board> boards = boardRepository.findByTaskusersOid(oid);
         List<BoardDTO> boardDTOs = new ArrayList<>();
 
         for (Board board : boards) {
-            Optional<User> userOptional = userRepository.findById(board.getUsersOid());
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                OwnerDTO ownerDTO = new OwnerDTO(user.getOid(), user.getName());
+            // Fetch TaskUser by oid directly (null check will be used instead of Optional)
+            TaskUser taskUser = taskUserRepository.findByOid(board.getTaskusersOid());
+
+            if (taskUser != null) {
+                OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+
+                // Create and populate BoardDTO
                 BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setBoardId(board.getId());
+                boardDTO.setId(board.getId());
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 
                 boardDTOs.add(boardDTO);
             }
+            // If taskUser is null, you can choose to either skip or handle the board differently
         }
 
         return boardDTOs;
     }
 
+    public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
+        // Initialize ValidationErrorException
+        ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
-    public Optional<Board> getBoardById(int id) {
-        return boardRepository.findById(id);
+        // Validate BoardCDTO fields
+        if (boardCDTO.getName() == null) {
+            validationErrors.addError("name", "must not be null");
+        } else if (boardCDTO.getName().isEmpty()) {
+            validationErrors.addError("name", "must not be empty");
+        } else if (boardCDTO.getName().length() > 45) {
+            validationErrors.addError("name", "must not exceed 45 characters");
+        }
+
+        // Check for board ownership
+        boolean boardExists = doesBoardExistForUser(oid);
+        if (boardExists) {
+            throw new BoardOwnershipException("User can only own one board.");
+        }
+
+        // Throw validation errors if any
+        if (!validationErrors.getErrors().isEmpty()) {
+            throw validationErrors;
+        }
+
+        // Create and save new board
+        Board board = new Board();
+        board.setName(boardCDTO.getName());
+        board.setTaskusersOid(oid);
+        boardRepository.save(board);
+
+        return new BoardCDTO(board.getId(), board.getName());
     }
 
-    // Delete a board by ID
-    public void deleteBoardById(int id) {
-        boardRepository.deleteById(id);
+    public boolean doesBoardExistForUser(String taskusersOid) {
+        // Check if a board already exists for the given taskusers_oid
+        return boardRepository.existsByTaskusersOid(taskusersOid);
     }
 
-    // Update a board
-//    public Board updateBoard(int id, BoardDTO boardDTO) {
-//        Optional<Board> existingBoard = boardRepository.findById(id);
-//        if (existingBoard.isPresent()) {
-//            Board board = existingBoard.get();
-//            board.setName(boardDTO.getName());
-//            board.setUsersOid(boardDTO.getUsersOid());
-//            return boardRepository.save(board);
-//        }
-//        return null;
-//    }
+    public BoardDTO getBoardById(Integer boardId, String oid) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
+
+        if (!board.getTaskusersOid().equals(oid)) {
+            throw new BoardOwnershipException("User does not own this board.");
+        }
+
+        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        
+        TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
+
+        OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+        boardDTO.setOwner(ownerDTO);
+
+        return boardDTO;
+    }
+
+
+    public BoardCDTO updateBoard(Integer boardId, BoardCDTO boardCDTO, String oid) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
+
+        if (!board.getTaskusersOid().equals(oid)) {
+            throw new BoardOwnershipException("User does not own this board.");
+        }
+
+        // Update the board's name if it's valid
+        if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
+            board.setName(boardCDTO.getName());
+            boardRepository.save(board);
+        } else {
+            throw new IllegalArgumentException("Invalid board name.");
+        }
+
+        return new BoardCDTO(board.getId(), board.getName());
+    }
+
+    public BoardDTO deleteBoard(Integer boardId, String oid) {
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
+
+
+        if (!board.getTaskusersOid().equals(oid)) {
+            throw new BoardOwnershipException("User does not own this board.");
+        }
+
+
+        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+
+
+        TaskUser taskUser = taskUserRepository.findById(board.getTaskusersOid())
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getTaskusersOid()));
+
+        OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+        boardDTO.setOwner(ownerDTO);
+
+        boardRepository.delete(board);
+
+        return boardDTO;
+    }
+
+
+
 }
