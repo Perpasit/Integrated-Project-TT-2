@@ -66,12 +66,12 @@ const createPersonalBoard = () => {
 
 const openCreateBoardModal = () => {
   showCreateBoardModal.value = true;
-  newBoardName.value = ""; 
+  newBoardName.value = "";
 };
 
 const closeCreateBoardModal = () => {
   showCreateBoardModal.value = false;
-  newBoardName.value = ""; 
+  newBoardName.value = "";
 };
 
 const saveNewBoard = async () => {
@@ -79,7 +79,7 @@ const saveNewBoard = async () => {
     try {
       await boardStore.createBoard(newBoardName.value.trim());
       closeCreateBoardModal();
-      fetchBoards(); 
+      fetchBoards();
     } catch (error) {
       console.error("Error creating new board:", error);
     }
@@ -89,20 +89,27 @@ const saveNewBoard = async () => {
 
 const fetchBoards = async () => {
   try {
-    await boardStore.fetchAllBoards(); 
+    await boardStore.fetchAllBoards();
     boards.value = boardStore.getBoards;
-    
-    if (boards.value.length >= 1) {
-      router.push({ name: "home" });
-  }
+
+    //   if (boards.value.length >= 1) {
+    //     router.push({ name: "home" });
+    // }
   } catch (error) {
     console.error('Error fetching boards:', error);
   }
 };
 
 onMounted(async () => {
-  await fetchBoards(); 
+  await fetchBoards();
 });
+
+const navigateToTasks = (board) => {
+  if (board && board.id) {
+    router.push({ name: "home", params: { boardId: board.id } });
+  }
+};
+
 </script>
 
 <template>
@@ -169,14 +176,15 @@ onMounted(async () => {
         </thead>
         <tbody>
           <tr v-for="(board, index) in boards" :key="index"
-            class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out">
+            class="itbkk-item bg-white shadow-lg hover:bg-gray-100 hover:scale-105 transition-all duration-200 ease-in-out cursor-pointer"
+            @click="navigateToTasks(board)">
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
               <p class="itbkk-title truncate">{{ board.name }}</p>
             </td>
             <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
               <button class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
-                @click="editBoard(board)">
+                @click.stop="editBoard(board)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -184,7 +192,7 @@ onMounted(async () => {
                 </svg>
               </button>
               <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                @click="confirmDelete(board)">
+                @click.stop="confirmDelete(board)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
