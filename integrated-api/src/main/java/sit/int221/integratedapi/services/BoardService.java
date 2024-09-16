@@ -92,10 +92,10 @@ public class BoardService {
         }
 
         // Check for board ownership
-        boolean boardExists = doesBoardExistForUser(oid);
-        if (boardExists) {
-            throw new BoardOwnershipException("User can only own one board.");
-        }
+//        boolean boardExists = doesBoardExistForUser(oid);
+//        if (boardExists) {
+//            throw new BoardOwnershipException("User can only own one board.");
+//        }
 
         // Throw validation errors if any
         if (!validationErrors.getErrors().isEmpty()) {
