@@ -27,33 +27,33 @@ public class TaskController {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    @GetMapping("")
-    public ResponseEntity<Object> getTasks(
-            @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) List<String> filterStatuses,
-            @RequestParam(required = false) List<String> allParams) {
-
-        if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
-            return ResponseEntity.ok(new ArrayList<>());
-        }
-
-        if (sortBy != null && !isValidSortBy(sortBy)) {
-            return ResponseEntity.ok(new ArrayList<>());
-        }
-
-        if (allParams != null && !allParams.isEmpty()) {
-            return ResponseEntity.ok(new ArrayList<>());
-        }
-
-        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses, allParams);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            List<Task> tasks = (List<Task>) response.getBody();
-            List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
-            return ResponseEntity.ok(taskDTOs);
-        } else {
-            return response;
-        }
-    }
+//    @GetMapping("")
+//    public ResponseEntity<Object> getTasks(
+//            @RequestParam(required = false) String sortBy,
+//            @RequestParam(required = false) List<String> filterStatuses,
+//            @RequestParam(required = false) List<String> allParams) {
+//
+//        if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
+//            return ResponseEntity.ok(new ArrayList<>());
+//        }
+//
+//        if (sortBy != null && !isValidSortBy(sortBy)) {
+//            return ResponseEntity.ok(new ArrayList<>());
+//        }
+//
+//        if (allParams != null && !allParams.isEmpty()) {
+//            return ResponseEntity.ok(new ArrayList<>());
+//        }
+//
+//        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses, allParams);
+//        if (response.getStatusCode().is2xxSuccessful()) {
+//            List<Task> tasks = (List<Task>) response.getBody();
+//            List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
+//            return ResponseEntity.ok(taskDTOs);
+//        } else {
+//            return response;
+//        }
+//    }
 
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");

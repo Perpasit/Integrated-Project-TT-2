@@ -68,7 +68,7 @@ public class TaskService {
     }
 
 
-    public ResponseEntity<Object> getAllTasks(String sortBy, List<String> filterStatuses, List<String> allParams) {
+    public ResponseEntity<Object> getAllTasks(Integer boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -85,9 +85,9 @@ public class TaskService {
         List<Task> tasks;
         if (filterStatuses != null && !filterStatuses.isEmpty()) {
             List<String> statusNames = extractStatusNames(filterStatuses);
-            tasks = taskRepository.findByStatusNameIn(statusNames, sort);
+            tasks = taskRepository.findByStatusNameInAndBoardId(statusNames, boardId, sort);
         } else {
-            tasks = taskRepository.findAll(sort);
+            tasks = taskRepository.findByBoardId(boardId, sort);
         }
         return ResponseEntity.ok(tasks);
     }
