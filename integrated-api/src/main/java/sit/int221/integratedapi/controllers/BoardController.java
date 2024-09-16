@@ -118,9 +118,13 @@ public class BoardController {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
 
+    @GetMapping("/{boardId}/tasks/{id}")
+    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer boardId, @PathVariable Integer id) {
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id);
+        return ResponseEntity.ok(taskRDTO);
+    }
 
-
-
+    
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
             @PathVariable Integer boardId,
