@@ -10,6 +10,7 @@ import ModalStatus from "../components/ModalStatus.vue"
 import Login from "../components/Login.vue"
 import TaskTable from "../components/TaskTable.vue"
 import Board from "../components/Board.vue"
+import AddEditBoard from "../components/AddEditBoard.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,21 +24,17 @@ const router = createRouter({
       name: "Login", 
       component: Login,
     },
+
     {
       path: "/board",
-      name: "Board", 
+      name: "Board",
       component: Board,
-    },
-    {
-      path: "/board/:boardId/task",
-      name: "home",
-      component: Home,
 
       children: [
         {
           path: "/board/add",
           name: "AddBoard", 
-          component: AddBoard,
+          component: AddEditBoard,
           props: () => ({
             mode: "add", 
           }),
@@ -45,7 +42,7 @@ const router = createRouter({
         {
           path: "/board/:boardId/edit",
           name: "EditBoard", 
-          component: AddBoard,
+          component: AddEditBoard,
           props: () => ({
             mode: "edit",
           }),

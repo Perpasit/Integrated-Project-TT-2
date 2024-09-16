@@ -13,6 +13,8 @@ const boardStore = useBoardStore();
 const boardName = ref('');
 const isEditing = ref(false);
 
+console.log(boardName.value);
+
 watch(() => props.editingBoard, (newVal) => {
     if (newVal) {
         boardName.value = newVal.name;
@@ -23,13 +25,16 @@ watch(() => props.editingBoard, (newVal) => {
     }
 }, { immediate: true });
 
+
+
 const saveBoard = async () => {
     if (boardName.value.trim()) {
         try {
             if (isEditing.value) {
                 await boardStore.updateBoard({ ...props.editingBoard, name: boardName.value.trim() });
             } else {
-                await boardStore.createBoard(boardName.value.trim());
+                await boardStore.addBoard(boardName.value.trim());
+                console.log(boardName.value)
             }
             emit('boardSaved');
             closeModal();
@@ -62,7 +67,7 @@ const closeModal = () => {
                                 <label for="boardName" class="block text-sm font-bold mb-2">Name</label>
                                 <input type="text" id="boardName" v-model="boardName"
                                     class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md"
-                                    placeholder="Enter board name">
+                                    placeholder="Enter board name"  >
                             </div>
                         </div>
                     </div>

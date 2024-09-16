@@ -8,6 +8,7 @@ export const useBoardStore = defineStore("board", {
 
   getters: {
     getBoards: (state) => state.boards,
+
   },
 
   actions: {
@@ -24,24 +25,27 @@ export const useBoardStore = defineStore("board", {
       }
     },
 
-    async addBoard(boardData) {
+    async addBoard(newBoard) {
       try {
-        const response = await fetch("/api/boards", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(boardData),
-        })
+        const formattedBoard = {
+                name: newBoard.trim(),
+              };
+
+              const Board = await postItem(
+                `${import.meta.env.VITE_API_ENDPOINTV3}/boards`,
+                formattedBoard
+              );
+        
         if (!response.ok) {
           throw new Error("Network response was not ok")
         }
-        const newBoard = await response.json()
-        this.boards.push(newBoard)
+        this.boards.push(createdBoard)
       } catch (error) {
         console.error("Error adding board:", error)
       }
     },
+
+
 
     async updateBoard(id, updatedData) {
       try {
@@ -65,6 +69,8 @@ export const useBoardStore = defineStore("board", {
       }
     },
 
+
+    
     async deleteBoard(id) {
       try {
         const response = await fetch(`/api/boards/${id}`, {

@@ -6,16 +6,8 @@ import { useUserStore } from "../stores/userStore";
 const router = useRouter();
 const userStore = useUserStore();
 
-const addTask = () => {
-  router.push({ name: " " });
-};
-
-const goHome = () => {
-  router.push({ name: "Board" });
-};
-
 const goToBoard = () => {
-  router.push("/board");
+  router.push({ name: "Board" });
 };
 
 const accountName = computed(() => userStore.getAccountName);
@@ -44,7 +36,7 @@ onMounted(() => {
     <div class="flex">
       <h1
         class="cursor-default text-6xl font-bold font-italiana pt-2 text-lime-100 hover:scale-110 transition-all duration-200 ease-in-out mr-4"
-        @click="goHome"
+        @click="goToBoard"
       >
         Kanban
       </h1>
