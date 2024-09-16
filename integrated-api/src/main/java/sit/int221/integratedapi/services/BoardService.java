@@ -7,20 +7,27 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.BoardCDTO;
 import sit.int221.integratedapi.dtos.BoardDTO;
 import sit.int221.integratedapi.dtos.OwnerDTO;
+import sit.int221.integratedapi.dtos.StatusCDTO;
 import sit.int221.integratedapi.entities.Board;
+import sit.int221.integratedapi.entities.GlobalSetting;
+import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
+import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
 
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @NoArgsConstructor
@@ -38,6 +45,9 @@ public class BoardService {
 
     @Autowired
     private TaskUserRepository taskUserRepository;
+
+    @Autowired
+    private StatusService statusService;
 
 
 
@@ -99,10 +109,31 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setTaskusersOid(oid);
-        boardRepository.save(board);
+        board = boardRepository.save(board);
 
-        return new BoardCDTO(board.getId(), board.getName());
+        // Define status data with boardId
+        List<StatusCDTO> defaultStatuses = Arrays.asList(
+                new StatusCDTO(null, "No Status", "The default status", board.getId(), "#C0C0C0"),
+                new StatusCDTO(null, "To Do", "The task is included in the project", board.getId(), "#6D5ACF"),
+                new StatusCDTO(null, "Doing", "Being worked on.", board.getId(), "#FFDF00"),
+                new StatusCDTO(null, "Done", "Finished", board.getId(), "#00FF7F")
+        );
+
+        // Create statuses using StatusService
+        for (StatusCDTO statusCDTO : defaultStatuses) {
+            statusService.createStatus(board.getId(), statusCDTO);
+        }
+
+        // Return created board
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName());
+        return createdBoardCDTO;
     }
+
+
+
+
+
+
 
     public boolean doesBoardExistForUser(String taskusersOid) {
         // Check if a board already exists for the given taskusers_oid
