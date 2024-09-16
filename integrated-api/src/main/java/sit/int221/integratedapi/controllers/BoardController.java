@@ -104,7 +104,7 @@ public class BoardController {
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        ResponseEntity<Object> response = taskService.getAllTasks(sortBy, filterStatuses, allParams);
+        ResponseEntity<Object> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
             List<Task> tasks = (List<Task>) response.getBody();
             List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
@@ -113,6 +113,7 @@ public class BoardController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
@@ -135,9 +136,9 @@ public class BoardController {
     public ResponseEntity<Object> addNewTask(
             @PathVariable Integer boardId,
             @Valid @RequestBody TaskCDTO taskCDTO) {
-        taskCDTO.setBoardId(boardId);
-        return taskService.createNewTask(taskCDTO);
+        return taskService.createNewTask(taskCDTO, boardId);
     }
+
 
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(
@@ -146,8 +147,6 @@ public class BoardController {
             @Valid @RequestBody TaskUDTO updatedTaskDTO) {
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
-
-
 
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
