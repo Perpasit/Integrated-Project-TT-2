@@ -10,30 +10,21 @@ import java.util.List;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Integer> {
 
-    // ค้นหาทาสก์ตามสถานะ
     List<Task> findByStatusId(Integer statusId);
 
-    // ค้นหาทาสก์ตามสถานะและเรียงลำดับ
     List<Task> findByStatusIdIn(List<Integer> statusIds, Sort sort);
 
-    // ค้นหาทาสก์ตามสถานะหรือชื่อสถานะและเรียงลำดับ
     List<Task> findByStatusIdInOrStatusNameIn(List<Integer> statusIds, List<String> statusNames, Sort sort);
 
-    // นับจำนวนทาสก์ตามสถานะ
     int countByStatusId(Integer id);
 
-    // ค้นหาทาสก์ตามบอร์ด
-    List<Task> findByBoardId(Integer boardId);
+    List<Task> findByBoardId(String boardId);
 
-    // ค้นหาทาสก์ตามบอร์ดและชื่อสถานะ และเรียงลำดับ
-    List<Task> findByBoardIdAndStatusNameIn(Integer boardId, List<String> statusNames, Sort sort);
+    List<Task> findByBoardIdAndStatusNameIn(String boardId, List<String> statusNames, Sort sort);
 
-    // ค้นหาทาสก์ตามชื่อสถานะและบอร์ด และเรียงลำดับ
-    List<Task> findByStatusNameInAndBoardId(List<String> statusNames, Integer boardId, Sort sort);
+    List<Task> findByStatusNameInAndBoardId(List<String> statusNames, String boardId, Sort sort);
 
-    // ค้นหาทาสก์ตามบอร์ดและเรียงลำดับ
-    List<Task> findByBoardId(Integer boardId, Sort sort);
+    List<Task> findByBoardId(String boardId, Sort sort); // เปลี่ยนจาก Integer เป็น String
 
-    List<Task> findFirstByBoardIdAndStatusNameIn(Integer boardId, List<String> statusNames, Sort sort);
-
+    List<Task> findFirstByBoardIdAndStatusNameIn(String boardId, List<String> statusNames, Sort sort);
 }
