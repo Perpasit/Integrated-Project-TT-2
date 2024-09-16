@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useBoardStore } from "../stores/boardStore";
+import AddEditBoard from './AddEditBoard.vue'; // Add this import
 
 const router = useRouter();
 const boardStore = useBoardStore();
@@ -11,15 +12,12 @@ const showDeleteConfirmation = ref(false);
 let selectedBoardToDelete = null;
 const showSuccessModal = ref(false);
 const showNotFoundModal = ref(false);
-const showCreateBoardModal = ref(false);
-const newBoardName = ref("");
-
-
+const showAddEditBoardModal = ref(false); // New ref for AddEditBoard modal
+const selectedBoard = ref(null); // New ref to hold the board being edited
 
 const editBoard = (board) => {
-  if (board && board.id) {
-    router.push({ name: "EditBoard", params: { id: board.id } });
-  }
+  selectedBoard.value = board;
+  showAddEditBoardModal.value = true;
 };
 
 const confirmDelete = (board) => {
@@ -59,31 +57,9 @@ const cancelDelete = () => {
   showDeleteConfirmation.value = false;
 };
 
-
-const createPersonalBoard = () => {
-  console.log("Create Personal Board clicked");
-};
-
-const openCreateBoardModal = () => {
-  showCreateBoardModal.value = true;
-  newBoardName.value = "";
-};
-
-const closeCreateBoardModal = () => {
-  showCreateBoardModal.value = false;
-  newBoardName.value = "";
-};
-
-const saveNewBoard = async () => {
-  if (newBoardName.value.trim()) {
-    try {
-      await boardStore.createBoard(newBoardName.value.trim());
-      closeCreateBoardModal();
-      fetchBoards();
-    } catch (error) {
-      console.error("Error creating new board:", error);
-    }
-  }
+const openAddEditBoardModal = (board = null) => {
+  selectedBoard.value = board;
+  showAddEditBoardModal.value = true;
 };
 
 const navigateToTasks = (board) => {
@@ -97,11 +73,7 @@ const fetchBoards = async () => {
     await boardStore.fetchAllBoards();
     boards.value = boardStore.getBoards;
 
-    if (boards.value.length >= 1) {
-      const firstBoardId = boards.value[0].id; // Get the first board's ID
-      router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
-    }
-
+    
   } catch (error) {
     console.error('Error fetching boards:', error);
   }
@@ -111,8 +83,6 @@ onMounted(async () => {
   await fetchBoards();
 });
 
-
-
 </script>
 
 <template>
@@ -121,50 +91,13 @@ onMounted(async () => {
       <h2 class="text-center text-5xl font-bold text-white mb-4 py-1">Board List</h2>
 
       <div class="flex justify-end mb-6 pb-4 border-b border-white">
-        <button @click="openCreateBoardModal"
+        <button @click="openAddEditBoardModal()"
           class="itbkk-button-create relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium text-white rounded-lg group bg-gradient-to-br from-[#eddbe8] to-[#e9b9de] group-hover:from-teal-300 transition duration-300 ease-in-out transform hover:scale-105">
           <span
             class="relative px-5 py-2.5 transition-all ease-in duration-75  dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
             Create Personal Board
           </span>
         </button>
-      </div>
-
-
-      <div v-if="showCreateBoardModal" class="fixed z-10 inset-0 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-          </div>
-          <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-2xl sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                  <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">New Board</h3>
-                  <div class="mb-4">
-                    <label for="boardName" class="block text-sm font-bold mb-2">Name</label>
-                    <input type="text" id="boardName" v-model="newBoardName"
-                      class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md"
-                      placeholder="Enter board name">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button @click="saveNewBoard" :class="{
-                'bg-gray-300 text-gray-500 cursor-not-allowed': !newBoardName,
-                'bg-indigo-600 text-white hover:bg-indigo-700': newBoardName
-              }" :disabled="!newBoardName"
-                class="itbkk-button-ok w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                Save
-              </button>
-              <button @click="closeCreateBoardModal"
-                class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
@@ -210,6 +143,13 @@ onMounted(async () => {
       No Personal Board
     </div>
   </div>
+
+  <!-- AddEditBoard component -->
+  <AddEditBoard
+    v-model:showModal="showAddEditBoardModal"
+    :editingBoard="selectedBoard"
+    @boardSaved="fetchBoards"
+  />
 
   <!-- Delete Confirmation Modal -->
   <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
