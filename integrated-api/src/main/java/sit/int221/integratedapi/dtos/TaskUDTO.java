@@ -16,5 +16,5 @@ public class TaskUDTO {
     @Size(max = 30)
     private String assignees;
     private String status;
-    private Integer boardId;
+    private String boardId;
 }
