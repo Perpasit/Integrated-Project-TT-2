@@ -125,9 +125,8 @@ public class BoardController {
                                                 @PathVariable String boardId,
                                                 @PathVariable Integer id) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-
+        taskService.validateBoardOwnership(boardId,oidFromToken);
         TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id, oidFromToken);
-
         return ResponseEntity.ok(taskRDTO);
     }
 
