@@ -55,9 +55,9 @@ public class TaskController {
 //        }
 //    }
 
-    private boolean isValidSortBy(String sortBy) {
-        return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
-    }
+//    private boolean isValidSortBy(String sortBy) {
+//        return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
+//    }
 
 //    @GetMapping("/{id}")
 //    public ResponseEntity<TaskRDTO> getTaskById(@PathVariable Integer id) {
