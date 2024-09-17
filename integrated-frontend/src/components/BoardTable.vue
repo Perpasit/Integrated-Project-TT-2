@@ -28,7 +28,8 @@ const confirmDelete = (board) => {
 const deleteBoard = async () => {
   showDeleteConfirmation.value = false;
   try {
-    await boardStore.deleteBoard(selectedBoardToDelete.id);
+    await boardStore.deleteBoard(selectedBoardToDelete.boardId);
+    c
     showSuccessModal.value = true;
     selectedBoardToDelete = null;
     fetchBoards();
@@ -45,6 +46,7 @@ const deleteBoard = async () => {
       }, 3000);
     }
   }
+  fetchBoards();
 };
 
 function closeDeleteModal() {
@@ -72,7 +74,10 @@ const fetchBoards = async () => {
   try {
     await boardStore.fetchAllBoards();
     boards.value = boardStore.getBoards;
-
+    // if (boards.value.length >= 1) {
+    //   const firstBoardId = boards.value[0].boardId; // Get the first board's ID
+    //   router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
+    // }
     
   } catch (error) {
     console.error('Error fetching boards:', error);
