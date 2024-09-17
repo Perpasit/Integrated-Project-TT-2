@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
-import { useRouter } from "vue-router";
 
 export const useBoardStore = defineStore("board", {
   state: () => ({
@@ -18,14 +17,8 @@ export const useBoardStore = defineStore("board", {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards`);
         this.boards = data;
       } catch (error) {
-        if (error.response?.status === 401) {
-          // Redirect to login page if 401 Unauthorized
-          const router = useRouter();
-          router.push({ name: 'login' }); // Adjust 'login' to your actual login route name
-        } else {
-          console.error("Error fetching boards:", error);
-          // Optionally handle other errors here
-        }
+        // Remove router handling; just rethrow the error
+        throw error;
       }
     },
 
@@ -38,58 +31,28 @@ export const useBoardStore = defineStore("board", {
         );
         this.boards.push(createdBoard);
       } catch (error) {
-        if (error.response?.status === 401) {
-          const router = useRouter();
-          router.push({ name: 'login' });
-        } else {
-          console.error("Error adding board:", error);
-        }
+        throw error;
       }
     },
 
     async updateBoard(id, updatedData) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedData),
-        });
-        if (!response.ok) {
-          if (response.status === 401) {
-            const router = useRouter();
-            router.push({ name: 'login' });
-          }
-          throw new Error("Network response was not ok");
-        }
-        const updatedBoard = await response.json();
+        const response = await putItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
         const index = this.boards.findIndex((board) => board.id === id);
         if (index !== -1) {
-          this.boards[index] = updatedBoard;
+          this.boards[index] = response;
         }
       } catch (error) {
-        if (error.response?.status === 401) {
-          const router = useRouter();
-          router.push({ name: 'login' });
-        } else {
-          console.error("Error updating board:", error);
-        }
+        throw error;
       }
     },
 
     async deleteBoard(id) {
       try {
-        const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
+        await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
         this.boards = this.boards.filter((board) => board.id !== id);
-        return response;
       } catch (error) {
-        if (error.response?.status === 401) {
-          const router = useRouter();
-          router.push({ name: 'login' });
-        } else {
-          throw error;
-        }
+        throw error;
       }
     },
   },
