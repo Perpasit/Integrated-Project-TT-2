@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.exceptions.ItemNotFoundException;
+import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.services.BoardService;
 import sit.int221.integratedapi.services.StatusService;
 import sit.int221.integratedapi.services.TaskService;
@@ -69,6 +71,9 @@ public class BoardController {
     public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
                                          @PathVariable String boardId,
                                          @RequestBody BoardCDTO boardCDTO) {
+        if (boardCDTO == null) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+        }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
         return ResponseEntity.ok(updatedBoard);
@@ -134,7 +139,11 @@ public class BoardController {
     public ResponseEntity<Object> addNewTask(
             @RequestHeader("Authorization") String token,
             @PathVariable String boardId,
-            @Valid @RequestBody TaskCDTO taskCDTO) {
+            @Valid @RequestBody(required = false) TaskCDTO taskCDTO) {
+        if (taskCDTO == null) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+        }
+
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         taskService.validateBoardOwnership(boardId,oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
@@ -145,7 +154,10 @@ public class BoardController {
             @RequestHeader("Authorization") String token,
             @PathVariable String boardId,
             @PathVariable Integer taskId,
-            @Valid @RequestBody TaskUDTO updatedTaskDTO) {
+            @Valid @RequestBody(required = false) TaskUDTO updatedTaskDTO) {
+        if (updatedTaskDTO == null) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+        }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         taskService.validateBoardOwnership(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
@@ -182,7 +194,10 @@ public class BoardController {
     @PostMapping("/{boardId}/statuses")
     public ResponseEntity<Object> addNewStatus(@RequestHeader("Authorization") String token,
                                                @PathVariable String boardId,
-                                               @Valid @RequestBody StatusCDTO status) {
+                                               @Valid @RequestBody(required = false) StatusCDTO status) {
+        if (status == null) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+        }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
@@ -202,9 +217,12 @@ public class BoardController {
     @PutMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<Object> updateStatus(
             @RequestHeader("Authorization") String token,
-            @Valid @RequestBody StatusUDTO statusUDTO,
+            @Valid @RequestBody(required = false) StatusUDTO statusUDTO,
             @PathVariable String boardId,
             @PathVariable Integer statusId) {
+        if (statusUDTO == null) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+        }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
