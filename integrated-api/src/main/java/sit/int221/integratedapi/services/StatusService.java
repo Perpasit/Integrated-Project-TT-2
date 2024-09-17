@@ -106,7 +106,15 @@ public class StatusService {
         throw new ItemNotFoundException("Status with id " + statusId + " for board " + boardId + " does not exist!");
     }
 
+    public void validateBoardOwnership(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
+        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        }
+    }
     @Transactional
     public ResponseEntity<Object> createStatus(String boardId, StatusCDTO statusCDTO) {
         // ตรวจสอบค่า boardId ว่ามีอยู่จริงหรือไม่
