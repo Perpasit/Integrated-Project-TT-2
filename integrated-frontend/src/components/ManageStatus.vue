@@ -18,7 +18,7 @@ const selectedStatus = ref(null)
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 
-let selectedStatusToDelete = null
+let selectedStatusToDelete = ref(null)
 
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
@@ -169,6 +169,21 @@ const getStatusColor = (status) => {
   return statusStore.getStatusColorByName(status.name)
 }
 
+
+const handleDeleteClick = (status) => {
+  console.log("status",status)
+  console.log("statusid",status.id)
+  selectedStatusToDelete.value = status.id;
+  console.log(selectedStatus)
+  if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
+    showCannotEditDeleteModal.value = true;
+    
+  } else {
+    showDeleteConfirmationModal.value = true;
+    selectedStatusToDelete.value = status;
+  }
+};
+
 onMounted(async () => {
   fetchStatuses(boardId)
 })
@@ -261,17 +276,7 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                  
-                  @click="
-                   
-                   
-                      showDeleteConfirmationModal = true,
-                      selectedStatusToDelete = status
-                    
-                  "
-
-
-
+                   @click="handleDeleteClick(status)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
