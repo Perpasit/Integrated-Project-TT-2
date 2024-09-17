@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class BoardCDTO {
     private String boardId;
     private String name;
+    private OwnerDTO owner;
 }
