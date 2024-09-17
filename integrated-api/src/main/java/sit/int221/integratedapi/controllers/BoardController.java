@@ -161,52 +161,71 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}/statuses")
-    public ResponseEntity<List<StatusDTO>> getStatuses(@PathVariable String boardId) {
+    public ResponseEntity<List<StatusDTO>> getStatuses(@RequestHeader("Authorization") String token,
+                                                       @PathVariable String boardId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         List<StatusDTO> statusDTOs = statusService.getStatusesByBoardId(boardId);
         return ResponseEntity.ok(statusDTOs);
     }
 
     @GetMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable String boardId,
+    public ResponseEntity<StatusRDTO> getStatusById(@RequestHeader("Authorization") String token,
+                                                    @PathVariable String boardId,
                                                     @PathVariable Integer statusId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         StatusRDTO statusRDTO = statusService.getStatusByBoardIdAndStatusId(boardId, statusId);
         return ResponseEntity.ok(statusRDTO);
     }
 
     @PostMapping("/{boardId}/statuses")
-    public ResponseEntity<Object> addNewStatus(@PathVariable String boardId,
+    public ResponseEntity<Object> addNewStatus(@RequestHeader("Authorization") String token,
+                                               @PathVariable String boardId,
                                                @Valid @RequestBody StatusCDTO status) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
     }
 
     @GetMapping("/{boardId}/statuses/{statusId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardAndStatusId(
-            @PathVariable String boardId, // เปลี่ยนจาก Integer เป็น String
+            @RequestHeader("Authorization") String token,
+            @PathVariable String boardId,
             @PathVariable Integer statusId) {
-
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
         return ResponseEntity.ok(taskDTOs);
     }
 
     @PutMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<Object> updateStatus(
+            @RequestHeader("Authorization") String token,
             @Valid @RequestBody StatusUDTO statusUDTO,
-            @PathVariable String boardId, // เปลี่ยนจาก Integer เป็น String
+            @PathVariable String boardId,
             @PathVariable Integer statusId) {
-
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable String boardId,
+    public ResponseEntity<StatusDDTO> removeStatus(@RequestHeader("Authorization") String token,
+                                                   @PathVariable String boardId,
                                                    @PathVariable Integer statusId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.removeStatus(boardId, statusId);
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@PathVariable String boardId,
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@RequestHeader("Authorization") String token,
+                                                             @PathVariable String boardId,
                                                              @PathVariable Integer statusId,
                                                              @PathVariable Integer newId) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        statusService.validateBoardOwnership(boardId,oidFromToken);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
 
