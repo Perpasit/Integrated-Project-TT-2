@@ -44,7 +44,7 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: 1,
+  status: null,
 })
 
 const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
@@ -117,7 +117,7 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: 1,
+    status: null,
   }
 }
 
@@ -216,6 +216,7 @@ const fetchTaskAndStatus = async (boardId) => {
 }
 onMounted(async () => {
   fetchTaskAndStatus(boardId)
+  editedTask.value.status = statusStore.statuses[0].id;
 })
 </script>
 

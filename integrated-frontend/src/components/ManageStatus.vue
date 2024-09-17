@@ -68,8 +68,8 @@ async function confirmDeleteStatus() {
   
   if (selectedStatusToDelete) {
     try {
-      console.log(selectedStatusToDelete.id)
-      console.log(boardId)
+      console.log("selectedStatus : ",selectedStatusToDelete.id)
+      console.log("BoardID : ",boardId)
       const result = await statusStore.deleteStatus(
         boardId,
         selectedStatusToDelete.id
@@ -124,8 +124,10 @@ const closeCannotEditDeleteModal = () => {
 
 const deleteAndTransfer = async (newStatusId) => {
   if (canDeleteStatus.value) {
+    console.log("selectStatus : ",selectedStatusToDelete.id,"newStatus : ",newStatusId)
     try {
       const result = await statusStore.deleteStatusTransfer(
+        boardId,
         selectedStatusToDelete.id,
         newStatusId
       )
@@ -168,6 +170,19 @@ const cancelDeleteTransfer = () => {
 const getStatusColor = (status) => {
   return statusStore.getStatusColorByName(status.name)
 }
+
+
+const handleDeleteClick = (status) => {
+  console.log("status",status)
+  console.log("statusid",status.id)
+  if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
+    showCannotEditDeleteModal.value = true;
+    selectedStatusToDelete = status;
+  } else {
+    showDeleteConfirmationModal.value = true;
+    selectedStatusToDelete = status;
+  }
+};
 
 onMounted(async () => {
   fetchStatuses(boardId)
@@ -261,17 +276,7 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                  
-                  @click="
-                   
-                   
-                      showDeleteConfirmationModal = true,
-                      selectedStatusToDelete = status
-                    
-                  "
-
-
-
+                   @click="handleDeleteClick(status)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

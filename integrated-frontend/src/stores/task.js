@@ -37,7 +37,7 @@ export const useTaskStore = defineStore("task", {
           formattedTask
         );
         console.log(createdTask)
-        this.tasks.push(createdTask.value);
+        this.tasks.push(createdTask);
       } catch (error) {
         console.error("Error adding task:", error);
         throw error;
@@ -52,10 +52,12 @@ export const useTaskStore = defineStore("task", {
           assignees: updatedTask.assignees.trim(),
           status: updatedTask.status.id
         };
+        
         const updatedData = await putItem(
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`,
           formattedTask
         );
+        console.log(updatedData)
         const index = this.tasks.findIndex((task) => task.id === id);
         if (index !== -1) {
           this.tasks.splice(index, 1, updatedData);

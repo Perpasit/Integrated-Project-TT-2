@@ -91,14 +91,14 @@ export const useStatusStore = defineStore("status", {
       try {
         const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/tasks`);
         console.log(response);
-        if (!response.ok) {
-          if (response.status === 404) {
-            return { notFound: true };
-          } else {
-            throw new Error('Failed to fetch tasks');
-          }
-        }
-        const tasks = await response.json();
+        // if (!response.ok) {
+        //   if (response.status === 404) {
+        //     return { notFound: true };
+        //   } else {
+        //     throw new Error('Failed to fetch tasks');
+        //   }
+        // }
+        const tasks = await response
         
         if (tasks.length > 0) {
           return { needsTransfer: true, statusId: id };

@@ -1,4 +1,6 @@
 import { useUserStore } from "../stores/userStore";
+import { useRouter } from "vue-router"; // Import Vue Router
+
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore(); // Access the store within the function
@@ -7,6 +9,8 @@ const getToken = () => {
 
 export const fetch = async (url, options = {}) => {
   const token = getToken();
+  const router = useRouter(); // Initialize the router here
+
   const response = await window.fetch(url, {
     ...options,
     headers: {
@@ -16,7 +20,16 @@ export const fetch = async (url, options = {}) => {
   });
   const contentType = response.headers.get("content-type");
 
+  // Handle non-ok responses, especially 401 Unauthorized
   if (!response.ok) {
+    if (response.status === 401) {
+      // Clear token if needed and redirect to login page
+      const userStore = useUserStore();
+      userStore.logout(); // Assuming you have a logout action in your store
+      router.push({ name: "Login" }); // Redirect to login page
+      throw new Error("Unauthorized. Redirecting to login.");
+    }
+
     if (contentType && contentType.includes("application/json")) {
       const errorData = await response.json();
       throw new Error(errorData.message);
