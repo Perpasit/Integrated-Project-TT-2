@@ -38,9 +38,19 @@ const showTaskDetail = (task) => {
   })
 }
 
-const fetchTasksAndStatus = async () => {
-  await taskStore.fetchAllTasks()
-  await statusStore.fetchAllStatuses()
+const boardId = route.params.boardId
+
+
+
+const clearStatusFilter = () => {
+  taskStore.setFilterStatuses([], boardId)  // Pass boardId here
+  searchKeyword.value = ""
+}
+
+
+const fetchTasksAndStatus = async (boardId) => {
+  await taskStore.fetchAllTasks(boardId)
+  await statusStore.fetchAllStatuses(boardId)
 }
 
 const formattedStatus = computed(() => {
@@ -62,10 +72,10 @@ const confirmDelete = (task) => {
 const deleteTask = async () => {
   showDeleteConfirmation.value = false
   try {
-    await taskStore.deleteTask(selectedTaskToDelete.id)
+    await taskStore.deleteTask(boardId,selectedTaskToDelete.id)
     showSuccessModal.value = true
     selectedTaskToDelete = null
-    fetchTasksAndStatus()
+    fetchTasksAndStatus(boardId)
 
     setTimeout(() => {
       closeDeleteModal()
@@ -73,7 +83,7 @@ const deleteTask = async () => {
   } catch (error) {
     if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true
-      fetchTasksAndStatus()
+      fetchTasksAndStatus(boardId)
       setTimeout(() => {
         closeDeleteModal()
       }, 3000)
@@ -102,13 +112,10 @@ const toggleDropdown = () => {
 
 const selectedStatuses = computed({
   get: () => taskStore.filterStatuses,
-  set: (value) => taskStore.setFilterStatuses(value),
+  set: (value) => taskStore.setFilterStatuses(value, boardId),
 })
 
-const clearStatusFilter = () => {
-  taskStore.setFilterStatuses([])
-  searchKeyword.value = ""
-}
+
 
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
@@ -122,7 +129,7 @@ const filteredStatuses = computed(() => {
 
 const sortBy = computed({
   get: () => taskStore.sortBy,
-  set: (value) => taskStore.setSortBy(value),
+  set: (value) => taskStore.setSortBy(value ,boardId),
 })
 
 const togglesortBy = () => {
@@ -133,7 +140,7 @@ const togglesortBy = () => {
   } else {
     sortBy.value = "createOn"
   }
-  taskStore.setSortBy(sortBy.value)
+  taskStore.setSortBy(sortBy.value, boardId)  // Pass boardId here
 }
 const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
@@ -142,7 +149,7 @@ const updateMaxTasksPerStatus = (limit) => {
 const openLimitTaskModal = async () => {
   try {
     
-    await statusStore.fetchAllStatuses()
+    await statusStore.fetchAllStatuses(boardId)
     currentStatusesWithTaskCounts.value = statusStore.statuses.map(
       (status) => ({
         name: status.name,
@@ -182,12 +189,18 @@ const toggleStatusFilter = (statusName) => {
   } else {
     selectedStatuses.value.push(statusName)
   }
-  fetchTasksAndStatus()
+  fetchTasksAndStatus(boardId)
 }
 
-onMounted(async () => {
-  fetchTasksAndStatus()
 
+
+onMounted(async () => {
+  if (!boardId) {
+  console.error("Board ID is missing")
+  return
+}
+  
+   
   const sortByFromUrl = route.query.sortBy
   if (
     sortByFromUrl === "asc" ||
@@ -195,7 +208,7 @@ onMounted(async () => {
     sortByFromUrl === "createOn"
   ) {
     sortBy.value = sortByFromUrl
-    fetchTasksAndStatus()
+    fetchTasksAndStatus(boardId)
   }
 
   // Check the filterStatus query parameter from the URL
@@ -203,11 +216,11 @@ onMounted(async () => {
   if (filterStatusFromUrl) {
     const statusArray = filterStatusFromUrl.split(",")
     selectedStatuses.value = statusArray
-    fetchTasksAndStatus()
+    fetchTasksAndStatus(boardId)
   } else {
     // If filterStatus is not provided, clear the selectedStatuses
     selectedStatuses.value = []
-    fetchTasksAndStatus()
+    fetchTasksAndStatus(boardId)
   }
 })
 </script>
@@ -609,4 +622,5 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+  
 </template>

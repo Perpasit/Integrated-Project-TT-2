@@ -20,43 +20,43 @@ public class StatusController {
         this.listMapper = listMapper;
     }
 
-    @GetMapping("")
-    public ResponseEntity<List<StatusDTO>> getStatuses() {
-        List<StatusDTO> statusDTOs = statusService.getAllStatuses();
-        return ResponseEntity.ok(statusDTOs);
-    }
+//    @GetMapping("")
+//    public ResponseEntity<List<StatusDTO>> getStatuses() {
+//        List<StatusDTO> statusDTOs = statusService.getAllStatuses();
+//        return ResponseEntity.ok(statusDTOs);
+//    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {
-        StatusRDTO statusRDTO = statusService.getStatusById(id);
-        return ResponseEntity.ok(statusRDTO);
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<StatusRDTO> getStatusById(@PathVariable Integer id) {
+//        StatusRDTO statusRDTO = statusService.getStatusById(id);
+//        return ResponseEntity.ok(statusRDTO);
+//    }
 
-    @PostMapping("")
-    public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
+//    @PostMapping("")
+//    public ResponseEntity<Object> addNewStatus(@Valid @RequestBody StatusCDTO status) {
+//
+//        return statusService.createStatus(status);
+//    }
 
-        return statusService.createStatus(status);
-    }
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
+//        return statusService.removeStatus(id);
+//    }
+//
+//    @DeleteMapping("/{id}/{newId}")
+//    public ResponseEntity<StatusTFDDTO> deleteTransferStatus( @PathVariable Integer id, @PathVariable Integer newId) {
+//        return statusService.deleteTransferStatus(id,newId);
+//    }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<StatusDDTO> removeStatus(@PathVariable Integer id){
-        return statusService.removeStatus(id);
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
+//        return statusService.updateStatus(id, statusUDTO);
+//    }
 
-    @DeleteMapping("/{id}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus( @PathVariable Integer id, @PathVariable Integer newId) {
-        return statusService.deleteTransferStatus(id,newId);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> updateStatus(@Valid @RequestBody StatusUDTO statusUDTO, @PathVariable Integer id) {
-        return statusService.updateStatus(id, statusUDTO);
-    }
-
-    @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
-        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
-        return ResponseEntity.ok(taskDTOs);
-    }
+//    @GetMapping("/{id}/tasks")
+//    public ResponseEntity<List<TaskDTO>> getTasksByStatusId(@PathVariable Integer id) {
+//        List<TaskDTO> taskDTOs = statusService.getTasksByStatusId(id);
+//        return ResponseEntity.ok(taskDTOs);
+//    }
 
 }

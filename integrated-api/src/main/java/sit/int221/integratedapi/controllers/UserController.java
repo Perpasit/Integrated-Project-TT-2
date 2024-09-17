@@ -19,8 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.integratedapi.dtos.JwtRequestUser;
 import sit.int221.integratedapi.dtos.UserDTO;
+import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.AuthenticationException;
+import sit.int221.integratedapi.services.TaskUserService;
 import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
@@ -47,6 +49,9 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private TaskUserService taskUserService;
+
     @PostMapping("")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
@@ -54,6 +59,7 @@ public class UserController {
             if (user == null) {
                 return AuthenticationException.getMessage("The Username or Password is incorrect.");
             }
+
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(jwtRequestUser.getUserName(), jwtRequestUser.getPassword());
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
@@ -61,6 +67,23 @@ public class UserController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtTokenUtil.generateToken(userDetails);
 
+            // Extract claims from the token
+            Claims claims = jwtTokenUtil.getAllClaimsFromToken(token);
+
+            // Create or update TaskUser
+            TaskUser taskUser = new TaskUser();
+            taskUser.setOid(user.getOid()); // Set OID from User entity
+            taskUser.setUsername(jwtRequestUser.getUserName());
+            taskUser.setName(user.getName()); // You might need to fetch user details from the User entity
+            taskUser.setEmail(user.getEmail()); // You might need to fetch user details from the User entity
+            taskUser.setRole(user.getRole()); // You might need to fetch user details from the User entity
+            taskUser.setToken(token);
+            taskUser.setCreatedOn(java.time.LocalDateTime.now().toString()); // Set current timestamp
+
+            // Save or update TaskUser
+            taskUserService.saveOrUpdateTaskUser(taskUser);
+
+            // Prepare response
             Map<String, String> response = new HashMap<>();
             response.put("access_token", token);
 
@@ -74,6 +97,7 @@ public class UserController {
                     .body("There is a problem. Please try again later.");
         }
     }
+
 
 
 

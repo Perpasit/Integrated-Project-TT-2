@@ -1,23 +1,26 @@
-
 <script setup>
 import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
-import { useRouter } from "vue-router"
+import { useRouter , useRoute } from "vue-router"
+import { getItems } from "../utils/fetch"
 
 const router = useRouter()
+const route = useRoute()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
 const successModalTimeout = ref(null)
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
-const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
-
+const isDescriptionTooLong = computed(
+  () => editedStatus.value.description.length > 200
+)
+const boardId = parseInt(route.params.boardId);
 const props = defineProps({
   mode: {
     type: String,
-    default: "add"
-  }
+    default: "add",
+  },
 })
 
 const emit = defineEmits(["close", "statusSaved"])
@@ -25,7 +28,7 @@ const editedStatus = ref({
   id: "",
   name: "",
   description: "",
-  colorCode: "#000000"
+  colorCode: "#000000",
 })
 
 const isDuplicateName = computed(() => {
@@ -35,7 +38,6 @@ const isDuplicateName = computed(() => {
       status.id !== editedStatus.value.id
   )
 })
-
 
 const isNameValid = computed(() => {
   return (
@@ -60,22 +62,27 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
-        // console.log(response)
+        const response = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+        )
+        console.log(response)
         if (response.status === 404) {
           setTimeout(() => {
-            router.push("/status/manage")
+            router.push({ name: "ManageStatus" })
           }, 3000)
           throw new Error("Status not found")
         } else {
-          const data = await response.json()
+          const data = await response
           editedStatus.value = {
             ...data,
-            name: data.name || null, 
-            description: data.description || "", 
-            colorCode: data.colorCode
+            name: data.name || null,
+            description: data.description || "",
+            colorCode: data.colorCode,
           }
-          originalStatus.value = { ...data,description: data.description || "" }
+          originalStatus.value = {
+            ...data,
+            description: data.description || "",
+          }
         }
       } catch (error) {
         editedStatus.value = null
@@ -90,7 +97,7 @@ function resetForm() {
   editedStatus.value = {
     name: "",
     description: "",
-    colorCode: "#000000"
+    colorCode: "#000000",
   }
 }
 
@@ -98,40 +105,48 @@ async function saveStatus() {
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
+      description: editedStatus.value.description
+        ? editedStatus.value.description.trim()
+        : null,
       colorCode: editedStatus.value.colorCode,
-      globalSettingId: editedStatus.value.globalSetting?.id || null 
+      globalSettingId: editedStatus.value.globalSetting?.id || null,
     }
 
     if (props.mode === "edit") {
       const statusId = router.currentRoute.value.params.id
       if (statusId) {
-        await statusStore.updateStatus(statusId, updatedStatus)
+        await statusStore.updateStatus(boardId,statusId, updatedStatus)
         fetchStatus()
         emit("statusSaved")
-        modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+        modalStore.openStatusSuccessModal(
+          updatedStatus.name,
+          props.mode,
+          "status"
+        )
 
-     
         successModalTimeout.value = setTimeout(() => {
           modalStore.closeStatusSuccessModal()
-          resetForm() 
+          resetForm()
         }, 3000)
       } else {
         console.error("The status does not exist.")
       }
     } else {
-      await statusStore.createStatus(updatedStatus)
+      await statusStore.createStatus(boardId,updatedStatus)
       fetchStatus()
-      modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+      modalStore.openStatusSuccessModal(
+        updatedStatus.name,
+        props.mode,
+        "status"
+      )
 
-     
       successModalTimeout.value = setTimeout(() => {
         modalStore.closeStatusSuccessModal()
-        resetForm() 
+        resetForm()
       }, 3000)
     }
 
-    router.push("/status/manage")
+    router.push({ name: "ManageStatus" })
   } catch (error) {
     console.error("Error saving status:", error)
   }
@@ -146,15 +161,13 @@ const parseAndFormatDate = (dateString) => {
 }
 
 function closeModal() {
-  router.push("/status/manage")
+  router.push({ name: "ManageStatus" })
   resetForm()
 }
 
 const fetchStatus = async () => {
-  await statusStore.fetchAllStatuses()
+  await statusStore.fetchAllStatuses(boardId)
 }
-
-
 </script>
 
 <template>
@@ -201,7 +214,12 @@ const fetchStatus = async () => {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea rows="5" v-model="editedStatus.description" class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="No Description Provided"></textarea>
+                <textarea
+                  rows="5"
+                  v-model="editedStatus.description"
+                  class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  placeholder="No Description Provided"
+                ></textarea>
                 <p
                   class="itbkk-status-description text-gray-500 text-sm mt-1"
                   :class="{ 'text-red-500': isDescriptionTooLong }"
@@ -261,7 +279,7 @@ const fetchStatus = async () => {
                 !isNameValid ||
                 isDuplicateName ||
                 isNameTooLong ||
-                isDescriptionTooLong
+                isDescriptionTooLong,
             }"
             @click="saveStatus"
             :disabled="

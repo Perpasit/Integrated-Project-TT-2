@@ -1,42 +1,39 @@
 <script setup>
-import { computed, ref } from "vue"
-import { useRouter } from "vue-router"
+import { computed, ref, onMounted } from "vue"
+import { useRouter , useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 
+const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
-const isHomePage = computed(() => {
-  return router.currentRoute.value.path === "/task"
-})
 
 const isManageStatusPage = computed(() => {
-  return router.currentRoute.value.path.startsWith("/status/manage")
-
+  return router.currentRoute.value.path.includes("/status")
 })
 
 const isTaskPage = computed(() => {
-  return router.currentRoute.value.path.startsWith("/task")
+  return router.currentRoute.value.path.includes("/task")
 })
-
 
 const addTask = () => {
   router.push({ name: "AddTask" })
 }
-
+const boardId = parseInt(route.params.boardId);
 const goHome = () => {
-  router.push({ name: "home" })
+  router.push({ name: "home", params:{ boardId } })
 }
 
 const goToManageStatus = () => {
-  router.push({ name: "ManageStatus" })
+  router.push({ name: "ManageStatus",  params:{ boardId }})
 }
+
 
 const addStatus = () => {
   router.push({ name: "AddStatus" })
 }
 
-const userStore = useUserStore()
-const accountName = computed(() => userStore.accountName)
+const accountName = computed(() => userStore.getAccountName)
 const showDropdown = ref(false)
 
 const logout = () => {
@@ -47,6 +44,17 @@ const logout = () => {
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
 }
+
+const goToBoard = () => {
+  router.push("/board");
+};
+
+onMounted(() => {
+  // Ensure the store is initialized with data from localStorage
+  if (!userStore.getIsAuthenticated) {
+    router.push({ name: "Login" })
+  }
+})
 </script>
 
 <template>
@@ -58,13 +66,13 @@ const toggleDropdown = () => {
       Kanban
     </h1>
     <span :class="[
-        'itbkk-button-home text-2xl block cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
-        isHomePage ? 'text-white' : 'text-blue-600 hover:text-white'
+        'itbkk-button-home text-2xl  cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
+        isTaskPage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goHome">
         Home
       </span>
       <span :class="[
-        'itbkk-manage-status text-2xl block cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
+        'itbkk-manage-status text-2xl cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
         isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white'
       ]" @click="goToManageStatus">
         Manage Status
@@ -89,21 +97,35 @@ const toggleDropdown = () => {
           </svg>
         </div>
 
-        <div v-if="showDropdown" class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2">
-        
-          <button @click="goToProfile"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left ">
-            Profile
-          </button>
-          <button @click="goToSettings"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
-            Settings
-          </button>
-          <button @click="logout"
-            class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left">
-            Logout
-          </button>
-        </div>
+        <div
+            v-if="showDropdown"
+            class="absolute top-full right-0 mt-2 w-32 bg-white shadow-lg rounded-lg p-2"
+          >
+            <button
+              @click="goToBoard"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Board List
+            </button>
+            <button
+              @click="goToProfile"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Profile
+            </button>
+            <button
+              @click="goToSettings"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Settings
+            </button>
+            <button
+              @click="logout"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+            >
+              Logout
+            </button>
+          </div>
       </div>
     </div>
 

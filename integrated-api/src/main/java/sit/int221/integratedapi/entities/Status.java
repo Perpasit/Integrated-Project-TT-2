@@ -21,7 +21,7 @@ public class Status {
     @Column(name = "statusId")
     private Integer id;
 
-    @Column(name = "statusName", nullable = false, unique = true)
+    @Column(name = "statusName", nullable = false)
     private String name;
 
     @Column(name = "statusDescription")
@@ -40,6 +40,10 @@ public class Status {
     @ManyToOne
     @JoinColumn(name = "global_settings_id", nullable = false)
     private GlobalSetting globalSetting;
+
+    @ManyToOne
+    @JoinColumn(name = "boardId", nullable = false)
+    private Board board;
 
     @OneToMany(mappedBy = "status", cascade = CascadeType.PERSIST)
     private List<Task> tasks = new ArrayList<>();

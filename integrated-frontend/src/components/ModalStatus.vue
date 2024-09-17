@@ -10,7 +10,7 @@ const loading = ref(true)
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const closeModal = () => {
-  router.push("/status/manage")
+  router.push({ name: "ManageStatus" })
 }
 
 const parseAndFormatDate = (dateString) => {
@@ -20,12 +20,12 @@ const parseAndFormatDate = (dateString) => {
   }
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
-
+const boardId = route.params.boardId
 onMounted(async () => {
   try {
     const id = route.params.statusId
     const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`
+      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
     )
     status.value = data
     // console.log(status)
