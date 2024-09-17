@@ -144,3 +144,50 @@ export const postItemLogin = async (url, item) => {
     throw error;
   }
 };
+
+
+// import { useRouter } from "vue-router";
+// import { useUserStore } from "../stores/userStore";
+
+// // Get the token
+// const getToken = () => {
+//   const userStore = useUserStore(); // Access the store within the function
+//   return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.token;
+// };
+
+// export const fetch = async (url, options = {}) => {
+//   const token = getToken();
+//   const router = useRouter(); // Initialize router for redirecting
+
+//   const response = await window.fetch(url, {
+//     ...options,
+//     headers: {
+//       ...options.headers,
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+
+//   const contentType = response.headers.get("content-type");
+
+//   if (!response.ok) {
+//     if (response.status === 401) {
+//       // Redirect to login if 401 error is encountered
+//       router.push({ name: "login" });
+//       return; // Stop execution once redirected
+//     }
+
+//     if (contentType && contentType.includes("application/json")) {
+//       const errorData = await response.json();
+//       throw new Error(errorData.message);
+//     } else {
+//       const errorMessage = await response.text();
+//       throw new Error(errorMessage);
+//     }
+//   }
+
+//   if (contentType && contentType.includes("application/json")) {
+//     return await response.json();
+//   } else {
+//     return response.text();
+//   }
+// };
