@@ -192,13 +192,6 @@ public class TaskService {
     }
 
 
-
-
-
-
-
-
-
     @Transactional
     public ResponseEntity<TaskDDTO> removeTask(String boardId, Integer taskId) {
         // Fetch the task from the repository
@@ -224,65 +217,71 @@ public class TaskService {
 
     @Transactional
     public ResponseEntity<Object> updateTask(String boardId, Integer taskId, TaskUDTO updatedTaskDTO) {
-        // ตรวจสอบว่ามี Task ที่ต้องการหรือไม่
+        // Check if the Task exists
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist!"));
 
-        // ตรวจสอบว่า Task ที่จะอัปเดตเป็นของ Board ที่ถูกต้อง
+        // Verify if the Task belongs to the correct Board
         if (existingTask.getBoard() == null || !Objects.equals(existingTask.getBoard().getId(), boardId)) {
             throw new ItemNotFoundException("Task does not belong to Board with id " + boardId + "!");
         }
 
-        // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
+        // Create ValidationErrorException for validation checks
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
-        // ตรวจสอบ title ว่ามีค่าหรือไม่
+        // Validate the title
         if (updatedTaskDTO.getTitle() == null || updatedTaskDTO.getTitle().trim().isEmpty()) {
             validationErrors.addError("title", "must not be null or empty");
         }
 
-        // หากมี validation errors ให้โยน exception ออกไป
+        // Throw exception if there are validation errors
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
 
-        // ตรวจสอบ Status และจัดการข้อผิดพลาด
-        Status status = getDefaultStatus(boardId); // ค้นหา Status "no status" ที่ตรงกันสำหรับ boardId
+        // Handle Status
+        Status status = getDefaultStatus(boardId); // Default status for the board
 
         if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().trim().isEmpty()) {
             try {
-                // ค้นหาสถานะด้วยชื่อแทนการใช้ ID
-                String statusName = updatedTaskDTO.getStatus().trim();
-                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
-            } catch (Exception e) {
-                validationErrors.addError("status", "invalid status format or name");
+                // Find status by ID
+                Integer statusId = Integer.valueOf(updatedTaskDTO.getStatus().trim());
+                status = statusRepository.findByIdAndBoardId(statusId, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist for board id " + boardId));
+            } catch (NumberFormatException e) {
+                validationErrors.addError("status", "must be a valid number");
                 throw validationErrors;
             }
         }
 
-        // ตรวจสอบข้อจำกัดของจำนวน tasks ใน status
+        // Retrieve the status name
+        String statusName = status.getName(); // Assuming Status entity has a getName() method
+
+        // Check if the status has reached its task limit
         if (status.getGlobalSetting().isLimitMaximumTask() &&
                 taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            throw new StatusLimitReachedException("The status " + status.getName() + " has reached its maximum task limit.");
+            throw new StatusLimitReachedException("The status " + statusName + " has reached its maximum task limit.");
         }
 
-        // อัปเดต Task ด้วยข้อมูลใหม่
+        // Update Task with new data
         existingTask.setTitle(updatedTaskDTO.getTitle().trim());
         existingTask.setDescription(updatedTaskDTO.getDescription() != null && !updatedTaskDTO.getDescription().trim().isEmpty() ? updatedTaskDTO.getDescription().trim() : null);
         existingTask.setAssignees(updatedTaskDTO.getAssignees() != null && !updatedTaskDTO.getAssignees().trim().isEmpty() ? updatedTaskDTO.getAssignees().trim() : null);
-        existingTask.setStatus(status);  // อัปเดต status
+        existingTask.setStatus(status);  // Update status
         existingTask.setUpdatedOn(ZonedDateTime.now());
 
-        // บันทึก Task ที่อัปเดตแล้ว
+        // Save updated Task
         Task updatedTask = taskRepository.save(existingTask);
 
-        // แปลง Task ที่อัปเดตเป็น DTO
+        // Map updated Task to DTO
         TaskUDTO updatedTaskCDTO = modelMapper.map(updatedTask, TaskUDTO.class);
+        updatedTaskCDTO.setStatus(statusName); // Set the status name in the DTO
 
-        // ส่งผลลัพธ์กลับ
+        // Return updated Task
         return ResponseEntity.ok(updatedTaskCDTO);
     }
+
+
 
 
 
