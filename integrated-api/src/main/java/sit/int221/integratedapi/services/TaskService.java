@@ -127,20 +127,6 @@ public class TaskService {
             validationErrors.addError("boardId", "must not be null");
         }
 
-        // Check if status is provided and valid
-        String statusString = taskCDTO.getStatus();  // Get status as String from taskCDTO
-        Integer statusId;
-        try {
-            statusId = Integer.valueOf(statusString);  // Convert String to Integer
-        } catch (NumberFormatException e) {
-            validationErrors.addError("status", "must be a valid number");
-            statusId = null;
-        }
-
-        if (statusId == null || statusId <= 0) {
-            validationErrors.addError("status", "must be a valid positive number");
-        }
-
         // Throw exception if there are validation errors
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
@@ -150,12 +136,21 @@ public class TaskService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-        // Finalize statusId for use in lambda expressions
-        final Integer finalStatusId = statusId;
-
-        // Find Status by finalStatusId and boardId
-        Status status = statusRepository.findByIdAndBoardId(finalStatusId, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Status with id " + finalStatusId + " does not exist for board id " + boardId));
+        // Retrieve the status from taskCDTO, or use default status if not provided
+        Status status;
+        if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
+            try {
+                Integer statusId = Integer.valueOf(taskCDTO.getStatus().trim());
+                status = statusRepository.findByIdAndBoardId(statusId, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist for board id " + boardId));
+            } catch (NumberFormatException e) {
+                validationErrors.addError("status", "must be a valid number");
+                throw validationErrors;
+            }
+        } else {
+            // Use default 'no status' if no status provided
+            status = getDefaultStatus(boardId);
+        }
 
         // Retrieve the status name
         String statusName = status.getName(); // Assuming Status entity has a getName() method
@@ -184,12 +179,13 @@ public class TaskService {
         createdTaskCDTO.setTitle(createdTask.getTitle());
         createdTaskCDTO.setDescription(createdTask.getDescription());
         createdTaskCDTO.setAssignees(createdTask.getAssignees());
-        createdTaskCDTO.setStatus(status != null ? status.getName() : null);  // Use statusName instead of statusId
+        createdTaskCDTO.setStatus(statusName);  // Use statusName instead of statusId
         createdTaskCDTO.setBoardId(createdTask.getBoard() != null ? createdTask.getBoard().getId() : null);
 
         // Respond with HTTP Status 201 and the created task data
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
+
 
 
     @Transactional
