@@ -17,4 +17,5 @@ public class StatusUDTO {
     private String colorCode;
     private String createdOn;
     private String updatedOn;
+    private String boardId;
 }

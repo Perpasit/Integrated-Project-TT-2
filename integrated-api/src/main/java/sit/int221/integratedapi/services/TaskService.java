@@ -52,7 +52,7 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public TaskRDTO getTaskDetailsById(Integer boardId, Integer taskId, String oid) {
+    public TaskRDTO getTaskDetailsById(String boardId, Integer taskId, String oid) {
         Task task = getTaskById(taskId);
         Board board = task.getBoard();
 
@@ -60,15 +60,23 @@ public class TaskService {
             throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
         }
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
         return modelMapper.map(task, TaskRDTO.class);
     }
 
+    public void validateBoardOwnership(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-    public ResponseEntity<Object> getAllTasks(Integer boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
+        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        }
+    }
+    public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -103,8 +111,9 @@ public class TaskService {
     }
 
 
+
     @Transactional
-    public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO, Integer boardId) {
+    public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO, String boardId) {
         // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
@@ -133,11 +142,12 @@ public class TaskService {
         // ตรวจสอบและตั้งค่า status หากได้รับ status จาก DTO
         if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
             try {
-                Integer statusId = Integer.valueOf(taskCDTO.getStatus());
-                status = statusRepository.findById(statusId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist!"));
-            } catch (NumberFormatException e) {
-                validationErrors.addError("status", "invalid status format");
+                // ค้นหาสถานะด้วยชื่อแทน ID
+                String statusName = taskCDTO.getStatus().trim();
+                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
+            } catch (Exception e) {
+                validationErrors.addError("status", "invalid status format or name");
                 throw validationErrors;
             }
         }
@@ -174,7 +184,7 @@ public class TaskService {
 
 
     @Transactional
-    public ResponseEntity<TaskDDTO> removeTask(Integer boardId, Integer taskId) {
+    public ResponseEntity<TaskDDTO> removeTask(String boardId, Integer taskId) {
         // Fetch the task from the repository
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist!"));
@@ -197,17 +207,17 @@ public class TaskService {
 
 
     @Transactional
-    public ResponseEntity<Object> updateTask(Integer boardId, Integer taskId, TaskUDTO updatedTaskDTO) {
+    public ResponseEntity<Object> updateTask(String boardId, Integer taskId, TaskUDTO updatedTaskDTO) {
         // ตรวจสอบว่ามี Task ที่ต้องการหรือไม่
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist!"));
 
         // ตรวจสอบว่า Task ที่จะอัปเดตเป็นของ Board ที่ถูกต้อง
         if (existingTask.getBoard() == null || !Objects.equals(existingTask.getBoard().getId(), boardId)) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new ItemNotFoundException("Task does not belong to Board with id " + boardId + "!");
         }
 
-        // ตรวจสอบความถูกต้องของข้อมูล
+        // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
         // ตรวจสอบ title ว่ามีค่าหรือไม่
@@ -221,21 +231,16 @@ public class TaskService {
         }
 
         // ตรวจสอบ Status และจัดการข้อผิดพลาด
-        Status status = getDefaultStatus(boardId); // ต้องใช้ boardId สำหรับการค้นหา Status "no status" ที่ตรงกัน
+        Status status = getDefaultStatus(boardId); // ค้นหา Status "no status" ที่ตรงกันสำหรับ boardId
 
         if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().trim().isEmpty()) {
             try {
-                // ดึงค่า status จาก ID ที่ได้รับมา และตรวจสอบว่า status ที่ได้เป็นของ board เดียวกันหรือไม่
-                Integer statusId = Integer.valueOf(updatedTaskDTO.getStatus());
-                status = statusRepository.findById(statusId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist!"));
-
-                // ตรวจสอบว่า status นั้นเป็นของ board ที่ถูกต้อง
-                if (!Objects.equals(status.getBoard().getId(), boardId)) {
-                    throw new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status does not belong to the specified board!");
-                }
-            } catch (NumberFormatException e) {
-                validationErrors.addError("status", "invalid status format");
+                // ค้นหาสถานะด้วยชื่อแทนการใช้ ID
+                String statusName = updatedTaskDTO.getStatus().trim();
+                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
+            } catch (Exception e) {
+                validationErrors.addError("status", "invalid status format or name");
                 throw validationErrors;
             }
         }
@@ -264,7 +269,9 @@ public class TaskService {
     }
 
 
-    private Status getDefaultStatus(Integer boardId) {
+
+
+    private Status getDefaultStatus(String boardId) {
         return statusRepository.findByNameIgnoreCaseAndBoardId("no status", boardId)
                 .orElseThrow(() -> new IllegalStateException("Default 'no status' for board " + boardId + " not found in the database"));
     }
@@ -280,7 +287,7 @@ public class TaskService {
         task.setUpdatedOn(ZonedDateTime.now());
     }
 
-    public ResponseEntity<Object> getTasksByBoardId(Integer boardId, String sortBy, List<String> filterStatuses) {
+    public ResponseEntity<Object> getTasksByBoardId(String boardId, String sortBy, List<String> filterStatuses) {
         // Return an empty list if any status contains '#'
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
@@ -312,7 +319,7 @@ public class TaskService {
 
 
 
-    public boolean isBoardOwnedByOid(Integer boardId, String oidFromToken) {
+    public boolean isBoardOwnedByOid(String boardId, String oidFromToken) {
         // Fetch the board by ID
         Optional<Board> boardOptional = boardRepository.findById(boardId);
 
@@ -324,7 +331,7 @@ public class TaskService {
         Board board = boardOptional.get();
 
         // Fetch the TaskUser associated with the board's taskusersOid
-        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getTaskusersOid()));
+        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getOwnerId()));
 
         // If the taskUser is found, check if it matches the OID
         return taskUserOptional.isPresent() && taskUserOptional.get().getOid().equals(oidFromToken);
@@ -332,7 +339,7 @@ public class TaskService {
 
 
     // Method to fetch tasks by boardId
-    public List<TaskRDTO> getTasksByBoardId(Integer boardId) {
+    public List<TaskRDTO> getTasksByBoardId(String boardId) {
         // Fetch tasks by boardId (directly, without Optional)
         List<Task> tasks = taskRepository.findByBoardId(boardId);
 

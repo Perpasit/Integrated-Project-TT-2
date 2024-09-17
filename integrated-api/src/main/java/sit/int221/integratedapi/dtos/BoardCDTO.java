@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoardCDTO {
-    private Integer id;
+    private String boardId;
     private String name;
+    private OwnerDTO owner;
 }

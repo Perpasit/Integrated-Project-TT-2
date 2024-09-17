@@ -18,7 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.integratedapi.dtos.JwtRequestUser;
-import sit.int221.integratedapi.dtos.UserDTO;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.AuthenticationException;
@@ -27,9 +26,9 @@ import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/login")
@@ -74,11 +73,10 @@ public class UserController {
             TaskUser taskUser = new TaskUser();
             taskUser.setOid(user.getOid()); // Set OID from User entity
             taskUser.setUsername(jwtRequestUser.getUserName());
-            taskUser.setName(user.getName()); // You might need to fetch user details from the User entity
-            taskUser.setEmail(user.getEmail()); // You might need to fetch user details from the User entity
-            taskUser.setRole(user.getRole()); // You might need to fetch user details from the User entity
-            taskUser.setToken(token);
-            taskUser.setCreatedOn(java.time.LocalDateTime.now().toString()); // Set current timestamp
+            taskUser.setName(user.getName()); // Fetch user details from the User entity
+            taskUser.setEmail(user.getEmail()); // Fetch user details from the User entity
+            taskUser.setCreatedOn(ZonedDateTime.now()); // Set current timestamp using ZonedDateTime
+            taskUser.setUpdatedOn(ZonedDateTime.now()); // Update timestamp using ZonedDateTime
 
             // Save or update TaskUser
             taskUserService.saveOrUpdateTaskUser(taskUser);
@@ -97,10 +95,6 @@ public class UserController {
                     .body("There is a problem. Please try again later.");
         }
     }
-
-
-
-
 
     @GetMapping("/validate-token")
     public ResponseEntity<Object> validateToken(@RequestHeader("Authorization") String requestTokenHeader) {
@@ -123,9 +117,6 @@ public class UserController {
         }
     }
 
-
-
-
     @GetMapping("/{username}")
     public ResponseEntity<Object> getUserByUsername(@PathVariable("username") String username) {
         try {
@@ -144,6 +135,7 @@ public class UserController {
                     .body("There is a problem. Please try again later.");
         }
     }
+
     @GetMapping("")
     public ResponseEntity<Object> getAllUsers() {
         try {

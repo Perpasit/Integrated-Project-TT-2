@@ -12,13 +12,13 @@ import java.util.Optional;
 @Repository
 public interface StatusRepository extends JpaRepository<Status, Integer> {
     Optional<Status> findByNameIgnoreCase(String name);
-    List<Status> findByBoardId(Integer boardId);
+    List<Status> findByBoardId(String boardId);
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Status s WHERE LOWER(s.name) = LOWER(:name)")
     boolean existsByNameIgnoreCase(@Param("name") String name);
 
-    Optional<Status> findByIdAndBoardId(Integer statusId, Integer boardId);
+    Optional<Status> findByIdAndBoardId(Integer statusId, String boardId);
 
-    Optional<Status> findByNameIgnoreCaseAndBoardId(String name, Integer boardId);
-    boolean existsByNameAndBoardId(String name, Integer boardId);
+    Optional<Status> findByNameIgnoreCaseAndBoardId(String name, String boardId);
+    boolean existsByNameAndBoardId(String name, String boardId);
 
 }

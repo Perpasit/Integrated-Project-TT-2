@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface BoardRepository extends JpaRepository<Board, Integer> {
-    List<Board> findByTaskusersOid(String taskusersOid);
-    boolean existsByTaskusersOid(String taskusersOid);
+public interface BoardRepository extends JpaRepository<Board, String> {
+    List<Board> findByOwnerId(String taskusersOid);
+    boolean existsByOwnerId(String taskusersOid);
 
 }
