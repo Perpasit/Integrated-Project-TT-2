@@ -60,14 +60,22 @@ public class TaskService {
             throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
         }
 
-        if (!board.getTaskusersOid().equals(oid)) {
+        if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
         return modelMapper.map(task, TaskRDTO.class);
     }
 
+    public void validateBoardOwnership(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
+        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        }
+    }
     public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
@@ -103,6 +111,7 @@ public class TaskService {
     }
 
 
+
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO, String boardId) {
         // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
@@ -133,11 +142,12 @@ public class TaskService {
         // ตรวจสอบและตั้งค่า status หากได้รับ status จาก DTO
         if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
             try {
-                Integer statusId = Integer.valueOf(taskCDTO.getStatus());
-                status = statusRepository.findById(statusId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist!"));
-            } catch (NumberFormatException e) {
-                validationErrors.addError("status", "invalid status format");
+                // ค้นหาสถานะด้วยชื่อแทน ID
+                String statusName = taskCDTO.getStatus().trim();
+                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
+            } catch (Exception e) {
+                validationErrors.addError("status", "invalid status format or name");
                 throw validationErrors;
             }
         }
@@ -204,10 +214,10 @@ public class TaskService {
 
         // ตรวจสอบว่า Task ที่จะอัปเดตเป็นของ Board ที่ถูกต้อง
         if (existingTask.getBoard() == null || !Objects.equals(existingTask.getBoard().getId(), boardId)) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new ItemNotFoundException("Task does not belong to Board with id " + boardId + "!");
         }
 
-        // ตรวจสอบความถูกต้องของข้อมูล
+        // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
         // ตรวจสอบ title ว่ามีค่าหรือไม่
@@ -221,21 +231,16 @@ public class TaskService {
         }
 
         // ตรวจสอบ Status และจัดการข้อผิดพลาด
-        Status status = getDefaultStatus(boardId); // ต้องใช้ boardId สำหรับการค้นหา Status "no status" ที่ตรงกัน
+        Status status = getDefaultStatus(boardId); // ค้นหา Status "no status" ที่ตรงกันสำหรับ boardId
 
         if (updatedTaskDTO.getStatus() != null && !updatedTaskDTO.getStatus().trim().isEmpty()) {
             try {
-                // ดึงค่า status จาก ID ที่ได้รับมา และตรวจสอบว่า status ที่ได้เป็นของ board เดียวกันหรือไม่
-                Integer statusId = Integer.valueOf(updatedTaskDTO.getStatus());
-                status = statusRepository.findById(statusId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist!"));
-
-                // ตรวจสอบว่า status นั้นเป็นของ board ที่ถูกต้อง
-                if (!Objects.equals(status.getBoard().getId(), boardId)) {
-                    throw new ValidationErrorException(HttpStatus.BAD_REQUEST, "Status does not belong to the specified board!");
-                }
-            } catch (NumberFormatException e) {
-                validationErrors.addError("status", "invalid status format");
+                // ค้นหาสถานะด้วยชื่อแทนการใช้ ID
+                String statusName = updatedTaskDTO.getStatus().trim();
+                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
+            } catch (Exception e) {
+                validationErrors.addError("status", "invalid status format or name");
                 throw validationErrors;
             }
         }
@@ -262,6 +267,8 @@ public class TaskService {
         // ส่งผลลัพธ์กลับ
         return ResponseEntity.ok(updatedTaskCDTO);
     }
+
+
 
 
     private Status getDefaultStatus(String boardId) {
@@ -324,7 +331,7 @@ public class TaskService {
         Board board = boardOptional.get();
 
         // Fetch the TaskUser associated with the board's taskusersOid
-        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getTaskusersOid()));
+        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getOwnerId()));
 
         // If the taskUser is found, check if it matches the OID
         return taskUserOptional.isPresent() && taskUserOptional.get().getOid().equals(oidFromToken);

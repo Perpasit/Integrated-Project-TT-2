@@ -2,10 +2,12 @@ package sit.int221.integratedapi.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "tasks", schema = "integrateddatabase")
 @Getter
 @Setter
 @Builder
@@ -14,30 +16,30 @@ import java.time.ZonedDateTime;
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "taskId")
+    @Column(name = "id")
     private Integer id;
 
-    @Column(name = "taskTitle", length = 100, nullable = false)
+    @Column(name = "title", length = 100, nullable = false)
     private String title;
 
-    @Column(name = "taskDescription", length = 500)
+    @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "taskAssignees", length = 30)
+    @Column(name = "assignees", length = 30)
     private String assignees;
 
     @ManyToOne
-    @JoinColumn(name = "statusId", foreignKey = @ForeignKey(name = "fk_status"))
+    @JoinColumn(name = "status_id", foreignKey = @ForeignKey(name = "fk_tasks_statuses"))
     private Status status;
 
-    @Column(name = "createdOn", nullable = false)
+    @Column(name = "created_on", nullable = false)
     private ZonedDateTime createdOn;
 
-    @Column(name = "updatedOn", nullable = false)
+    @Column(name = "updated_on", nullable = false)
     private ZonedDateTime updatedOn;
 
     @ManyToOne
-    @JoinColumn(name = "boardId", foreignKey = @ForeignKey(name = "fk_tasks_boards1"))
+    @JoinColumn(name = "board_id", nullable = false, foreignKey = @ForeignKey(name = "fk_tasks_boards"))
     private Board board;
 
     @PrePersist

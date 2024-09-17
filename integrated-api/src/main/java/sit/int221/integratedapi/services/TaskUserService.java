@@ -24,7 +24,7 @@ public class TaskUserService {
         TaskUser existingUser = taskUserRepository.findByOid(taskUser.getOid());
         if (existingUser != null) {
             // Update existing user
-            existingUser.setToken(taskUser.getToken());
+            existingUser.setUsername(taskUser.getUsername());
             taskUserRepository.save(existingUser);
         } else {
             // Insert new user
