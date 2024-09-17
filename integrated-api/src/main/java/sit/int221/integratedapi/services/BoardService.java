@@ -120,9 +120,15 @@ public class BoardService {
         for (StatusCDTO statusCDTO : defaultStatuses) {
             statusService.createStatus(board.getId(), statusCDTO);
         }
+        String ownerId = board.getOwnerId(); // Store ownerId in a final variable
+        TaskUser taskUser = taskUserRepository.findById(ownerId)
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
-        // Return created board
-        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName());
+
+        OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+
+        // Create and return BoardCDTO
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), ownerDTO);
         return createdBoardCDTO;
     }
 
@@ -153,23 +159,35 @@ public class BoardService {
 
     @Transactional
     public BoardCDTO updateBoard(String boardId, BoardCDTO boardCDTO, String oid) {
+        // Fetch the board by ID
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
+        // Check if the user owns the board
         if (!board.getOwnerId().equals(oid)) {
             throw new BoardOwnershipException("User does not own this board.");
         }
 
-        // Update the board's name if it's valid
+        // Validate and update the board's name
         if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
             board.setName(boardCDTO.getName());
-            boardRepository.save(board);
+            board = boardRepository.save(board); // Ensure the updated board is saved
         } else {
-            throw new IllegalArgumentException("Invalid board name.");
+            throw new IllegalArgumentException("Board name must not be null, empty, or exceed 120 characters.");
         }
 
-        return new BoardCDTO(board.getId(), board.getName());
+        // Fetch owner details to include in the response
+        String ownerId = board.getOwnerId(); // Store ownerId in a final variable
+        TaskUser taskUser = taskUserRepository.findById(ownerId)
+                .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
+
+
+        OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+
+        // Return updated BoardCDTO with owner information
+        return new BoardCDTO(board.getId(), board.getName(), ownerDTO);
     }
+
 
     @Transactional
     public BoardDTO deleteBoard(String boardId, String oid) {
