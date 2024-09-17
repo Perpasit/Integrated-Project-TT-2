@@ -114,68 +114,84 @@ public class TaskService {
 
     @Transactional
     public ResponseEntity<Object> createNewTask(TaskCDTO taskCDTO, String boardId) {
-        // สร้าง ValidationErrorException สำหรับตรวจสอบ validation
+        // Create ValidationErrorException to check validation
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
-        // ตรวจสอบ title ว่ามีค่าหรือไม่
+        // Check if the title is provided
         if (taskCDTO.getTitle() == null || taskCDTO.getTitle().trim().isEmpty()) {
             validationErrors.addError("title", "must not be null or empty");
         }
 
-        // ตรวจสอบ boardId ว่ามีค่าหรือไม่
+        // Check if boardId is provided
         if (boardId == null) {
             validationErrors.addError("boardId", "must not be null");
         }
 
-        // หากมี validation errors ให้โยน exception ออกไป
+        // Check if status is provided and valid
+        String statusString = taskCDTO.getStatus();  // Get status as String from taskCDTO
+        Integer statusId;
+        try {
+            statusId = Integer.valueOf(statusString);  // Convert String to Integer
+        } catch (NumberFormatException e) {
+            validationErrors.addError("status", "must be a valid number");
+            statusId = null;
+        }
+
+        if (statusId == null || statusId <= 0) {
+            validationErrors.addError("status", "must be a valid positive number");
+        }
+
+        // Throw exception if there are validation errors
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
         }
 
-        // ค้นหา Board ที่ต้องการ
+        // Find the Board by boardId
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-        // ค้นหา Default Status ด้วยชื่อ "no status" และ boardId
-        Status status = getDefaultStatus(boardId);
+        // Finalize statusId for use in lambda expressions
+        final Integer finalStatusId = statusId;
 
-        // ตรวจสอบและตั้งค่า status หากได้รับ status จาก DTO
-        if (taskCDTO.getStatus() != null && !taskCDTO.getStatus().trim().isEmpty()) {
-            try {
-                // ค้นหาสถานะด้วยชื่อแทน ID
-                String statusName = taskCDTO.getStatus().trim();
-                status = statusRepository.findByNameIgnoreCaseAndBoardId(statusName, boardId)
-                        .orElseThrow(() -> new ItemNotFoundException("Status with name '" + statusName + "' does not exist for board id " + boardId));
-            } catch (Exception e) {
-                validationErrors.addError("status", "invalid status format or name");
-                throw validationErrors;
-            }
-        }
+        // Find Status by finalStatusId and boardId
+        Status status = statusRepository.findByIdAndBoardId(finalStatusId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Status with id " + finalStatusId + " does not exist for board id " + boardId));
 
-        // ตรวจสอบว่า status มีการจำกัดจำนวน task หรือไม่
+        // Retrieve the status name
+        String statusName = status.getName(); // Assuming Status entity has a getName() method
+
+        // Check if the status has a task limit and if it's reached
         if (status.getGlobalSetting().isLimitMaximumTask() &&
                 taskRepository.countByStatusId(status.getId()) >= status.getGlobalSetting().getMaximumTaskLimit()) {
-            throw new StatusLimitReachedException("The status " + status.getName() + " has reached its maximum task limit.");
+            throw new StatusLimitReachedException("The status " + statusName + " has reached its maximum task limit.");
         }
 
-        // สร้าง Task ใหม่
+        // Create a new Task
         Task task = new Task();
         task.setTitle(taskCDTO.getTitle().trim());
-        task.setStatus(status);  // ตั้งค่า status
+        task.setStatus(status);  // Set the status entity
         task.setDescription(taskCDTO.getDescription() != null && !taskCDTO.getDescription().trim().isEmpty() ? taskCDTO.getDescription().trim() : null);
         task.setAssignees(taskCDTO.getAssignees() != null && !taskCDTO.getAssignees().trim().isEmpty() ? taskCDTO.getAssignees().trim() : null);
-        task.setBoard(board);  // ตั้งค่า board
-        setDefaultValuesForTask(task);  // ตั้งค่า default values
+        task.setBoard(board);  // Set the board
+        setDefaultValuesForTask(task);  // Set default values
 
-        // บันทึก task ลงฐานข้อมูล
+        // Save the task to the database
         Task createdTask = taskRepository.save(task);
 
-        // แปลง Task เป็น TaskCDTO สำหรับการตอบกลับ
-        TaskCDTO createdTaskCDTO = modelMapper.map(createdTask, TaskCDTO.class);
+        // Manually map Task to TaskCDTO
+        TaskCDTO createdTaskCDTO = new TaskCDTO();
+        createdTaskCDTO.setId(createdTask.getId());
+        createdTaskCDTO.setTitle(createdTask.getTitle());
+        createdTaskCDTO.setDescription(createdTask.getDescription());
+        createdTaskCDTO.setAssignees(createdTask.getAssignees());
+        createdTaskCDTO.setStatus(status != null ? status.getName() : null);  // Use statusName instead of statusId
+        createdTaskCDTO.setBoardId(createdTask.getBoard() != null ? createdTask.getBoard().getId() : null);
 
-        // ตอบกลับ HTTP Status 201 พร้อมข้อมูล task ที่สร้างใหม่
+        // Respond with HTTP Status 201 and the created task data
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTaskCDTO);
     }
+
+
 
 
 
