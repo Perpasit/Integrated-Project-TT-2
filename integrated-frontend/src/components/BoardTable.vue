@@ -63,8 +63,8 @@ const openAddEditBoardModal = (board = null) => {
 };
 
 const navigateToTasks = (board) => {
-  if (board && board.id) {
-    router.push({ name: "home", params: { boardId: board.id } });
+  if (board && board.boardId) {
+    router.push({ name: "home", params: { boardId: board.boardId } });
   }
 };
 

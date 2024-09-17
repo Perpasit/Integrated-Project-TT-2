@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
-import { useRouter } from "vue-router";
 
 export const useStatusStore = defineStore("status", {
   state: () => ({
@@ -34,37 +33,26 @@ export const useStatusStore = defineStore("status", {
 
   actions: {
     async fetchAllStatuses(boardId) {
-      const router = useRouter();
       try {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
         this.statuses = data || [];
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error fetching statuses:", error);
-        }
+        console.error("Error fetching statuses:", error);
       }
     },
 
     async deleteStatusTransfer(boardId, id, newId) {
-      const router = useRouter();
       try {
         const deletedStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/${newId}`);
         this.statuses = this.statuses.filter((status) => status.id !== id);
         return deletedStatus;
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error deleting and transferring status:", error);
-          throw error;
-        }
+        console.error("Error deleting and transferring status:", error);
+        throw error;
       }
     },
 
     async createStatus(boardId, newStatus) {
-      const router = useRouter();
       try {
         const formattedStatus = {
           name: newStatus.name,
@@ -75,17 +63,12 @@ export const useStatusStore = defineStore("status", {
         this.statuses.push(createdStatus);
         return createdStatus;
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error creating status:", error);
-          throw error;
-        }
+        console.error("Error creating status:", error);
+        throw error;
       }
     },
 
     async updateStatus(boardId, id, updatedStatus) {
-      const router = useRouter();
       try {
         const formattedStatus = {
           name: updatedStatus.name,
@@ -99,43 +82,35 @@ export const useStatusStore = defineStore("status", {
         }
         return updatedData;
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error updating status:", error);
-          throw error;
-        }
+        console.error("Error updating status:", error);
+        throw error;
       }
     },
 
     async deleteStatus(boardId, id) {
-      const router = useRouter();
       try {
         const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/tasks`);
+        console.log(response);
         if (!response.ok) {
-          if (response.status === 401) {
-            router.push({ name: 'login' }); // Redirect to login page
-          } else if (response.status === 404) {
+          if (response.status === 404) {
             return { notFound: true };
           } else {
             throw new Error('Failed to fetch tasks');
           }
         }
         const tasks = await response.json();
+        
         if (tasks.length > 0) {
           return { needsTransfer: true, statusId: id };
         } else {
           const deleteStatus = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`);
+          
           this.statuses = this.statuses.filter((status) => status.id !== id);
           return deleteStatus;
         }
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error deleting status:", error);
-          throw error;
-        }
+        console.error("Error deleting status:", error);
+        throw error;
       }
     }
   }

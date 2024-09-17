@@ -19,12 +19,19 @@ const generalSetting = computed(
 const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
 
 const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId
+    await fetchTaskAndStatus(boardId) // Refetch when board changes
+  }
+)
 
 watch(generalSetting, (newValue) => {
   isLimitEnabled.value = newValue?.limitMaximumTask
   maxTasks.value = newValue?.maximumTaskLimit
 })
-const boardId = parseInt(route.params.boardId);
+const boardId = route.params.boardId
 const props = defineProps({
   mode: {
     type: String,
@@ -132,8 +139,8 @@ async function saveTask() {
     if (props.mode === "edit") {
       const taskId = router.currentRoute.value.params.id
       if (taskId) {
-        await taskStore.updateTask(boardId,taskId, updatedTask)
-        fetchTaskAndStatus()
+        await taskStore.updateTask(boardId, taskId, updatedTask)
+        fetchTaskAndStatus(boardId)
         modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
       } else {
         console.error("The task does not exist.")
@@ -149,9 +156,10 @@ async function saveTask() {
           : "",
         status: editedTask.value.status,
       }
-      await taskStore.addTask(boardId,newTask)
-      fetchTaskAndStatus()
-      router.push({name:"home"})
+      console.log(boardId , newTask)
+      await taskStore.addTask(boardId, newTask)
+      fetchTaskAndStatus(boardId)
+      router.push({ name: "home" })
       modalStore.openTaskSuccessModal(newTask.title, props.mode)
 
       const status = statusStore.statuses.find((s) => s.id === newTask.status)
@@ -161,8 +169,8 @@ async function saveTask() {
 
       closeModal()
     }
-    router.push({name:"home"})
-    fetchTaskAndStatus()
+    router.push({ name: "home" })
+    fetchTaskAndStatus(boardId)
   } catch (error) {
     errorMessage.value = error.message
   }
@@ -183,7 +191,7 @@ const formatStatus = (status) => {
 }
 
 function closeModal() {
-  router.push({name:"home"})
+  router.push({ name: "home" })
   resetForm()
   taskStore.fetchAllTasks(boardId)
 }
@@ -197,17 +205,17 @@ const getStatusUsage = (statusId) => {
     ) {
       return ""
     }
-    return `${status.noOfTasks}/${maxTasks.value} tasks`
+    return `${status.noOfTasks || 0}/${maxTasks.value || 0} tasks`
   }
   return "0/0 tasks"
 }
 
-const fetchTaskAndStatus = async () => {
+const fetchTaskAndStatus = async (boardId) => {
   await statusStore.fetchAllStatuses(boardId)
   await taskStore.fetchAllTasks(boardId)
 }
 onMounted(async () => {
-  fetchTaskAndStatus()
+  fetchTaskAndStatus(boardId)
 })
 </script>
 
@@ -297,6 +305,7 @@ onMounted(async () => {
                     v-for="status in statusStore.statuses"
                     :key="status.id"
                     :value="status.id"
+                    
                   >
                     {{ formatStatus(status.name) }}
                   </option>

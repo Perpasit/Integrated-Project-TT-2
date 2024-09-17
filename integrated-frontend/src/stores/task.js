@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
-import { useRouter } from "vue-router";
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
@@ -14,24 +13,18 @@ export const useTaskStore = defineStore("task", {
   },
   actions: {
     async fetchAllTasks(boardId) {
-      const router = useRouter();
       try {
         const data = await getItems(
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
         );
         this.tasks = data || [];
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error fetching tasks:", error);
-          throw error;
-        }
+        console.error("Error fetching tasks:", error);
+        throw error;
       }
     },
     
     async addTask(boardId, newTask) {
-      const router = useRouter();
       try {
         const formattedTask = {
           title: newTask.title.trim(),
@@ -43,19 +36,15 @@ export const useTaskStore = defineStore("task", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks`,
           formattedTask
         );
-        this.tasks.push(createdTask);
+        console.log(createdTask)
+        this.tasks.push(createdTask.value);
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error adding task:", error);
-          throw error;
-        }
+        console.error("Error adding task:", error);
+        throw error;
       }
     },
     
     async updateTask(boardId, id, updatedTask) {
-      const router = useRouter();
       try {
         const formattedTask = {
           title: updatedTask.title.trim(),
@@ -72,28 +61,19 @@ export const useTaskStore = defineStore("task", {
           this.tasks.splice(index, 1, updatedData);
         }
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error updating task:", error);
-          throw error;
-        }
+        console.error("Error updating task:", error);
+        throw error;
       }
     },
     
     async deleteTask(boardId, id) {
-      const router = useRouter();
       try {
         const response = await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`);
         this.tasks = this.tasks.filter((task) => task.id !== id);
         return response;
       } catch (error) {
-        if (error.response?.status === 401) {
-          router.push({ name: 'login' }); // Redirect to login page
-        } else {
-          console.error("Error deleting task:", error);
-          throw error;
-        }
+        console.error("Error deleting task:", error);
+        throw error;
       }
     },
     
