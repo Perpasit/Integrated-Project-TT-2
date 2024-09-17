@@ -2,7 +2,7 @@
 import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
-import { useRouter , useRoute } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 import { getItems } from "../utils/fetch"
 
 const router = useRouter()
@@ -15,7 +15,7 @@ const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
 const isDescriptionTooLong = computed(
   () => editedStatus.value.description.length > 200
 )
-const boardId = parseInt(route.params.boardId);
+const boardId = route.params.boardId
 const props = defineProps({
   mode: {
     type: String,
@@ -63,7 +63,9 @@ watch(
     if (props.mode === "edit") {
       try {
         const response = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+          `${
+            import.meta.env.VITE_API_ENDPOINTV3
+          }/boards/${boardId}/statuses/${id}`
         )
         console.log(response)
         if (response.status === 404) {
@@ -115,7 +117,7 @@ async function saveStatus() {
     if (props.mode === "edit") {
       const statusId = router.currentRoute.value.params.id
       if (statusId) {
-        await statusStore.updateStatus(boardId,statusId, updatedStatus)
+        await statusStore.updateStatus(boardId, statusId, updatedStatus)
         fetchStatus()
         emit("statusSaved")
         modalStore.openStatusSuccessModal(
@@ -132,7 +134,7 @@ async function saveStatus() {
         console.error("The status does not exist.")
       }
     } else {
-      await statusStore.createStatus(boardId,updatedStatus)
+      await statusStore.createStatus(boardId, updatedStatus)
       fetchStatus()
       modalStore.openStatusSuccessModal(
         updatedStatus.name,

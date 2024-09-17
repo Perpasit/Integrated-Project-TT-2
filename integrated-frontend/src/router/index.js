@@ -24,7 +24,6 @@ const router = createRouter({
       name: "Login", 
       component: Login,
     },
-
     {
       path: "/board",
       name: "Board",
@@ -107,7 +106,7 @@ const router = createRouter({
         },
       ]
     },
-
+    
     {
       path: "/:pathMatch(.)",
       name: "NotFound",
