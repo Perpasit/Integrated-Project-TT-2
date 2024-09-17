@@ -18,7 +18,7 @@ const selectedStatus = ref(null)
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 
-let selectedStatusToDelete = ref(null)
+let selectedStatusToDelete = null
 
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
@@ -173,14 +173,13 @@ const getStatusColor = (status) => {
 const handleDeleteClick = (status) => {
   console.log("status",status)
   console.log("statusid",status.id)
-  selectedStatusToDelete.value = status.id;
-  console.log(selectedStatus)
+
   if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
     showCannotEditDeleteModal.value = true;
-    
+    selectedStatusToDelete = status;
   } else {
     showDeleteConfirmationModal.value = true;
-    selectedStatusToDelete.value = status;
+    selectedStatusToDelete = status;
   }
 };
 

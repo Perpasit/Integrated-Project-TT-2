@@ -36,6 +36,7 @@ export const useUserStore = defineStore('user', {
       this.isAuthenticated = false;
       this.token = '';
       localStorage.removeItem('userStore');
+      localStorage.removeItem('isLimitEnabled');
     },
 
     saveToLocalStorage() {
