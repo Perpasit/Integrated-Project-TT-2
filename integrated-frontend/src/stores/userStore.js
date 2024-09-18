@@ -47,7 +47,7 @@ export const useUserStore = defineStore('user', {
       this.token = '';
       localStorage.removeItem('userStore');
       localStorage.removeItem('isLimitEnabled');
-      router.push('/login');
+      router.push({name:"Login"});
     },
 
     saveToLocalStorage() {
