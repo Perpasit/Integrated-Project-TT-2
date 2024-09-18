@@ -1,93 +1,99 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useBoardStore } from "../stores/boardStore";
-import AddEditBoard from './AddEditBoard.vue'; // Add this import
+import { ref, onMounted } from "vue"
+import { useRouter } from "vue-router"
+import { useUserStore } from "../stores/userStore"
+import { useBoardStore } from "../stores/boardStore"
+import AddEditBoard from "./AddEditBoard.vue"
 
-const router = useRouter();
-const boardStore = useBoardStore();
-const boards = ref([]);
+const router = useRouter()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
+const boards = ref([])
 
-const showDeleteConfirmation = ref(false);
-let selectedBoardToDelete = null;
-const showSuccessModal = ref(false);
-const showNotFoundModal = ref(false);
-const showAddEditBoardModal = ref(false); // New ref for AddEditBoard modal
-const selectedBoard = ref(null); // New ref to hold the board being edited
+const showDeleteConfirmation = ref(false)
+let selectedBoardToDelete = null
+const showSuccessModal = ref(false)
+const showNotFoundModal = ref(false)
+const showAddEditBoardModal = ref(false)
+const selectedBoard = ref(null)
 
 const editBoard = (board) => {
-  selectedBoard.value = board;
-  showAddEditBoardModal.value = true;
-};
+
+    selectedBoard.value = board
+    showAddEditBoardModal.value = true
+}
 
 const confirmDelete = (board) => {
-  selectedBoardToDelete = board;
-  showDeleteConfirmation.value = true;
-};
+
+    selectedBoardToDelete = board
+    showDeleteConfirmation.value = true
+
+}
 
 const deleteBoard = async () => {
-  showDeleteConfirmation.value = false;
-  try {
-    await boardStore.deleteBoard(selectedBoardToDelete.boardId);
-    c
-    showSuccessModal.value = true;
-    selectedBoardToDelete = null;
-    fetchBoards();
 
-    setTimeout(() => {
-      closeDeleteModal();
-    }, 3000);
-  } catch (error) {
-    if (error.message.includes("does not exist")) {
-      showNotFoundModal.value = true;
-      fetchBoards();
+    showDeleteConfirmation.value = false
+    try {
+      await boardStore.deleteBoard(selectedBoardToDelete.boardId)
+      showSuccessModal.value = true
+      selectedBoardToDelete = null
+      await fetchBoards()
+
       setTimeout(() => {
-        closeDeleteModal();
-      }, 3000);
+        closeDeleteModal()
+      }, 3000)
+    } catch (error) {
+      if (error.message.includes("does not exist")) {
+        showNotFoundModal.value = true
+        await fetchBoards()
+        setTimeout(() => {
+          closeDeleteModal()
+        }, 3000)
+      }
     }
-  }
-  fetchBoards();
-};
+
+}
 
 function closeDeleteModal() {
-  showSuccessModal.value = false;
-  showNotFoundModal.value = false;
+  showSuccessModal.value = false
+  showNotFoundModal.value = false
 }
 
 const cancelDelete = () => {
-  selectedBoardToDelete = null;
-  showDeleteConfirmation.value = false;
-};
+
+    selectedBoardToDelete = null
+    showDeleteConfirmation.value = false
+ 
+}
 
 const openAddEditBoardModal = (board = null) => {
-  selectedBoard.value = board;
-  showAddEditBoardModal.value = true;
-};
+
+    selectedBoard.value = board
+    showAddEditBoardModal.value = true
+
+}
 
 const navigateToTasks = (board) => {
-  if (board && board.boardId) {
-    router.push({ name: "home", params: { boardId: board.boardId } });
-  }
-};
+
+    if (board && board.boardId) {
+      router.push({ name: "home", params: { boardId: board.boardId } })
+    }
+
+}
 
 const fetchBoards = async () => {
-  try {
-    await boardStore.fetchAllBoards();
-    boards.value = boardStore.getBoards;
-    // if (boards.value.length >= 1) {
-    //   const firstBoardId = boards.value[0].boardId; // Get the first board's ID
-    //   router.push({ name: "home", params: { boardId: firstBoardId } }); // Navigate to the 'home' route with the first board's ID
-    // }
-    
-  } catch (error) {
-    console.error('Error fetching boards:', error);
-  }
-};
+
+    try {
+      await boardStore.fetchAllBoards()
+      boards.value = boardStore.getBoards
+    } catch (error) {
+      console.error("Error fetching boards:", error)
+    }
+}
 
 onMounted(async () => {
-  await fetchBoards();
-});
-
+  await fetchBoards()
+})
 </script>
 
 <template>
