@@ -9,8 +9,7 @@ const getToken = () => {
 
 export const fetch = async (url, options = {}) => {
   const token = getToken();
-  const router = useRouter(); // Initialize the router here
-
+  const userStore = useUserStore();
   const response = await window.fetch(url, {
     ...options,
     headers: {
@@ -23,9 +22,7 @@ export const fetch = async (url, options = {}) => {
   // Handle non-ok responses, especially 401 Unauthorized
     if (response.status === 401) {
       // Clear token if needed and redirect to login page
-      const userStore = useUserStore();
       userStore.logout(); // Assuming you have a logout action in your store
-      router.push({ name: "Login" }); // Redirect to login page
       throw new Error("Unauthorized. Redirecting to login.");
     }
 
