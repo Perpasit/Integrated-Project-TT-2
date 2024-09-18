@@ -21,7 +21,6 @@ export const fetch = async (url, options = {}) => {
   const contentType = response.headers.get("content-type");
 
   // Handle non-ok responses, especially 401 Unauthorized
-  if (!response.ok) {
     if (response.status === 401) {
       // Clear token if needed and redirect to login page
       const userStore = useUserStore();
@@ -30,14 +29,14 @@ export const fetch = async (url, options = {}) => {
       throw new Error("Unauthorized. Redirecting to login.");
     }
 
-    if (contentType && contentType.includes("application/json")) {
-      const errorData = await response.json();
-      throw new Error(errorData.message);
-    } else {
-      const errorMessage = await response.text();
-      throw new Error(errorMessage);
-    }
-  }
+    // if (contentType && contentType.includes("application/json")) {
+    //   const errorData = await response.json();
+    //   throw new Error(errorData.message);
+    // } else {
+    //   const errorMessage = await response.text();
+    //   throw new Error(errorMessage);
+    // }
+  
 
   if (contentType && contentType.includes("application/json")) {
     return await response.json();
