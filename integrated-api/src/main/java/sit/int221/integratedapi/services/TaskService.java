@@ -246,7 +246,8 @@ public class TaskService {
                         .orElseThrow(() -> new ItemNotFoundException("Status with id " + statusId + " does not exist for board id " + boardId));
             } catch (NumberFormatException e) {
                 validationErrors.addError("status", "must be a valid number");
-                throw validationErrors;
+                throw
+                        validationErrors;
             }
         }
 
