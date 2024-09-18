@@ -23,6 +23,7 @@ const toggleDropdown = () => {
 };
 
 onMounted(() => {
+  userStore.loadFromLocalStorage();
   if (!userStore.getIsAuthenticated) {
     router.push({ name: "Login" });
   }
