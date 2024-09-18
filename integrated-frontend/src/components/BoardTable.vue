@@ -17,33 +17,21 @@ const showNotFoundModal = ref(false)
 const showAddEditBoardModal = ref(false)
 const selectedBoard = ref(null)
 
-const withTokenCheck = async (action) => {
-  if (userStore.validateToken()) {
-    return await action()
-  } else {
-    console.log("Token is invalid or expired. Redirecting to login...")
-    router.push('/login') 
-    return null
-  }
-}
-
-
 const editBoard = (board) => {
-  withTokenCheck(() => {
+  userStore.loadFromLocalStorage()
     selectedBoard.value = board
     showAddEditBoardModal.value = true
-  })
 }
 
 const confirmDelete = (board) => {
-  withTokenCheck(() => {
+  userStore.loadFromLocalStorage()
     selectedBoardToDelete = board
     showDeleteConfirmation.value = true
-  })
+
 }
 
 const deleteBoard = async () => {
-  await withTokenCheck(async () => {
+  userStore.loadFromLocalStorage()
     showDeleteConfirmation.value = false
     try {
       await boardStore.deleteBoard(selectedBoardToDelete.boardId)
@@ -63,7 +51,7 @@ const deleteBoard = async () => {
         }, 3000)
       }
     }
-  })
+
 }
 
 function closeDeleteModal() {
@@ -72,36 +60,35 @@ function closeDeleteModal() {
 }
 
 const cancelDelete = () => {
-  withTokenCheck(() => {
+  userStore.loadFromLocalStorage()
     selectedBoardToDelete = null
     showDeleteConfirmation.value = false
-  })
+ 
 }
 
 const openAddEditBoardModal = (board = null) => {
-  withTokenCheck(() => {
+  userStore.loadFromLocalStorage()
     selectedBoard.value = board
     showAddEditBoardModal.value = true
-  })
+
 }
 
 const navigateToTasks = (board) => {
-  withTokenCheck(() => {
+  userStore.loadFromLocalStorage()
     if (board && board.boardId) {
       router.push({ name: "home", params: { boardId: board.boardId } })
     }
-  })
+
 }
 
 const fetchBoards = async () => {
-  await withTokenCheck(async () => {
+  userStore.loadFromLocalStorage()
     try {
       await boardStore.fetchAllBoards()
       boards.value = boardStore.getBoards
     } catch (error) {
       console.error("Error fetching boards:", error)
     }
-  })
 }
 
 onMounted(async () => {
