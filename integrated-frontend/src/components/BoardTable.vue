@@ -18,20 +18,20 @@ const showAddEditBoardModal = ref(false)
 const selectedBoard = ref(null)
 
 const editBoard = (board) => {
-  userStore.loadFromLocalStorage()
+
     selectedBoard.value = board
     showAddEditBoardModal.value = true
 }
 
 const confirmDelete = (board) => {
-  userStore.loadFromLocalStorage()
+
     selectedBoardToDelete = board
     showDeleteConfirmation.value = true
 
 }
 
 const deleteBoard = async () => {
-  userStore.loadFromLocalStorage()
+
     showDeleteConfirmation.value = false
     try {
       await boardStore.deleteBoard(selectedBoardToDelete.boardId)
@@ -60,21 +60,21 @@ function closeDeleteModal() {
 }
 
 const cancelDelete = () => {
-  userStore.loadFromLocalStorage()
+
     selectedBoardToDelete = null
     showDeleteConfirmation.value = false
  
 }
 
 const openAddEditBoardModal = (board = null) => {
-  userStore.loadFromLocalStorage()
+
     selectedBoard.value = board
     showAddEditBoardModal.value = true
 
 }
 
 const navigateToTasks = (board) => {
-  userStore.loadFromLocalStorage()
+
     if (board && board.boardId) {
       router.push({ name: "home", params: { boardId: board.boardId } })
     }
@@ -82,7 +82,7 @@ const navigateToTasks = (board) => {
 }
 
 const fetchBoards = async () => {
-  userStore.loadFromLocalStorage()
+
     try {
       await boardStore.fetchAllBoards()
       boards.value = boardStore.getBoards

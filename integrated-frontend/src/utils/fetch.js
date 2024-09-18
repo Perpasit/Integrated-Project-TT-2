@@ -1,5 +1,4 @@
 import { useUserStore } from "../stores/userStore";
-import { useRouter } from "vue-router"; // Import Vue Router
 
 // Define the fetch function to include token dynamically
 const getToken = () => {
@@ -43,7 +42,9 @@ export const fetch = async (url, options = {}) => {
 };
 
 export const getItems = async (url) => {
+  const userStore = useUserStore()
   try {
+      userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "GET",
     });
@@ -53,7 +54,9 @@ export const getItems = async (url) => {
 };
 
 export const postItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "POST",
       headers: {
@@ -67,7 +70,9 @@ export const postItem = async (url, item) => {
 };
 
 export const putItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PUT",
       headers: {
@@ -81,7 +86,9 @@ export const putItem = async (url, item) => {
 };
 
 export const deleteItem = async (url) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "DELETE",
     });
@@ -91,7 +98,9 @@ export const deleteItem = async (url) => {
 };
 
 export const patchItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PATCH",
       headers: {
