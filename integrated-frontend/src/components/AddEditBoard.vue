@@ -32,7 +32,7 @@ watch(() => props.editingBoard, (newVal) => {
 const saveBoard = async () => {
     if (boardName.value.trim()) {
         try {
-            const trimmedName = boardName.value.trim().replace(/ personal board$/, '');
+            const trimmedName = boardName.value.trim().replace();
             if (isEditing.value) {
                 await boardStore.updateBoard({ ...props.editingBoard, name: trimmedName });
             } else {
