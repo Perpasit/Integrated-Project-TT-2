@@ -29,8 +29,9 @@ public class Board {
     @Column(name = "owner_id", nullable = false, length = 36)
     private String ownerId;
 
-    @Column(name = "is_public", nullable = false)
-    private boolean isPublic;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    private Visibility visibility = Visibility.PRIVATE;
 
     @Column(name = "created_on", nullable = false)
     private ZonedDateTime createdOn;
@@ -51,5 +52,9 @@ public class Board {
     @PreUpdate
     protected void onUpdate() {
         updatedOn = ZonedDateTime.now();
+    }
+
+    public enum Visibility {
+        PUBLIC, PRIVATE
     }
 }
