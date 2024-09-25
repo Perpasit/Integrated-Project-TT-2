@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.services.BoardService;
@@ -47,12 +48,27 @@ public class BoardController {
         return ResponseEntity.ok(boardDTOs);
     }
 
+//    @GetMapping("/{boardId}")
+//    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
+//        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+//        BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
+//        return ResponseEntity.ok(boardDTO);
+//    }
+
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
-        return ResponseEntity.ok(boardDTO);
+        try {
+            BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
+            return ResponseEntity.ok(boardDTO);
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        } catch (ItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
+
+
 
     @PostMapping("")
     public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token,
