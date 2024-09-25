@@ -11,4 +11,5 @@ public class BoardCDTO {
     private String boardId;
     private String name;
     private OwnerDTO owner;
+    private boolean isPublic;
 }
