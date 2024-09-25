@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.BoardCDTO;
@@ -23,6 +24,7 @@ import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
+import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.utils.NanoIdGenerator;
 
 import java.util.ArrayList;
@@ -174,40 +176,47 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-
-        if (!board.getOwnerId().equals(oid) && !board.getVisibility().equals(Board.Visibility.PUBLIC)) {
-            throw new ForbiddenException("User does not own this board and it is not public.");
+        // Check ownership
+        if (!board.getOwnerId().equals(oid)) {
+            throw new ForbiddenException("User does not own this board.");
         }
-
 
         // Validate and update the board's name
-        if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
+        if (boardCDTO.getName() != null) {
+            if (boardCDTO.getName().isEmpty() || boardCDTO.getName().length() > 120) {
+                throw new IllegalArgumentException("Board name must not be empty and must not exceed 120 characters.");
+            }
             board.setName(boardCDTO.getName());
-        } else if (boardCDTO.getName() != null) { // if name is provided but invalid
-            throw new IllegalArgumentException("Board name must not be null, empty, or exceed 120 characters.");
         }
+
 
         // ตรวจสอบและตั้งค่า visibility
-        if (boardCDTO.getVisibility() == null) {
-            boardCDTO.setVisibility(Board.Visibility.valueOf("PRIVATE")); // ใช้ค่า default เป็น PRIVATE
+        if (boardCDTO.getVisibility() != null) {
+            try {
+                Board.Visibility visibility = boardCDTO.getVisibility();
+                board.setVisibility(visibility);
+            } catch (IllegalArgumentException e) {
+                throw new HttpMessageNotReadableException("Invalid visibility value. Must be either PUBLIC or PRIVATE.");
+            }
         }
 
-        // Update the isPublic field
-        board.setVisibility(boardCDTO.getVisibility());
+
 
         // Save the updated board entity
         board = boardRepository.save(board);
 
         // Fetch owner details to include in the response
-        String ownerId = board.getOwnerId(); // Store ownerId in a final variable
+        String ownerId = board.getOwnerId();
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
-        // Return updated BoardCDTO with owner information and isPublic status
+        // Return updated BoardCDTO with owner information and visibility status
         return new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
     }
+
+
 
 
 
