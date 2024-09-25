@@ -67,7 +67,7 @@ public class BoardService {
 
                 // Create and populate BoardDTO
                 BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setBoardId(board.getId());
+                boardDTO.setId(board.getId());
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 
@@ -92,6 +92,11 @@ public class BoardService {
             validationErrors.addError("name", "must not exceed 120 characters");
         }
 
+        // ตรวจสอบและตั้งค่า visibility
+        if (boardCDTO.getVisibility() == null) {
+            boardCDTO.setVisibility(Board.Visibility.valueOf("PRIVATE")); // ใช้ค่า default เป็น PRIVATE
+        }
+
         // Throw validation errors if any
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
@@ -100,7 +105,7 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setOwnerId(oid);
-        board.setPublic(boardCDTO.isPublic()); // Set the isPublic field
+        board.setVisibility(boardCDTO.getVisibility()); // Set the isPublic field
         board.setId(NanoIdGenerator.generateNanoId(10)); // Use NanoId generator
         board = boardRepository.save(board);
 
@@ -124,7 +129,7 @@ public class BoardService {
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
         // Create and return BoardCDTO
-        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), ownerDTO, board.isPublic());
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(),  board.getVisibility(),ownerDTO);
         return createdBoardCDTO;
     }
 
@@ -142,9 +147,10 @@ public class BoardService {
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
         // Check if the user is the owner of the board or if the board is public
-        if (!board.getOwnerId().equals(oid) && !board.isPublic()) {
+        if (!board.getOwnerId().equals(oid) && !board.getVisibility().equals(Board.Visibility.PUBLIC)) {
             throw new ForbiddenException("User does not own this board and it is not public.");
         }
+
 
         // Map the board to BoardDTO
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
@@ -168,10 +174,11 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        // Check if the user owns the board
-        if (!board.getOwnerId().equals(oid)) {
-            throw new BoardOwnershipException("User does not own this board.");
+
+        if (!board.getOwnerId().equals(oid) && !board.getVisibility().equals(Board.Visibility.PUBLIC)) {
+            throw new ForbiddenException("User does not own this board and it is not public.");
         }
+
 
         // Validate and update the board's name
         if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
@@ -180,8 +187,13 @@ public class BoardService {
             throw new IllegalArgumentException("Board name must not be null, empty, or exceed 120 characters.");
         }
 
+        // ตรวจสอบและตั้งค่า visibility
+        if (boardCDTO.getVisibility() == null) {
+            boardCDTO.setVisibility(Board.Visibility.valueOf("PRIVATE")); // ใช้ค่า default เป็น PRIVATE
+        }
+
         // Update the isPublic field
-        board.setPublic(boardCDTO.isPublic());
+        board.setVisibility(boardCDTO.getVisibility());
 
         // Save the updated board entity
         board = boardRepository.save(board);
@@ -194,7 +206,7 @@ public class BoardService {
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
         // Return updated BoardCDTO with owner information and isPublic status
-        return new BoardCDTO(board.getId(), board.getName(), ownerDTO, board.isPublic());
+        return new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
     }
 
 
