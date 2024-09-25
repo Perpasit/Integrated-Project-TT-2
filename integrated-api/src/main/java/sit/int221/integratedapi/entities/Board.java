@@ -29,6 +29,9 @@ public class Board {
     @Column(name = "owner_id", nullable = false, length = 36)
     private String ownerId;
 
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
+
     @Column(name = "created_on", nullable = false)
     private ZonedDateTime createdOn;
 

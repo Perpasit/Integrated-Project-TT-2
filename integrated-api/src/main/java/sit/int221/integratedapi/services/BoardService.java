@@ -15,6 +15,7 @@ import sit.int221.integratedapi.dtos.StatusCDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.TaskUser;
+import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
@@ -137,24 +138,32 @@ public class BoardService {
         return boardRepository.existsByOwnerId(taskusersOid);
     }
 
+
+
     public BoardDTO getBoardById(String boardId, String oid) {
+        // Find the board by its ID
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        if (!board.getOwnerId().equals(oid)) {
-            throw new BoardOwnershipException("User does not own this board.");
+        // Check if the user is the owner of the board or if the board is public
+        if (!board.getOwnerId().equals(oid) && !board.isPublic()) {
+            throw new ForbiddenException("User does not own this board and it is not public.");
         }
 
+        // Map the board to BoardDTO
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
+        // Find the owner of the board
         TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
+        // Create OwnerDTO
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
         boardDTO.setOwner(ownerDTO);
 
         return boardDTO;
     }
+
 
 
     @Transactional
