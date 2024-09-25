@@ -92,12 +92,6 @@ public class BoardService {
             validationErrors.addError("name", "must not exceed 120 characters");
         }
 
-        // Check for board ownership
-//        boolean boardExists = doesBoardExistForUser(oid);
-//        if (boardExists) {
-//            throw new BoardOwnershipException("User can only own one board.");
-//        }
-
         // Throw validation errors if any
         if (!validationErrors.getErrors().isEmpty()) {
             throw validationErrors;
@@ -106,7 +100,8 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setOwnerId(oid);
-        board.setId(NanoIdGenerator.generateNanoId(10)); // ใช้ NanoId generator
+        board.setPublic(boardCDTO.isPublic()); // Set the isPublic field
+        board.setId(NanoIdGenerator.generateNanoId(10)); // Use NanoId generator
         board = boardRepository.save(board);
 
         // Define status data with boardId
@@ -121,17 +116,18 @@ public class BoardService {
         for (StatusCDTO statusCDTO : defaultStatuses) {
             statusService.createStatus(board.getId(), statusCDTO);
         }
+
         String ownerId = board.getOwnerId(); // Store ownerId in a final variable
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
-
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
         // Create and return BoardCDTO
-        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), ownerDTO);
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), ownerDTO, board.isPublic());
         return createdBoardCDTO;
     }
+
 
     public boolean doesBoardExistForUser(String taskusersOid) {
         // Check if a board already exists for the given taskusers_oid
@@ -180,22 +176,27 @@ public class BoardService {
         // Validate and update the board's name
         if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
             board.setName(boardCDTO.getName());
-            board = boardRepository.save(board); // Ensure the updated board is saved
-        } else {
+        } else if (boardCDTO.getName() != null) { // if name is provided but invalid
             throw new IllegalArgumentException("Board name must not be null, empty, or exceed 120 characters.");
         }
+
+        // Update the isPublic field
+        board.setPublic(boardCDTO.isPublic());
+
+        // Save the updated board entity
+        board = boardRepository.save(board);
 
         // Fetch owner details to include in the response
         String ownerId = board.getOwnerId(); // Store ownerId in a final variable
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
-
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
-        // Return updated BoardCDTO with owner information
-        return new BoardCDTO(board.getId(), board.getName(), ownerDTO);
+        // Return updated BoardCDTO with owner information and isPublic status
+        return new BoardCDTO(board.getId(), board.getName(), ownerDTO, board.isPublic());
     }
+
 
 
     @Transactional
