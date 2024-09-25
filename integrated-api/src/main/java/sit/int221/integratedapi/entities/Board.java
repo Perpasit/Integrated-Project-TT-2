@@ -1,5 +1,6 @@
 package sit.int221.integratedapi.entities;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -54,7 +55,11 @@ public class Board {
         updatedOn = ZonedDateTime.now();
     }
 
+
     public enum Visibility {
-        PUBLIC, PRIVATE
+        PUBLIC, PRIVATE;
+
     }
+
+
 }

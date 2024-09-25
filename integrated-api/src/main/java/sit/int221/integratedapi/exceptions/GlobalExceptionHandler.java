@@ -5,6 +5,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,7 +19,6 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler  {
-
     @ExceptionHandler(ValidationErrorException.class)
     public ResponseEntity<Object> handleValidationErrorException(ValidationErrorException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -222,6 +222,30 @@ public class GlobalExceptionHandler  {
                 Collections.emptyList()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<CustomErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException .class)
+    public ResponseEntity<CustomErrorResponse> handleHttpMessageNotReadableException (HttpMessageNotReadableException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Invalid visibility value. Must be either PUBLIC or PRIVATE.",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
 

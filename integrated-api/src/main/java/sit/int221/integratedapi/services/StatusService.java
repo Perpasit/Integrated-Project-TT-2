@@ -302,29 +302,29 @@ public class StatusService {
         status.setGlobalSetting(globalSetting);
     }
 
-    private void validateStatusName(String statusName, Integer id) {
-        if (statusName == null || statusName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Status name cannot be null or empty");
-        }
-
-
-        Status existingStatus = statusRepository.findByNameIgnoreCase(statusName.trim()).orElse(null);
-        if (existingStatus != null && !existingStatus.getId().equals(id)) {
-            throw new DuplicateStatusException("Status name '" + statusName.trim() + "' already exists");
-        }
-    }
-
-    private void validateStatusDescription(String description, int maxLength) {
-        if (description != null && description.length() > maxLength) {
-            throw new IllegalArgumentException("Status description must be between 0 and " + maxLength + " characters");
-        }
-    }
-
-    private void validateStatusNotDeletable(Status status) {
-        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
-            throw new IllegalArgumentException("Status with name '" + status.getName() + "' cannot be deleted or transferred");
-        }
-    }
+//    private void validateStatusName(String statusName, Integer id) {
+//        if (statusName == null || statusName.trim().isEmpty()) {
+//            throw new IllegalArgumentException("Status name cannot be null or empty");
+//        }
+//
+//
+//        Status existingStatus = statusRepository.findByNameIgnoreCase(statusName.trim()).orElse(null);
+//        if (existingStatus != null && !existingStatus.getId().equals(id)) {
+//            throw new DuplicateStatusException("Status name '" + statusName.trim() + "' already exists");
+//        }
+//    }
+//
+//    private void validateStatusDescription(String description, int maxLength) {
+//        if (description != null && description.length() > maxLength) {
+//            throw new IllegalArgumentException("Status description must be between 0 and " + maxLength + " characters");
+//        }
+//    }
+//
+//    private void validateStatusNotDeletable(Status status) {
+//        if (status.getName().equalsIgnoreCase("No Status") || status.getName().equalsIgnoreCase("Done")) {
+//            throw new IllegalArgumentException("Status with name '" + status.getName() + "' cannot be deleted or transferred");
+//        }
+//    }
 
     private void validateStatusNotTransferrable(Status status, int taskCount) {
         if (status != null && status.getGlobalSetting().isLimitMaximumTask() && taskCount > status.getGlobalSetting().getMaximumTaskLimit()) {

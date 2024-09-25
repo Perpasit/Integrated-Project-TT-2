@@ -58,14 +58,8 @@ public class BoardController {
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        try {
-            BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
-            return ResponseEntity.ok(boardDTO);
-        } catch (ForbiddenException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-        } catch (ItemNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
+        return ResponseEntity.ok(boardDTO);
     }
 
 
@@ -83,10 +77,10 @@ public class BoardController {
         return ResponseEntity.ok(createdBoard);
     }
 
-    @PutMapping("/{boardId}")
+    @PatchMapping("/{boardId}")
     public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
                                          @PathVariable String boardId,
-                                         @RequestBody BoardCDTO boardCDTO) {
+                                         @RequestBody(required = false) BoardCDTO boardCDTO) {
         if (boardCDTO == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
