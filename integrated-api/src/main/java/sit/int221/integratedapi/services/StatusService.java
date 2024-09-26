@@ -109,10 +109,12 @@ public class StatusService {
     public void validateBoardOwnership(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+        if (board.getVisibility() == Board.Visibility.PUBLIC) {
+            return;
+        }
 
-        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
-        if (!board.getOwnerId().equals(oidFromToken)) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("You do not have permission to access this private board.");
         }
     }
     @Transactional
