@@ -140,7 +140,7 @@ public class BoardController {
         }
 
         // เพิ่ม oidFromToken ลงในคำสั่งเรียกใช้ taskService.getAllTasks
-        ResponseEntity<Object> response = taskService.getAllTasks(boardId, oidFromToken, sortBy, filterStatuses, allParams);
+        ResponseEntity<Object> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
             List<Task> tasks = (List<Task>) response.getBody();
             List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
@@ -154,14 +154,20 @@ public class BoardController {
 
 
     @GetMapping("/{boardId}/tasks/{id}")
-    public ResponseEntity<TaskRDTO> getTaskById(@RequestHeader("Authorization") String token,
-                                                @PathVariable String boardId,
-                                                @PathVariable Integer id) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        taskService.validateBoardOwnership(boardId,oidFromToken);
-        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id, oidFromToken);
+    public ResponseEntity<TaskRDTO> getTaskById(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer id) {
+
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
+        taskService.validateBoardOwnership(boardId, oidFromToken);
+        TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id);
         return ResponseEntity.ok(taskRDTO);
     }
+
 
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
@@ -201,23 +207,34 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}/statuses")
-    public ResponseEntity<List<StatusDTO>> getStatuses(@RequestHeader("Authorization") String token,
-                                                       @PathVariable String boardId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+    public ResponseEntity<List<StatusDTO>> getStatuses(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId) {
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
+        statusService.validateBoardOwnership(boardId, oidFromToken);
         List<StatusDTO> statusDTOs = statusService.getStatusesByBoardId(boardId);
         return ResponseEntity.ok(statusDTOs);
     }
 
+
     @GetMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusRDTO> getStatusById(@RequestHeader("Authorization") String token,
-                                                    @PathVariable String boardId,
-                                                    @PathVariable Integer statusId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+    public ResponseEntity<StatusRDTO> getStatusById(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer statusId) {
+
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
+        statusService.validateBoardOwnership(boardId, oidFromToken);
         StatusRDTO statusRDTO = statusService.getStatusByBoardIdAndStatusId(boardId, statusId);
         return ResponseEntity.ok(statusRDTO);
     }
+
 
     @PostMapping("/{boardId}/statuses")
     public ResponseEntity<Object> addNewStatus(@RequestHeader("Authorization") String token,

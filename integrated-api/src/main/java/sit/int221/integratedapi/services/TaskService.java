@@ -52,16 +52,11 @@ public class TaskService {
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
     }
 
-    public TaskRDTO getTaskDetailsById(String boardId, Integer taskId, String oid) {
+    public TaskRDTO getTaskDetailsById(String boardId, Integer taskId) {
         Task task = getTaskById(taskId);
-        Board board = task.getBoard();
 
         if (!Objects.equals(boardId, task.getBoard().getId())) {
             throw new ItemNotFoundException("Task " + taskId + " does not belong to board " + boardId);
-        }
-
-        if (!board.getOwnerId().equals(oid)) {
-            throw new BoardOwnershipException("User does not own this board.");
         }
 
         return modelMapper.map(task, TaskRDTO.class);
@@ -79,18 +74,7 @@ public class TaskService {
         }
     }
 
-    public ResponseEntity<Object> getAllTasks(String boardId, String oidFromToken, String sortBy, List<String> filterStatuses, List<String> allParams) {
-        // ดึงข้อมูลบอร์ดจากฐานข้อมูล
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
-
-        // ถ้าบอร์ดเป็น PRIVATE ต้องตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือไม่
-        if (board.getVisibility() == Board.Visibility.PRIVATE) {
-            if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
-                throw new ForbiddenException("You do not have permission to access tasks for this private board.");
-            }
-        }
-
+    public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }
