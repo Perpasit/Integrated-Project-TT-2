@@ -70,13 +70,27 @@ public class TaskService {
     public void validateBoardOwnership(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+        if (board.getVisibility() == Board.Visibility.PUBLIC) {
+            return;
+        }
 
-        // ตรวจสอบว่า board เป็นของเจ้าของที่มี oid ตรงกับ token หรือไม่
-        if (!board.getOwnerId().equals(oidFromToken)) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not belong to the user with oid " + oidFromToken);
+        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("You do not have permission to access this private board.");
         }
     }
-    public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
+
+    public ResponseEntity<Object> getAllTasks(String boardId, String oidFromToken, String sortBy, List<String> filterStatuses, List<String> allParams) {
+        // ดึงข้อมูลบอร์ดจากฐานข้อมูล
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        // ถ้าบอร์ดเป็น PRIVATE ต้องตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือไม่
+        if (board.getVisibility() == Board.Visibility.PRIVATE) {
+            if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+                throw new ForbiddenException("You do not have permission to access tasks for this private board.");
+            }
+        }
+
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }

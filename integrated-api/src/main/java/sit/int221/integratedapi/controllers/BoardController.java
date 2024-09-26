@@ -56,12 +56,21 @@ public class BoardController {
 //    }
 
     @GetMapping("/{boardId}")
-    public ResponseEntity<BoardDTO> getBoardById(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+    public ResponseEntity<BoardDTO> getBoardById(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId) {
+
+        String oidFromToken = null;
+
+        // Check if the token is provided
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                    claims -> claims.get("oid", String.class));
+        }
+
         BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
         return ResponseEntity.ok(boardDTO);
     }
-
 
 
     @PostMapping("")
@@ -102,16 +111,22 @@ public class BoardController {
 
     @GetMapping("/{boardId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(
+            @RequestHeader(value = "Authorization", required = false) String token,  // ทำให้ optional
             @PathVariable String boardId,
-            @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) List<String> filterStatuses,
             @RequestParam(required = false) List<String> allParams) {
 
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
 
-        taskService.validateBoardOwnership(boardId, oidFromToken);
+        // ตรวจสอบว่ามี token หรือไม่ (ในกรณีที่ผู้ใช้ล็อกอินมา)
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
 
+        taskService.validateBoardOwnership(boardId, oidFromToken);  // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
+
+        // ตรวจสอบ filter และ sort
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -124,7 +139,8 @@ public class BoardController {
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        ResponseEntity<Object> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
+        // เพิ่ม oidFromToken ลงในคำสั่งเรียกใช้ taskService.getAllTasks
+        ResponseEntity<Object> response = taskService.getAllTasks(boardId, oidFromToken, sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
             List<Task> tasks = (List<Task>) response.getBody();
             List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
@@ -133,6 +149,8 @@ public class BoardController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
 
     @GetMapping("/{boardId}/tasks/{id}")

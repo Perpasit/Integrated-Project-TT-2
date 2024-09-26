@@ -82,6 +82,7 @@ public class BoardService {
     }
     @Transactional
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
+
         // Initialize ValidationErrorException
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
@@ -148,11 +149,18 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        // Check if the user is the owner of the board or if the board is public
-        if (!board.getOwnerId().equals(oid) && !board.getVisibility().equals(Board.Visibility.PUBLIC)) {
-            throw new ForbiddenException("User does not own this board and it is not public.");
+        // Check visibility and oid to control access
+        if (oid == null) {
+            // If user is not logged in, only allow access if the board is public
+            if (board.getVisibility() != Board.Visibility.PUBLIC) {
+                throw new ForbiddenException("Login is required to view this private board.");
+            }
+        } else {
+            // If user is logged in, check if the user is the owner or if the board is public
+            if (!board.getOwnerId().equals(oid) && board.getVisibility() != Board.Visibility.PUBLIC) {
+                throw new ForbiddenException("User does not own this board and it is not public.");
+            }
         }
-
 
         // Map the board to BoardDTO
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
@@ -167,6 +175,8 @@ public class BoardService {
 
         return boardDTO;
     }
+
+
 
 
 
