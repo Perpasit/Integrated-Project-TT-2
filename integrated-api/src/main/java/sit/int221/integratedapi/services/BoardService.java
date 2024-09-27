@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.BoardCDTO;
@@ -15,6 +16,7 @@ import sit.int221.integratedapi.dtos.StatusCDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.TaskUser;
+import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
@@ -22,6 +24,7 @@ import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
+import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.utils.NanoIdGenerator;
 
 import java.util.ArrayList;
@@ -66,7 +69,7 @@ public class BoardService {
 
                 // Create and populate BoardDTO
                 BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setBoardId(board.getId());
+                boardDTO.setId(board.getId());
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 
@@ -79,6 +82,7 @@ public class BoardService {
     }
     @Transactional
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
+
         // Initialize ValidationErrorException
         ValidationErrorException validationErrors = new ValidationErrorException(HttpStatus.BAD_REQUEST, "Validation failed");
 
@@ -91,11 +95,10 @@ public class BoardService {
             validationErrors.addError("name", "must not exceed 120 characters");
         }
 
-        // Check for board ownership
-//        boolean boardExists = doesBoardExistForUser(oid);
-//        if (boardExists) {
-//            throw new BoardOwnershipException("User can only own one board.");
-//        }
+        // ตรวจสอบและตั้งค่า visibility
+        if (boardCDTO.getVisibility() == null) {
+            boardCDTO.setVisibility(Board.Visibility.valueOf("PRIVATE")); // ใช้ค่า default เป็น PRIVATE
+        }
 
         // Throw validation errors if any
         if (!validationErrors.getErrors().isEmpty()) {
@@ -105,7 +108,8 @@ public class BoardService {
         Board board = new Board();
         board.setName(boardCDTO.getName());
         board.setOwnerId(oid);
-        board.setId(NanoIdGenerator.generateNanoId(10)); // ใช้ NanoId generator
+        board.setVisibility(boardCDTO.getVisibility()); // Set the isPublic field
+        board.setId(NanoIdGenerator.generateNanoId(10)); // Use NanoId generator
         board = boardRepository.save(board);
 
         // Define status data with boardId
@@ -120,41 +124,60 @@ public class BoardService {
         for (StatusCDTO statusCDTO : defaultStatuses) {
             statusService.createStatus(board.getId(), statusCDTO);
         }
+
         String ownerId = board.getOwnerId(); // Store ownerId in a final variable
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
-
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
         // Create and return BoardCDTO
-        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), ownerDTO);
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(),  board.getVisibility(),ownerDTO);
         return createdBoardCDTO;
     }
+
 
     public boolean doesBoardExistForUser(String taskusersOid) {
         // Check if a board already exists for the given taskusers_oid
         return boardRepository.existsByOwnerId(taskusersOid);
     }
 
+
+
     public BoardDTO getBoardById(String boardId, String oid) {
+        // Find the board by its ID
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        if (!board.getOwnerId().equals(oid)) {
-            throw new BoardOwnershipException("User does not own this board.");
+        // Check visibility and oid to control access
+        if (oid == null) {
+            // If user is not logged in, only allow access if the board is public
+            if (board.getVisibility() != Board.Visibility.PUBLIC) {
+                throw new ForbiddenException("Login is required to view this private board.");
+            }
+        } else {
+            // If user is logged in, check if the user is the owner or if the board is public
+            if (!board.getOwnerId().equals(oid) && board.getVisibility() != Board.Visibility.PUBLIC) {
+                throw new ForbiddenException("User does not own this board and it is not public.");
+            }
         }
 
+        // Map the board to BoardDTO
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
+        // Find the owner of the board
         TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
+        // Create OwnerDTO
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
         boardDTO.setOwner(ownerDTO);
 
         return boardDTO;
     }
+
+
+
 
 
     @Transactional
@@ -163,30 +186,48 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
 
-        // Check if the user owns the board
+        // Check ownership
         if (!board.getOwnerId().equals(oid)) {
-            throw new BoardOwnershipException("User does not own this board.");
+            throw new ForbiddenException("User does not own this board.");
         }
 
         // Validate and update the board's name
-        if (boardCDTO.getName() != null && !boardCDTO.getName().isEmpty() && boardCDTO.getName().length() <= 120) {
+        if (boardCDTO.getName() != null) {
+            if (boardCDTO.getName().isEmpty() || boardCDTO.getName().length() > 120) {
+                throw new IllegalArgumentException("Board name must not be empty and must not exceed 120 characters.");
+            }
             board.setName(boardCDTO.getName());
-            board = boardRepository.save(board); // Ensure the updated board is saved
-        } else {
-            throw new IllegalArgumentException("Board name must not be null, empty, or exceed 120 characters.");
         }
 
+
+        // ตรวจสอบและตั้งค่า visibility
+        if (boardCDTO.getVisibility() != null) {
+            try {
+                Board.Visibility visibility = boardCDTO.getVisibility();
+                board.setVisibility(visibility);
+            } catch (IllegalArgumentException e) {
+                throw new HttpMessageNotReadableException("Invalid visibility value. Must be either PUBLIC or PRIVATE.");
+            }
+        }
+
+
+
+        // Save the updated board entity
+        board = boardRepository.save(board);
+
         // Fetch owner details to include in the response
-        String ownerId = board.getOwnerId(); // Store ownerId in a final variable
+        String ownerId = board.getOwnerId();
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
-
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
-        // Return updated BoardCDTO with owner information
-        return new BoardCDTO(board.getId(), board.getName(), ownerDTO);
+        // Return updated BoardCDTO with owner information and visibility status
+        return new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
     }
+
+
+
 
 
     @Transactional

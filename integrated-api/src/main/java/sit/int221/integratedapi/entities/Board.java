@@ -1,5 +1,6 @@
 package sit.int221.integratedapi.entities;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -29,6 +30,10 @@ public class Board {
     @Column(name = "owner_id", nullable = false, length = 36)
     private String ownerId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    private Visibility visibility = Visibility.PRIVATE;
+
     @Column(name = "created_on", nullable = false)
     private ZonedDateTime createdOn;
 
@@ -49,4 +54,12 @@ public class Board {
     protected void onUpdate() {
         updatedOn = ZonedDateTime.now();
     }
+
+
+    public enum Visibility {
+        PUBLIC, PRIVATE;
+
+    }
+
+
 }
