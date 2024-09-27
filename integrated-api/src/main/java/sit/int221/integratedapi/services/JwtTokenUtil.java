@@ -79,6 +79,20 @@ public class JwtTokenUtil implements Serializable {
         return doGenerateToken(claims, username);
     }
 
+    public String generateRefreshToken(UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        User user = userService.getUserByUsername(username);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("iss", JWT_ISSUER);
+        claims.put("iat", currentTimeMillis());
+        claims.put("exp", currentTimeMillis() + 24 * 60 * 60 * 1000);
+        claims.put("oid", user.getOid());
+
+        return doGenerateToken(claims, username);
+    }
+
+
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")

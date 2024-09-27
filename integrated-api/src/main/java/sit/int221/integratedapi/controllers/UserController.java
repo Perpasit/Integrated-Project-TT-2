@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("")
 @CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -51,39 +51,43 @@ public class UserController {
     @Autowired
     private TaskUserService taskUserService;
 
-    @PostMapping("")
+    @PostMapping("/login")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
         try {
+            // Fetch user by username
             User user = userService.getUserByUsername(jwtRequestUser.getUserName());
             if (user == null) {
                 return AuthenticationException.getMessage("The Username or Password is incorrect.");
             }
 
+            // Authenticate the user
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(jwtRequestUser.getUserName(), jwtRequestUser.getPassword());
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
+            // Retrieve UserDetails
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String token = jwtTokenUtil.generateToken(userDetails);
 
-            // Extract claims from the token
-            Claims claims = jwtTokenUtil.getAllClaimsFromToken(token);
+            // Generate access_token (valid for 30 minutes)
+            String accessToken = jwtTokenUtil.generateToken(userDetails);
 
-            // Create or update TaskUser
+            // Generate refresh_token (valid for 24 hours)
+            String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails);
+
+            // Create or update TaskUser (existing logic)
             TaskUser taskUser = new TaskUser();
-            taskUser.setOid(user.getOid()); // Set OID from User entity
+            taskUser.setOid(user.getOid());
             taskUser.setUsername(jwtRequestUser.getUserName());
-            taskUser.setName(user.getName()); // Fetch user details from the User entity
-            taskUser.setEmail(user.getEmail()); // Fetch user details from the User entity
-            taskUser.setCreatedOn(ZonedDateTime.now()); // Set current timestamp using ZonedDateTime
-            taskUser.setUpdatedOn(ZonedDateTime.now()); // Update timestamp using ZonedDateTime
-
-            // Save or update TaskUser
+            taskUser.setName(user.getName());
+            taskUser.setEmail(user.getEmail());
+            taskUser.setCreatedOn(ZonedDateTime.now());
+            taskUser.setUpdatedOn(ZonedDateTime.now());
             taskUserService.saveOrUpdateTaskUser(taskUser);
 
             // Prepare response
             Map<String, String> response = new HashMap<>();
-            response.put("access_token", token);
+            response.put("access_token", accessToken);
+            response.put("refresh_token", refreshToken);
 
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
@@ -95,6 +99,40 @@ public class UserController {
                     .body("There is a problem. Please try again later.");
         }
     }
+
+    @PostMapping("/token")
+    public ResponseEntity<Object> refreshAccessToken(@RequestHeader("Authorization") String requestTokenHeader) {
+        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            String refreshToken = requestTokenHeader.substring(7);
+            try {
+                Claims claims = jwtTokenUtil.getAllClaimsFromToken(refreshToken);
+                String username = claims.getSubject();
+
+                UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
+
+                // Validate the refresh token
+                if (jwtTokenUtil.validateToken(refreshToken, userDetails)) {
+                    String newAccessToken = jwtTokenUtil.generateToken(userDetails);
+
+                    Map<String, String> response = new HashMap<>();
+                    response.put("access_token", newAccessToken);
+
+                    return ResponseEntity.ok(response);
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+                }
+            } catch (ExpiredJwtException e) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has expired", e);
+            } catch (Exception e) {
+                logger.error("Refresh token error: ", e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("There is a problem. Please try again later.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Refresh token does not begin with Bearer String");
+        }
+    }
+
 
     @GetMapping("/validate-token")
     public ResponseEntity<Object> validateToken(@RequestHeader("Authorization") String requestTokenHeader) {
