@@ -1,4 +1,5 @@
 import { useUserStore } from "../stores/userStore";
+
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore(); // Access the store within the function
@@ -7,6 +8,7 @@ const getToken = () => {
 
 export const fetch = async (url, options = {}) => {
   const token = getToken();
+  const userStore = useUserStore();
   const response = await window.fetch(url, {
     ...options,
     headers: {
@@ -16,15 +18,21 @@ export const fetch = async (url, options = {}) => {
   });
   const contentType = response.headers.get("content-type");
 
-  if (!response.ok) {
-    if (contentType && contentType.includes("application/json")) {
-      const errorData = await response.json();
-      throw new Error(errorData.message);
-    } else {
-      const errorMessage = await response.text();
-      throw new Error(errorMessage);
+  // Handle non-ok responses, especially 401 Unauthorized
+    if (response.status === 401) {
+      // Clear token if needed and redirect to login page
+      userStore.logout(); // Assuming you have a logout action in your store
+      throw new Error("Unauthorized. Redirecting to login.");
     }
-  }
+
+    // if (contentType && contentType.includes("application/json")) {
+    //   const errorData = await response.json();
+    //   throw new Error(errorData.message);
+    // } else {
+    //   const errorMessage = await response.text();
+    //   throw new Error(errorMessage);
+    // }
+  
 
   if (contentType && contentType.includes("application/json")) {
     return await response.json();
@@ -34,7 +42,9 @@ export const fetch = async (url, options = {}) => {
 };
 
 export const getItems = async (url) => {
+  const userStore = useUserStore()
   try {
+      userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "GET",
     });
@@ -44,7 +54,9 @@ export const getItems = async (url) => {
 };
 
 export const postItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "POST",
       headers: {
@@ -58,7 +70,9 @@ export const postItem = async (url, item) => {
 };
 
 export const putItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PUT",
       headers: {
@@ -72,7 +86,9 @@ export const putItem = async (url, item) => {
 };
 
 export const deleteItem = async (url) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "DELETE",
     });
@@ -82,7 +98,9 @@ export const deleteItem = async (url) => {
 };
 
 export const patchItem = async (url, item) => {
+  const userStore = useUserStore()
   try {
+    userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PATCH",
       headers: {
@@ -131,3 +149,50 @@ export const postItemLogin = async (url, item) => {
     throw error;
   }
 };
+
+
+// import { useRouter } from "vue-router";
+// import { useUserStore } from "../stores/userStore";
+
+// // Get the token
+// const getToken = () => {
+//   const userStore = useUserStore(); // Access the store within the function
+//   return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.token;
+// };
+
+// export const fetch = async (url, options = {}) => {
+//   const token = getToken();
+//   const router = useRouter(); // Initialize router for redirecting
+
+//   const response = await window.fetch(url, {
+//     ...options,
+//     headers: {
+//       ...options.headers,
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+
+//   const contentType = response.headers.get("content-type");
+
+//   if (!response.ok) {
+//     if (response.status === 401) {
+//       // Redirect to login if 401 error is encountered
+//       router.push({ name: "login" });
+//       return; // Stop execution once redirected
+//     }
+
+//     if (contentType && contentType.includes("application/json")) {
+//       const errorData = await response.json();
+//       throw new Error(errorData.message);
+//     } else {
+//       const errorMessage = await response.text();
+//       throw new Error(errorMessage);
+//     }
+//   }
+
+//   if (contentType && contentType.includes("application/json")) {
+//     return await response.json();
+//   } else {
+//     return response.text();
+//   }
+// };
