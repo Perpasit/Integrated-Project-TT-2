@@ -4,18 +4,31 @@ import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter, useRoute } from "vue-router"
 import { getItems } from "../utils/fetch"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
 
 const router = useRouter()
 const route = useRoute()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
 const successModalTimeout = ref(null)
+
+const boardId = route.params.boardId
+const boardOid = computed(() => boardStore.getBoardOid(boardId))
+const userOid = computed(() => userStore.getUserOid)
+
+const isSameOid = computed(() => {
+  return boardOid.value !== userOid.value // Disable if boardOid is not equal to userOid
+})
+
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
 const isDescriptionTooLong = computed(
   () => editedStatus.value.description.length > 200
 )
-const boardId = route.params.boardId
+
 const props = defineProps({
   mode: {
     type: String,
@@ -268,31 +281,55 @@ const fetchStatus = async () => {
         </div>
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+          <div class="flex space-x-4">
+            <!-- Button for non-board owners (when OIDs are not the same) -->
+            <button
+              v-if="!isSameOid"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+              :class="{
+                'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                  isNameValid &&
+                  !isDuplicateName &&
+                  !isNameTooLong &&
+                  !isDescriptionTooLong,
+                'bg-gray-300 cursor-not-allowed':
+                  !isNameValid ||
+                  isDuplicateName ||
+                  isNameTooLong ||
+                  isDescriptionTooLong,
+              }"
+              @click="
                 isNameValid &&
-                !isDuplicateName &&
-                !isNameTooLong &&
-                !isDescriptionTooLong,
-              'bg-gray-300 cursor-not-allowed':
+                  !isDuplicateName &&
+                  !isNameTooLong &&
+                  !isDescriptionTooLong &&
+                  saveStatus()
+              "
+              :disabled="
                 !isNameValid ||
                 isDuplicateName ||
                 isNameTooLong ||
-                isDescriptionTooLong,
-            }"
-            @click="saveStatus"
-            :disabled="
-              !isNameValid ||
-              isDuplicateName ||
-              isNameTooLong ||
-              isDescriptionTooLong
-            "
-          >
-            {{ mode === "add" ? "Add" : "Save" }}
-          </button>
+                isDescriptionTooLong
+              "
+            >
+              {{ mode === "add" ? "Add" : "Save" }}
+            </button>
+
+            <!-- Button for board owners (when OIDs are the same) -->
+            <button
+              v-if="isSameOid"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
+              :class="{
+                'bg-gray-300 cursor-not-allowed': isSameOid,
+              }"
+              :disabled="true"
+              data-tip="Only the board owner can perform this action."
+            >
+              {{ mode === "add" ? "Add" : "Save" }} (Board Owner Only)
+            </button>
+          </div>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

@@ -1,15 +1,18 @@
-
 <script setup>
 import { ref, onMounted, computed } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import { useRouter, useRoute } from "vue-router"
 import LimitTaskModal from "./LimitTaskModal.vue"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
 
 const router = useRouter()
 const route = useRoute()
 const taskStore = useTaskStore()
 const statusStore = useStatusStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
 const tasks = computed(() => taskStore.getTasks)
 const selectedTask = ref(null)
 
@@ -31,6 +34,24 @@ const searchKeyword = ref("")
 const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
 
+const boardId = route.params.boardId
+const boardOid = computed(() => boardStore.getBoardOid(boardId))
+const userOid = computed(() => userStore.getUserOid)
+const boardName = ref("")
+
+const isSameOid = computed(() => {
+  return boardOid.value !== userOid.value 
+})
+
+const fetchBoardDetails = async () => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardName.value = boardData.name
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+}
+
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
@@ -38,15 +59,10 @@ const showTaskDetail = (task) => {
   })
 }
 
-const boardId = route.params.boardId
-
-
-
 const clearStatusFilter = () => {
-  taskStore.setFilterStatuses([], boardId)  // Pass boardId here
+  taskStore.setFilterStatuses([], boardId) // Pass boardId here
   searchKeyword.value = ""
 }
-
 
 const fetchTasksAndStatus = async (boardId) => {
   await taskStore.fetchAllTasks(boardId)
@@ -72,7 +88,7 @@ const confirmDelete = (task) => {
 const deleteTask = async () => {
   showDeleteConfirmation.value = false
   try {
-    await taskStore.deleteTask(boardId,selectedTaskToDelete.id)
+    await taskStore.deleteTask(boardId, selectedTaskToDelete.id)
     showSuccessModal.value = true
     selectedTaskToDelete = null
     fetchTasksAndStatus(boardId)
@@ -115,8 +131,6 @@ const selectedStatuses = computed({
   set: (value) => taskStore.setFilterStatuses(value, boardId),
 })
 
-
-
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
@@ -129,7 +143,7 @@ const filteredStatuses = computed(() => {
 
 const sortBy = computed({
   get: () => taskStore.sortBy,
-  set: (value) => taskStore.setSortBy(value ,boardId),
+  set: (value) => taskStore.setSortBy(value, boardId),
 })
 
 const togglesortBy = () => {
@@ -140,7 +154,7 @@ const togglesortBy = () => {
   } else {
     sortBy.value = "createOn"
   }
-  taskStore.setSortBy(sortBy.value, boardId)  // Pass boardId here
+  taskStore.setSortBy(sortBy.value, boardId) // Pass boardId here
 }
 const updateMaxTasksPerStatus = (limit) => {
   maxTasksPerStatus.value = limit
@@ -148,7 +162,6 @@ const updateMaxTasksPerStatus = (limit) => {
 
 const openLimitTaskModal = async () => {
   try {
-    
     await statusStore.fetchAllStatuses(boardId)
     currentStatusesWithTaskCounts.value = statusStore.statuses.map(
       (status) => ({
@@ -192,15 +205,16 @@ const toggleStatusFilter = (statusName) => {
   fetchTasksAndStatus(boardId)
 }
 
-
-
 onMounted(async () => {
+  boardStore.fetchAllBoards() // Fetch the boards first
+  await fetchBoardDetails()
+  const boardId = route.params.boardId
+
   if (!boardId) {
-  console.error("Board ID is missing")
-  return
-}
-  
-   
+    console.error("Board ID is missing")
+    return
+  }
+
   const sortByFromUrl = route.query.sortBy
   if (
     sortByFromUrl === "asc" ||
@@ -227,7 +241,10 @@ onMounted(async () => {
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex mb-10">
+    <div class="flex mb-5 justify-center items-center">
+      <div class="flex text-5xl mt-10 text-white font-extrabold">
+        {{ boardName }}
+      </div>
       <thead class="absolute mt-2">
         <th class="w-full text-xl font-medium">
           <div class="flex items-center text-white">
@@ -258,10 +275,14 @@ onMounted(async () => {
           <tr class="text-white w-full">
             <th class="w-19 py-2 rounded-l-lg text-xl font-medium">
               <div class="flex">
-                <div class="relative">
+                <div class="relative " >
                   <button
                     @click="toggleDropdown"
-                    class="hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500"
+                    :class="{
+                      'hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500': true,
+                      'text-gray-700 cursor-not-allowed tooltip tooltip-secondary': isSameOid,
+                    }"
+                    data-tip="You need to be board owner to perform this action."
                   >
                     Filter Status
                     <svg
@@ -279,7 +300,7 @@ onMounted(async () => {
                     </svg>
                   </button>
                   <div
-                    v-if="isDropdownOpen"
+                    v-if="isDropdownOpen && !isSameOid"
                     class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
@@ -306,11 +327,9 @@ onMounted(async () => {
                             :value="status.name"
                             class="itbkk-filter-item mr-2"
                           />
-                          <span class="break-words whitespace-normal text-left"
-                            >{{ status.name }} ({{
-                              status.noOfTasks || 0
-                            }})</span
-                          >
+                          <span class="break-words whitespace-normal text-left">
+                            {{ status.name }} ({{ status.noOfTasks || 0 }})
+                          </span>
                         </label>
                       </div>
 
@@ -495,7 +514,6 @@ onMounted(async () => {
     </div>
   </div>
 
-
   <div
     v-if="showDeleteConfirmation"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
@@ -513,8 +531,15 @@ onMounted(async () => {
           Cancel
         </button>
         <button
-          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          class="itbkk-button-confirm text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
+          :class="{
+            'bg-red-500 hover:bg-red-600 ': !isSameOid,
+            'bg-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+              isSameOid,
+          }"
+          :disabled="isSameOid"
+          data-tip="You need to be board owner to perform this action."
         >
           Delete
         </button>
@@ -622,5 +647,4 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-  
 </template>
