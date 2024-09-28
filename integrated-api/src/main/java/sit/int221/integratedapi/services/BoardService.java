@@ -55,6 +55,28 @@ public class BoardService {
         return boardRepository.existsById(boardId);
     }
 
+    public void validateBoardAccessForGet(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        if (board.getVisibility() == Board.Visibility.PUBLIC) {
+            return;
+        }
+
+        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("You do not have permission to access this private board.");
+        }
+    }
+
+    public void validateBoardOwnershipForModification(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("You do not have permission to modify this board.");
+        }
+    }
+
     public List<BoardDTO> getAllBoards(String oid) {
         // Retrieve all boards where the task user's oid matches the given oid
         List<Board> boards = boardRepository.findByOwnerId(oid);

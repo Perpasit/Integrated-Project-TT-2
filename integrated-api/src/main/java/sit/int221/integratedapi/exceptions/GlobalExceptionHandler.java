@@ -152,8 +152,8 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<CustomErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+    @ExceptionHandler(CustomAuthenticationException .class)
+    public ResponseEntity<CustomErrorResponse> handleAuthenticationException(CustomAuthenticationException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),

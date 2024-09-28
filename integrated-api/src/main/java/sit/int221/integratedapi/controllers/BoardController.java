@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
@@ -44,7 +45,11 @@ public class BoardController {
 
     @GetMapping("")
     public ResponseEntity<List<BoardDTO>> getAllBoards(@RequestHeader("Authorization") String token) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                    claims -> claims.get("oid", String.class));
+        }
         List<BoardDTO> boardDTOs = boardService.getAllBoards(oidFromToken);
         return ResponseEntity.ok(boardDTOs);
     }
@@ -68,7 +73,7 @@ public class BoardController {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                     claims -> claims.get("oid", String.class));
         }
-
+        boardService.validateBoardAccessForGet(boardId, oidFromToken);
         BoardDTO boardDTO = boardService.getBoardById(boardId, oidFromToken);
         return ResponseEntity.ok(boardDTO);
     }
@@ -91,17 +96,29 @@ public class BoardController {
     public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
                                          @PathVariable String boardId,
                                          @RequestBody(required = false) BoardCDTO boardCDTO) {
+        String oidFromToken = null;
+
+        // Check if the token is provided
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                    claims -> claims.get("oid", String.class));
+        }
         if (boardCDTO == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        boardService.validateBoardOwnershipForModification(boardId, oidFromToken);
         BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
         return ResponseEntity.ok(updatedBoard);
     }
 
     @DeleteMapping("/{boardId}")
     public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                    claims -> claims.get("oid", String.class));
+        }
+        boardService.validateBoardOwnershipForModification(boardId, oidFromToken);
         BoardDTO deletedBoard = boardService.deleteBoard(boardId, oidFromToken);
         return ResponseEntity.ok(deletedBoard);
     }
@@ -172,37 +189,52 @@ public class BoardController {
 
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<Object> addNewTask(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @Valid @RequestBody(required = false) TaskCDTO taskCDTO) {
+
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         if (taskCDTO == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
-
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @Valid @RequestBody(required = false) TaskUDTO updatedTaskDTO) {
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         if (updatedTaskDTO == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<TaskDDTO> deleteTask(@RequestHeader("Authorization") String token,
+    public ResponseEntity<TaskDDTO> deleteTask(@RequestHeader(value = "Authorization", required = false) String token,
                                                @PathVariable String boardId,
                                                @PathVariable Integer taskId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.removeTask(boardId, taskId);
     }
@@ -238,23 +270,33 @@ public class BoardController {
 
 
     @PostMapping("/{boardId}/statuses")
-    public ResponseEntity<Object> addNewStatus(@RequestHeader("Authorization") String token,
+    public ResponseEntity<Object> addNewStatus(@RequestHeader(value = "Authorization",required = false) String token,
                                                @PathVariable String boardId,
                                                @Valid @RequestBody(required = false) StatusCDTO status) {
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         if (status == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
     }
 
     @GetMapping("/{boardId}/statuses/{statusId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardAndStatusId(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization",required = false) String token,
             @PathVariable String boardId,
             @PathVariable Integer statusId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         statusService.validateBoardAccessForGet(boardId,oidFromToken);
         List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
         return ResponseEntity.ok(taskDTOs);
@@ -266,10 +308,15 @@ public class BoardController {
             @Valid @RequestBody(required = false) StatusUDTO statusUDTO,
             @PathVariable String boardId,
             @PathVariable Integer statusId) {
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         if (statusUDTO == null) {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
@@ -278,7 +325,12 @@ public class BoardController {
     public ResponseEntity<StatusDDTO> removeStatus(@RequestHeader("Authorization") String token,
                                                    @PathVariable String boardId,
                                                    @PathVariable Integer statusId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.removeStatus(boardId, statusId);
     }
@@ -288,7 +340,12 @@ public class BoardController {
                                                              @PathVariable String boardId,
                                                              @PathVariable Integer statusId,
                                                              @PathVariable Integer newId) {
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
