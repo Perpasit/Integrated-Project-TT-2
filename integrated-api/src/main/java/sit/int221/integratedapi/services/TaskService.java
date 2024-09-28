@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDDTO;
@@ -24,9 +25,9 @@ import sit.int221.integratedapi.repositories.primary.TaskRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
+
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Qualifier("primaryDataSource")

@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import sit.int221.integratedapi.dtos.JwtRequestUser;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
-import sit.int221.integratedapi.exceptions.AuthenticationException;
+import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.services.TaskUserService;
 import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
@@ -57,7 +57,7 @@ public class UserController {
             // Fetch user by username
             User user = userService.getUserByUsername(jwtRequestUser.getUserName());
             if (user == null) {
-                return AuthenticationException.getMessage("The Username or Password is incorrect.");
+                throw new CustomAuthenticationException("You do not have permission to access this resource.");
             }
 
             // Authenticate the user
@@ -92,7 +92,7 @@ public class UserController {
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             logger.error("Login error: ", e);
-            return AuthenticationException.getMessage("The Username or Password is incorrect.");
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
         } catch (Exception e) {
             logger.error("Login error: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
