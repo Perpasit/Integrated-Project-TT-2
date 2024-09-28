@@ -34,10 +34,9 @@ const saveBoard = async () => {
         try {
             const trimmedName = boardName.value.trim().replace(/ personal board$/, '');
             if (isEditing.value) {
-                await boardStore.updateBoard({ ...props.editingBoard, name: trimmedName });
+                await boardStore.updateBoard(props.editingBoard.id, { ...props.editingBoard, name: trimmedName });
             } else {
                 await boardStore.addBoard(trimmedName);
-                console.log(trimmedName);
             }
             emit('boardSaved');
             closeModal();
@@ -46,6 +45,7 @@ const saveBoard = async () => {
         }
     }
 };
+
 
 const closeModal = () => {
     emit('update:showModal', false);

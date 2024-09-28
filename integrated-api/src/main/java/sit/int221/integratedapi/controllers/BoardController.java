@@ -25,6 +25,7 @@ import sit.int221.integratedapi.utils.ListMapper;
 
 @RestController
 @RequestMapping("/v3/boards")
+@CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
 public class BoardController {
     @Autowired
     private BoardService boardService;
