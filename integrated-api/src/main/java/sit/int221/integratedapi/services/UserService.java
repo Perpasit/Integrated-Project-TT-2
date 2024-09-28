@@ -80,6 +80,17 @@ public class UserService {
         }
     }
 
+    public User getUserByOid(String oid) {
+        Optional<User> userOptional = userRepository.findByOid(oid);
+        if (userOptional.isPresent()) {
+            return userOptional.get();
+        } else {
+            logger.warn("User not found for oid: {}", oid);
+            return null;
+        }
+    }
+
+
     public boolean validateUserCredentials(String username, String password) {
         User user = userRepository.findByUsername(username);
         if (user == null) {

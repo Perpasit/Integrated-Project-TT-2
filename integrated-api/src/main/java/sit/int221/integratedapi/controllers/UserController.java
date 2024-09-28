@@ -103,35 +103,41 @@ public class UserController {
     @PostMapping("/token")
     public ResponseEntity<Object> refreshAccessToken(@RequestHeader("Authorization") String requestTokenHeader) {
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            String refreshToken = requestTokenHeader.substring(7);
+            String refreshToken = requestTokenHeader.substring(7);  // ตัดคำว่า "Bearer " ออก
             try {
+                // ตรวจสอบว่า refresh token ถูกต้องหรือไม่
                 Claims claims = jwtTokenUtil.getAllClaimsFromToken(refreshToken);
-                String username = claims.getSubject();
 
+                // ตรวจสอบว่า token_type เป็น "refresh"
+                String tokenType = claims.get("token_type", String.class);
+                if (!"refresh".equals(tokenType)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token type");
+                }
+
+                // ดึงข้อมูลผู้ใช้จาก refresh token (เช่น OID หรือ Username)
+                String username = claims.getSubject();
                 UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
 
-                // Validate the refresh token
-                if (jwtTokenUtil.validateToken(refreshToken, userDetails)) {
-                    String newAccessToken = jwtTokenUtil.generateToken(userDetails);
+                // สร้าง access token ใหม่
+                String newAccessToken = jwtTokenUtil.generateToken(userDetails);
 
-                    Map<String, String> response = new HashMap<>();
-                    response.put("access_token", newAccessToken);
+                // ส่ง access token ใหม่กลับไป
+                Map<String, String> response = new HashMap<>();
+                response.put("access_token", newAccessToken);
 
-                    return ResponseEntity.ok(response);
-                } else {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
-                }
-            } catch (ExpiredJwtException e) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has expired", e);
+                return ResponseEntity.ok(response);
+
+            } catch (ExpiredJwtException | MalformedJwtException | SignatureException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Refresh token error: ", e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("There is a problem. Please try again later.");
+                throw new IllegalArgumentException("Invalid refresh token or error during token processing");
             }
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Refresh token does not begin with Bearer String");
+            throw new IllegalArgumentException("Refresh token does not begin with Bearer String");
         }
     }
+
 
 
     @GetMapping("/validate-token")
