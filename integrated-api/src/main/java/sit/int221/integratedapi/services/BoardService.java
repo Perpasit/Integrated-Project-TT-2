@@ -73,13 +73,16 @@ public class BoardService {
                 boardDTO.setName(board.getName());
                 boardDTO.setOwner(ownerDTO);
 
+                // Map the visibility field
+                boardDTO.setVisibility(board.getVisibility());
+
                 boardDTOs.add(boardDTO);
             }
-
         }
 
         return boardDTOs;
     }
+
     @Transactional
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {
 
