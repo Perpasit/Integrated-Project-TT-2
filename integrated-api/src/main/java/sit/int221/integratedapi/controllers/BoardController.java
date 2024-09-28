@@ -125,7 +125,7 @@ public class BoardController {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
 
-        taskService.validateBoardOwnership(boardId, oidFromToken);  // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
+        taskService.validateBoardAccessForGet(boardId, oidFromToken);  // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
 
         // ตรวจสอบ filter และ sort
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
@@ -164,7 +164,7 @@ public class BoardController {
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
-        taskService.validateBoardOwnership(boardId, oidFromToken);
+        taskService.validateBoardAccessForGet(boardId, oidFromToken);
         TaskRDTO taskRDTO = taskService.getTaskDetailsById(boardId, id);
         return ResponseEntity.ok(taskRDTO);
     }
@@ -180,7 +180,7 @@ public class BoardController {
         }
 
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        taskService.validateBoardOwnership(boardId,oidFromToken);
+        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
@@ -194,7 +194,7 @@ public class BoardController {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        taskService.validateBoardOwnership(boardId,oidFromToken);
+        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
@@ -203,7 +203,7 @@ public class BoardController {
                                                @PathVariable String boardId,
                                                @PathVariable Integer taskId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        taskService.validateBoardOwnership(boardId,oidFromToken);
+        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.removeTask(boardId, taskId);
     }
 
@@ -215,7 +215,7 @@ public class BoardController {
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
-        statusService.validateBoardOwnership(boardId, oidFromToken);
+        statusService.validateBoardAccessForGet(boardId, oidFromToken);
         List<StatusDTO> statusDTOs = statusService.getStatusesByBoardId(boardId);
         return ResponseEntity.ok(statusDTOs);
     }
@@ -231,7 +231,7 @@ public class BoardController {
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
-        statusService.validateBoardOwnership(boardId, oidFromToken);
+        statusService.validateBoardAccessForGet(boardId, oidFromToken);
         StatusRDTO statusRDTO = statusService.getStatusByBoardIdAndStatusId(boardId, statusId);
         return ResponseEntity.ok(statusRDTO);
     }
@@ -245,7 +245,7 @@ public class BoardController {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
     }
 
@@ -255,7 +255,7 @@ public class BoardController {
             @PathVariable String boardId,
             @PathVariable Integer statusId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+        statusService.validateBoardAccessForGet(boardId,oidFromToken);
         List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
         return ResponseEntity.ok(taskDTOs);
     }
@@ -270,7 +270,7 @@ public class BoardController {
             throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
         }
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
 
@@ -279,7 +279,7 @@ public class BoardController {
                                                    @PathVariable String boardId,
                                                    @PathVariable Integer statusId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.removeStatus(boardId, statusId);
     }
 
@@ -289,7 +289,7 @@ public class BoardController {
                                                              @PathVariable Integer statusId,
                                                              @PathVariable Integer newId) {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        statusService.validateBoardOwnership(boardId,oidFromToken);
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
 
