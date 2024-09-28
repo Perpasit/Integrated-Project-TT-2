@@ -11,18 +11,19 @@ import Login from "../components/Login.vue"
 import TaskTable from "../components/TaskTable.vue"
 import Board from "../components/Board.vue"
 import AddEditBoard from "../components/AddEditBoard.vue"
+import AccessDenied from "../components/AccessDenied.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
-      redirect: "/login",
+      redirect: "/login"
     },
     {
       path: "/login",
-      name: "Login", 
-      component: Login,
+      name: "Login",
+      component: Login
     },
     {
       path: "/board",
@@ -32,23 +33,23 @@ const router = createRouter({
       children: [
         {
           path: "/board/add",
-          name: "AddBoard", 
+          name: "AddBoard",
           component: AddEditBoard,
           props: () => ({
-            mode: "add", 
-          }),
+            mode: "add"
+          })
         },
         {
           path: "/board/:boardId/edit",
-          name: "EditBoard", 
+          name: "EditBoard",
           component: AddEditBoard,
           props: () => ({
-            mode: "edit",
-          }),
-        },
-      ],
+            mode: "edit"
+          })
+        }
+      ]
     },
-    
+
     {
       path: "/board/:boardId/task",
       name: "home",
@@ -58,31 +59,31 @@ const router = createRouter({
         {
           path: "/board/:boardId/task/:taskId",
           name: "taskDetail",
-          component: Modal,
+          component: Modal
         },
         {
           path: "/board/:boardId/task/add",
           name: "AddTask",
           component: AddEditTask,
           props: () => ({
-            mode: "add",
-          }),
+            mode: "add"
+          })
         },
         {
           path: "/board/:boardId/task/:id/edit",
           name: "EditTask",
           component: AddEditTask,
           props: () => ({
-            mode: "edit",
-          }),
-        },
-      ],
+            mode: "edit"
+          })
+        }
+      ]
     },
     {
       path: "/board/:boardId/status",
       name: "ManageStatus",
       component: ManageStatus,
-      children:[
+      children: [
         {
           path: "/board/:boardId/status/:statusId",
           name: "statusDetail",
@@ -93,28 +94,32 @@ const router = createRouter({
           name: "AddStatus",
           component: AddEditStatus,
           props: () => ({
-            mode: "add",
-          }),
+            mode: "add"
+          })
         },
         {
           path: "/board/:boardId/status/:id/edit",
           name: "EditStatus",
           component: AddEditStatus,
           props: () => ({
-            mode: "edit",
-          }),
-        },
+            mode: "edit"
+          })
+        }
       ]
     },
-    
+
+    {
+      path: "/access-denied",
+      name: "AccessDenied",
+      component: AccessDenied
+    },
+
     {
       path: "/:pathMatch(.)",
       name: "NotFound",
-      component: Error,
-    },
-  ],
+      component: Error
+    }
+  ]
 })
-
-
 
 export default router
