@@ -37,14 +37,28 @@ export const useBoardStore = defineStore("board", {
     async updateBoard(id, updatedData) {
       try {
         const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
-        const index = this.boards.findIndex((board) => board.id === id);
+        // Optionally, update the board in local state
+        const index = this.boards.findIndex(board => board.id === id);
         if (index !== -1) {
-          this.boards[index] = response;
+          this.boards[index] = { ...this.boards[index], ...updatedData };
         }
+        return response.data;
       } catch (error) {
+        console.error("Error updating board:", error);
         throw error;
       }
     },
+    // async updateBoard(id, updatedData) {
+    //   try {
+    //     const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
+    //     const index = this.boards.findIndex((board) => board.id === id);
+    //     if (index !== -1) {
+    //       this.boards[index] = response;
+    //     }
+    //   } catch (error) {
+    //     throw error;
+    //   }
+    // },
 
     async deleteBoard(id) {
       try {

@@ -15,7 +15,7 @@ const modalStore = useModalStore()
     class="bg-gradient-to-br from-[#9194eb] to-[#bff7ff] min-h-screen"
   >
   
-    <Header  />
+    <Header />
     <TaskTable />
 
 
