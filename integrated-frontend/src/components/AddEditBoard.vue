@@ -2,6 +2,7 @@
 import { ref, watch, computed } from "vue"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
+import Board from "./Board.vue";
 
 const props = defineProps({
   showModal: Boolean,
@@ -81,9 +82,20 @@ const closeModal = () => {
                   type="text"
                   id="boardName"
                   v-model="boardName"
-                  class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md"
+                  class="itbkk-board-name shadow-sm p-2 mt-1 block w-full text-base border border-gray-300 rounded-md " 
                   placeholder="Enter board name"
+                  maxlength="120"
                 />
+                <p
+                  class="itbkk-status-description text-gray-500 text-sm mt-1 flex justify-end mr-2"
+                  :class="{ 'text-red-500': boardName.length === 120 }"
+                >
+                  {{
+                    boardName
+                      ? boardName.length
+                      : 0
+                  }}/200 characters
+                </p>
               </div>
             </div>
           </div>
