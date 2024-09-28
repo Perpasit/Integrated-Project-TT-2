@@ -32,10 +32,19 @@ const newStatusId = ref(1)
 const boardId = route.params.boardId
 const boardOid = computed(() => boardStore.getBoardOid(boardId))
 const userOid = computed(() => userStore.getUserOid)
-
+const boardName = ref("")
 const isSameOid = computed(() => {
   return boardOid.value !== userOid.value
 })
+
+const fetchBoardDetails = async () => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardName.value = boardData.name
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+}
 
 const showStatusDetail = (status) => {
   router.push({
@@ -203,6 +212,7 @@ const handleDeleteClick = (status) => {
 onMounted(async () => {
   await boardStore.fetchAllBoards()
   fetchStatuses(boardId)
+  fetchBoardDetails()
 })
 </script>
 
@@ -214,8 +224,11 @@ onMounted(async () => {
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
 
-    <div class="container mx-auto px-4 pt-12">
-      <div class="overflow-x-auto">
+    <div class="container mx-auto px-4 pt-2 ">
+      <div class="overflow-x-auto flex flex-col mb-5 justify-center items-center gap-8">
+        <div class="flex text-4xl mt-10 text-white font-extrabold">
+        {{ boardName }}
+      </div>
         <table
           class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
         >

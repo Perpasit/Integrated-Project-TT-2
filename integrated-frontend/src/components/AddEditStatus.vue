@@ -327,7 +327,7 @@ const fetchStatus = async () => {
               :disabled="true"
               data-tip="Only the board owner can perform this action."
             >
-              {{ mode === "add" ? "Add" : "Save" }} (Board Owner Only)
+              {{ mode === "add" ? "Add" : "Save" }} 
             </button>
           </div>
           <button

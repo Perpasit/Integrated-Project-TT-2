@@ -241,14 +241,15 @@ onMounted(async () => {
 
 <template>
   <div class="container mx-auto px-4 pt-2">
-    <div class="flex mb-5 justify-center items-center">
-      <div class="flex text-5xl mt-10 text-white font-extrabold">
+    <div class="flex mb-1 justify-center flex-col items-center">
+      <div class="flex text-4xl mt-10 text-white  justify-center font-extrabold w-screen">
         {{ boardName }}
       </div>
-      <thead class="absolute mt-2">
-        <th class="w-full text-xl font-medium">
-          <div class="flex items-center text-white">
-            <span v-if="selectedStatuses.length > 0" class="mr-2 ml-36"
+      <thead class="flex mt-2">
+        <th class="w-full text-xl flex font-medium">
+          
+          <div class=" flex mt-4 text-white">
+            <span v-if="selectedStatuses.length > 0" class="flex"
               >Filter :
             </span>
             <div class="flex">
@@ -264,6 +265,7 @@ onMounted(async () => {
               </button>
             </div>
           </div>
+
         </th>
       </thead>
     </div>
