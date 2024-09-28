@@ -106,9 +106,10 @@ public class StatusService {
         throw new ItemNotFoundException("Status with id " + statusId + " for board " + boardId + " does not exist!");
     }
 
-    public void validateBoardOwnership(String boardId, String oidFromToken) {
+    public void validateBoardAccessForGet(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
         if (board.getVisibility() == Board.Visibility.PUBLIC) {
             return;
         }
@@ -117,6 +118,16 @@ public class StatusService {
             throw new ForbiddenException("You do not have permission to access this private board.");
         }
     }
+
+    public void validateBoardOwnershipForModification(String boardId, String oidFromToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("You do not have permission to modify this board.");
+        }
+    }
+
     @Transactional
     public ResponseEntity<Object> createStatus(String boardId, StatusCDTO statusCDTO) {
         // ตรวจสอบค่า boardId ว่ามีอยู่จริงหรือไม่
