@@ -5,10 +5,14 @@ import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
 
 const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
 const statusStore = useStatusStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 const statuses = computed(() => statusStore.getStatuses)
@@ -24,6 +28,23 @@ const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
+
+const boardId = route.params.boardId
+const boardOid = computed(() => boardStore.getBoardOid(boardId))
+const userOid = computed(() => userStore.getUserOid)
+const boardName = ref("")
+const isSameOid = computed(() => {
+  return boardOid.value !== userOid.value
+})
+
+const fetchBoardDetails = async () => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardName.value = boardData.name
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+}
 
 const showStatusDetail = (status) => {
   router.push({
@@ -61,19 +82,16 @@ const saveStatus = (status) => {
   }
   selectedStatus.value = null
 }
-const boardId = route.params.boardId
-
 
 async function confirmDeleteStatus() {
-  
   if (selectedStatusToDelete) {
     try {
-      console.log("selectedStatus : ",selectedStatusToDelete.id)
-      console.log("BoardID : ",boardId)
+      console.log("selectedStatus : ", selectedStatusToDelete.id)
+      console.log("BoardID : ", boardId)
       const result = await statusStore.deleteStatus(
         boardId,
         selectedStatusToDelete.id
-      ) 
+      )
       if (result.notFound) {
         showDeleteConfirmationModal.value = false
         selectedStatusToDelete = null
@@ -124,7 +142,12 @@ const closeCannotEditDeleteModal = () => {
 
 const deleteAndTransfer = async (newStatusId) => {
   if (canDeleteStatus.value) {
-    console.log("selectStatus : ",selectedStatusToDelete.id,"newStatus : ",newStatusId)
+    console.log(
+      "selectStatus : ",
+      selectedStatusToDelete.id,
+      "newStatus : ",
+      newStatusId
+    )
     try {
       const result = await statusStore.deleteStatusTransfer(
         boardId,
@@ -171,21 +194,25 @@ const getStatusColor = (status) => {
   return statusStore.getStatusColorByName(status.name)
 }
 
-
 const handleDeleteClick = (status) => {
-  console.log("status",status)
-  console.log("statusid",status.id)
-  if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
-    showCannotEditDeleteModal.value = true;
-    selectedStatusToDelete = status;
+  console.log("status", status)
+  console.log("statusid", status.id)
+  if (
+    status.name.toLowerCase() === "no status" ||
+    status.name.toLowerCase() === "done"
+  ) {
+    showCannotEditDeleteModal.value = true
+    selectedStatusToDelete = status
   } else {
-    showDeleteConfirmationModal.value = true;
-    selectedStatusToDelete = status;
+    showDeleteConfirmationModal.value = true
+    selectedStatusToDelete = status
   }
-};
+}
 
 onMounted(async () => {
+  await boardStore.fetchAllBoards()
   fetchStatuses(boardId)
+  fetchBoardDetails()
 })
 </script>
 
@@ -197,8 +224,11 @@ onMounted(async () => {
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
 
-    <div class="container mx-auto px-4 pt-12">
-      <div class="overflow-x-auto">
+    <div class="container mx-auto px-4 pt-2 ">
+      <div class="overflow-x-auto flex flex-col mb-5 justify-center items-center gap-8">
+        <div class="flex text-4xl mt-10 text-white font-extrabold">
+        {{ boardName }}
+      </div>
         <table
           class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
         >
@@ -276,7 +306,7 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                   @click="handleDeleteClick(status)"
+                  @click="handleDeleteClick(status)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -679,12 +709,26 @@ onMounted(async () => {
         >
           Cancel
         </button>
-        <button
-          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          @click="confirmDeleteStatus"
-        >
-          Delete
-        </button>
+        <div class="flex space-x-4">
+          <!-- Button for non-board owners (when OIDs are not the same) -->
+          <button
+            v-if="!isSameOid"
+            class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            @click="confirmDeleteStatus"
+          >
+            Delete
+          </button>
+
+          <!-- Button for board owners (when OIDs are the same) -->
+          <button
+            v-if="isSameOid"
+            class="itbkk-button-confirm bg-gray-300 cursor-not-allowed text-white px-4 py-2 rounded tooltip tooltip-secondary tooltip-left"
+            data-tip="Only the board owner can delete."
+            disabled
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -724,9 +768,7 @@ onMounted(async () => {
           <div>
             <p class="text-sm leading-5 text-gray-500">
               The status "{{ modalStore.statusName }}" has been
-              {{
-                modalStore.mode === "add" ? "added" : "updated"
-              }}
+              {{ modalStore.mode === "add" ? "added" : "updated" }}
               successfully.
             </p>
           </div>

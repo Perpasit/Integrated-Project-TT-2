@@ -8,7 +8,15 @@ export const useBoardStore = defineStore("board", {
 
   getters: {
     getBoards: (state) => state.boards,
-    getBoardById: (state) => (boardId) => state.boards.find((board) => board.id === boardId),
+    getBoardByBoardId: (state) => (boardId) => state.boards.find((board) => board.id === boardId),
+    getBoardName: (state) => (boardId) => {
+      const board = state.boards.find((board) => board.id === boardId);
+      return board ? board.name : null;
+    },
+    getBoardOid: (state) => (boardId) => {
+      const board = state.boards.find((board) => board.id === boardId);
+      return board ? board.owner.oid : "boom"; // Get owner ID
+    },
   },
 
   actions: {
@@ -16,6 +24,15 @@ export const useBoardStore = defineStore("board", {
       try {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards`);
         this.boards = data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    async getBoardById(id) {
+      try {
+        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
+        console.log(data)
+        return data
       } catch (error) {
         throw error;
       }

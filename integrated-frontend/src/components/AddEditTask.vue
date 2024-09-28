@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
 import { useRouter, useRoute } from "vue-router"
 import { getItems } from "../utils/fetch"
@@ -12,7 +14,18 @@ const route = useRoute()
 const taskStore = useTaskStore()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
 const globalSettingStore = useGlobalSettingStore()
+
+const boardId = route.params.boardId
+const boardOid = computed(() => boardStore.getBoardOid(boardId))
+const userOid = computed(() => userStore.getUserOid)
+
+const isSameOid = computed(() => {
+  return boardOid.value !== userOid.value // Disable if boardOid is not equal to userOid
+})
+
 const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
 )
@@ -31,7 +44,7 @@ watch(generalSetting, (newValue) => {
   isLimitEnabled.value = newValue?.limitMaximumTask
   maxTasks.value = newValue?.maximumTaskLimit
 })
-const boardId = route.params.boardId
+
 const props = defineProps({
   mode: {
     type: String,
@@ -156,7 +169,7 @@ async function saveTask() {
           : "",
         status: editedTask.value.status,
       }
-      console.log(boardId , newTask)
+      console.log(boardId, newTask)
       await taskStore.addTask(boardId, newTask)
       fetchTaskAndStatus(boardId)
       router.push({ name: "home" })
@@ -216,7 +229,7 @@ const fetchTaskAndStatus = async (boardId) => {
 }
 onMounted(async () => {
   fetchTaskAndStatus(boardId)
-  editedTask.value.status = statusStore.statuses[0].id;
+  editedTask.value.status = statusStore.statuses[0].id
 })
 </script>
 
@@ -306,7 +319,6 @@ onMounted(async () => {
                     v-for="status in statusStore.statuses"
                     :key="status.id"
                     :value="status.id"
-                    
                   >
                     {{ formatStatus(status.name) }}
                   </option>
@@ -353,24 +365,45 @@ onMounted(async () => {
         </div>
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                isTitleValid,
-              'bg-gray-300 cursor-not-allowed': !isTitleValid,
-            }"
-            @click="saveTask"
-            :disabled="
-              !isTitleValid ||
-              isTitleTooLong ||
-              isDescriptionTooLong ||
-              areAssigneesTooLong
-            "
-          >
+          <div class="flex space-x-4">
+            <!-- Button for non-board owners (when OIDs are not the same) -->
+            <button
+              v-if="!isSameOid"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+              :class="{
+                'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                  isTitleValid,
+                'bg-gray-300 cursor-not-allowed': !isTitleValid,
+              }"
+              @click="isTitleValid && saveTask()"
+              :disabled="
+                !isTitleValid ||
+                isTitleTooLong ||
+                isDescriptionTooLong ||
+                areAssigneesTooLong
+              "
+            >
+              {{ mode === "add" ? "Add" : "Save" }}
+            </button>
+
+            <!-- Button for board owners (when OIDs are the same) -->
+            <button
+              v-if="isSameOid"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
+              :class="{
+                'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                  !isSameOid,
+                'bg-gray-300 cursor-not-allowed': isSameOid,
+              }"
+              @click="isSameOid && saveTask()"
+              :disabled="!isSameOid"
+              data-tip="You need to be the board owner to perform this action."
+            >
             {{ mode === "add" ? "Add" : "Save" }}
-          </button>
+            </button>
+          </div>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
