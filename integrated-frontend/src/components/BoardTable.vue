@@ -34,7 +34,7 @@ const deleteBoard = async () => {
 
     showDeleteConfirmation.value = false
     try {
-      await boardStore.deleteBoard(selectedBoardToDelete.boardId)
+      await boardStore.deleteBoard(selectedBoardToDelete.id)
       showSuccessModal.value = true
       selectedBoardToDelete = null
       await fetchBoards()

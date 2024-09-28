@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
+import { getItems, postItem, putItem, patchItem,deleteItem } from "../utils/fetch";
 
 export const useBoardStore = defineStore("board", {
   state: () => ({
@@ -17,7 +17,6 @@ export const useBoardStore = defineStore("board", {
         const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards`);
         this.boards = data;
       } catch (error) {
-        // Remove router handling; just rethrow the error
         throw error;
       }
     },
@@ -37,7 +36,7 @@ export const useBoardStore = defineStore("board", {
 
     async updateBoard(id, updatedData) {
       try {
-        const response = await putItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
+        const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
         const index = this.boards.findIndex((board) => board.id === id);
         if (index !== -1) {
           this.boards[index] = response;
