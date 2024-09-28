@@ -139,16 +139,14 @@ public class BoardController {
         if (allParams != null && !allParams.isEmpty()) {
             return ResponseEntity.ok(new ArrayList<>());
         }
-
-        // เพิ่ม oidFromToken ลงในคำสั่งเรียกใช้ taskService.getAllTasks
-        ResponseEntity<Object> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
+        
+        ResponseEntity<List<TaskDTO>> response = taskService.getAllTasks(boardId, sortBy, filterStatuses, allParams);
         if (response.getStatusCode().is2xxSuccessful()) {
-            List<Task> tasks = (List<Task>) response.getBody();
-            List<TaskDTO> taskDTOs = listMapper.mapList(tasks, TaskDTO.class);
-            return ResponseEntity.ok(taskDTOs);
+            return ResponseEntity.ok(response.getBody());
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
     }
 
 
