@@ -9,7 +9,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import sit.int221.integratedapi.dtos.*;
+import sit.int221.integratedapi.dtos.TaskCDTO;
+import sit.int221.integratedapi.dtos.TaskDDTO;
+import sit.int221.integratedapi.dtos.TaskRDTO;
+import sit.int221.integratedapi.dtos.TaskUDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.Task;
@@ -81,7 +84,7 @@ public class TaskService {
         }
     }
 
-    public ResponseEntity<List<TaskDTO>> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
+    public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -102,28 +105,8 @@ public class TaskService {
         } else {
             tasks = taskRepository.findByBoardId(boardId, sort);
         }
-
-        // Map Task entities to TaskDTO, including board name
-        List<TaskDTO> taskDTOs = tasks.stream().map(task -> {
-            TaskDTO taskDTO = new TaskDTO();
-            taskDTO.setId(task.getId());
-            taskDTO.setTitle(task.getTitle());
-            taskDTO.setAssignees(task.getAssignees());
-            taskDTO.setStatus(task.getStatus().getName());
-
-            // Set the board name
-            String boardName = task.getBoard().getName(); // Assuming Board has a getName() method
-            taskDTO.setBoardName(boardName);
-
-            return taskDTO;
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.ok(taskDTOs);
+        return ResponseEntity.ok(tasks);
     }
-
-
-
-
 
     private List<String> extractStatusNames(List<String> filterStatuses) {
         List<String> statusNames = new ArrayList<>();
