@@ -48,6 +48,11 @@ public class StatusService {
         this.boardRepository = boardRepository;
     }
 
+    public Status findStatusByIdAndBoardId(Integer statusId, String boardId) {
+        return statusRepository.findByIdAndBoardId(statusId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Status " + statusId + " does not exist in board " + boardId));
+    }
+
     public List<StatusDTO> getStatusesByBoardId(String boardId) {
         List<Status> statuses = statusRepository.findByBoardId(boardId);
         List<StatusDTO> statusDTOs = new ArrayList<>();

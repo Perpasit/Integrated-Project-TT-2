@@ -12,6 +12,7 @@ import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
+import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.services.BoardService;
@@ -83,7 +84,7 @@ public class BoardController {
     public ResponseEntity<?> createBoard(@Valid @RequestHeader("Authorization") String token,
                                          @RequestBody(required = false) BoardCDTO boardCDTO) {
         if (boardCDTO == null || boardCDTO.getName() == null) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
 
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
@@ -104,7 +105,7 @@ public class BoardController {
                     claims -> claims.get("oid", String.class));
         }
         if (boardCDTO == null) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
         boardService.validateBoardOwnershipForModification(boardId, oidFromToken);
         BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
@@ -200,7 +201,7 @@ public class BoardController {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
         if (taskCDTO == null) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
         taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
@@ -218,8 +219,9 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        taskService.findTaskById(taskId);
         if (updatedTaskDTO == null) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
         taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
@@ -235,6 +237,7 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        taskService.findTaskById(taskId);
         taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.removeTask(boardId, taskId);
     }
@@ -280,7 +283,7 @@ public class BoardController {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
         if (status == null) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
@@ -314,8 +317,9 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        statusService.findStatusByIdAndBoardId(statusId,boardId);
         if (statusUDTO == null) {
-            throw new ItemNotFoundException("Board with id " + boardId + " does not exist!");
+            throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
@@ -331,6 +335,7 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        statusService.findStatusByIdAndBoardId(statusId,boardId);
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.removeStatus(boardId, statusId);
     }
@@ -346,6 +351,7 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        statusService.findStatusByIdAndBoardId(statusId,boardId);
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
