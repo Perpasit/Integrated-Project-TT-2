@@ -12,6 +12,35 @@ export const fetch = async (url, options = {}) => {
   const userStore = useUserStore()
   const router = useRouter()
 
+  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000;
+  if (Date.now() >= tokenExpirationTime) {
+    try {
+      // Send refresh token request to get a new access token
+      const refreshResponse = await window.fetch(
+        "http://localhost:8080/token",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json();
+        userStore.accessToken = data.access_token;
+        userStore.saveToLocalStorage(); // Save the new access token
+      } else {
+        // Refresh token failed or expired
+        userStore.logout();
+        throw new Error("Session expired, please login again.");
+      }
+    } catch (error) {
+      throw new Error("Failed to refresh token.");
+    }
+  }
+
   const response = await window.fetch(url, {
     ...options,
     headers: {

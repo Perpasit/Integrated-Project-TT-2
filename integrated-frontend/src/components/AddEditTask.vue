@@ -398,7 +398,7 @@ onMounted(async () => {
                 'bg-gray-300 cursor-not-allowed': isSameOid,
               }"
               @click="isSameOid && saveTask()"
-              :disabled="!isSameOid"
+              :disabled="isSameOid"
               data-tip="You need to be the board owner to perform this action."
             >
             {{ mode === "add" ? "Add" : "Save" }}
