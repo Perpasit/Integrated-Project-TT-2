@@ -21,6 +21,7 @@ import sit.int221.integratedapi.dtos.JwtRequestUser;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
+import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.services.TaskUserService;
 import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
@@ -118,6 +119,11 @@ public class UserController {
                 String username = claims.getSubject();
                 UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(username);
 
+                // ถ้า userDetails เป็น null หรือ user ถูกลบออกไปแล้ว
+                if (userDetails == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User no longer exists");
+                }
+
                 // สร้าง access token ใหม่
                 String newAccessToken = jwtTokenUtil.generateToken(userDetails);
 
@@ -131,13 +137,12 @@ public class UserController {
                 throw e;
             } catch (Exception e) {
                 logger.error("Refresh token error: ", e);
-                throw new IllegalArgumentException("Invalid refresh token or error during token processing");
+                throw new CustomAuthenticationException("Invalid refresh token or error during token processing");
             }
         } else {
             throw new IllegalArgumentException("Refresh token does not begin with Bearer String");
         }
     }
-
 
 
     @GetMapping("/validate-token")
