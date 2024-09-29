@@ -14,21 +14,24 @@ export const useUserStore = defineStore('user', {
       email: '',
     },
     isAuthenticated: false,
-    token: '',
+    accessToken: '',
+    refreshToken: '',  // Add refresh token here
   }),
 
   getters: {
     getUserInfo: (state) => state.userInfo,
     getAccountName: (state) => state.userInfo.name,
     getIsAuthenticated: (state) => state.isAuthenticated,
-    getToken: (state) => state.token,
+    getAccessToken: (state) => state.accessToken,
+    getRefreshToken: (state) => state.refreshToken,  // Getter for refresh token
     getUserOid: (state) => state.userInfo.oid,
   },
 
   actions: {
-    setUserInfo(info, token) {
+    setUserInfo(info, accessToken, refreshToken) {
       this.userInfo = info;
-      this.token = token;
+      this.accessToken = accessToken;
+      this.refreshToken = refreshToken;  // Save the refresh token
       this.isAuthenticated = true;
       this.saveToLocalStorage();
     },
@@ -45,10 +48,11 @@ export const useUserStore = defineStore('user', {
         email: '',
       };
       this.isAuthenticated = false;
-      this.token = '';
+      this.accessToken = '';
+      this.refreshToken = '';  // Clear refresh token
       localStorage.removeItem('userStore');
       localStorage.removeItem('isLimitEnabled');
-      router.push({name:"Login"});
+      router.push({name: "Login"});
     },
 
     saveToLocalStorage() {
@@ -57,7 +61,8 @@ export const useUserStore = defineStore('user', {
         JSON.stringify({
           userInfo: this.userInfo,
           isAuthenticated: this.isAuthenticated,
-          token: this.token,
+          accessToken: this.accessToken,
+          refreshToken: this.refreshToken,  // Save refresh token to localStorage
         })
       );
     },
@@ -68,7 +73,8 @@ export const useUserStore = defineStore('user', {
         const parsedData = JSON.parse(storedData);
         this.userInfo = parsedData.userInfo;
         this.isAuthenticated = parsedData.isAuthenticated;
-        this.token = parsedData.token;
+        this.accessToken = parsedData.accessToken;
+        this.refreshToken = parsedData.refreshToken;  // Load refresh token from localStorage
       }
     },
   },
