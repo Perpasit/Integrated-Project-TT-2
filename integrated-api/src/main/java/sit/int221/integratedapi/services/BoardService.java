@@ -224,6 +224,11 @@ public class BoardService {
             board.setName(boardCDTO.getName());
         }
 
+        // Check if visibility is null in the request
+        if (boardCDTO.getVisibility() == null) {
+            throw new IllegalArgumentException("Request body must contain a valid 'visibility' value.");
+        }
+
 
         // ตรวจสอบและตั้งค่า visibility
         if (boardCDTO.getVisibility() != null) {
