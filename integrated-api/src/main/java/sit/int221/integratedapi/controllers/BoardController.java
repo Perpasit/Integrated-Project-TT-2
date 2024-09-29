@@ -94,16 +94,17 @@ public class BoardController {
     }
 
     @PatchMapping("/{boardId}")
-    public ResponseEntity<?> updateBoard(@RequestHeader("Authorization") String token,
+    public ResponseEntity<?> updateBoard(@RequestHeader(value = "Authorization",required = false) String token,
                                          @PathVariable String boardId,
                                          @RequestBody(required = false) BoardCDTO boardCDTO) {
         String oidFromToken = null;
-
-        // Check if the token is provided
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                     claims -> claims.get("oid", String.class));
+        }else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+
         if (boardCDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
@@ -113,11 +114,13 @@ public class BoardController {
     }
 
     @DeleteMapping("/{boardId}")
-    public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader("Authorization") String token, @PathVariable String boardId) {
+    public ResponseEntity<BoardDTO> deleteBoard(@RequestHeader(value = "Authorization",required = false) String token, @PathVariable String boardId) {
         String oidFromToken = null;
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                     claims -> claims.get("oid", String.class));
+        }else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
         boardService.validateBoardOwnershipForModification(boardId, oidFromToken);
         BoardDTO deletedBoard = boardService.deleteBoard(boardId, oidFromToken);
@@ -297,8 +300,6 @@ public class BoardController {
         String oidFromToken = null;
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-        } else {
-            throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
         statusService.validateBoardAccessForGet(boardId,oidFromToken);
         List<TaskDTO> taskDTOs = statusService.getTasksByBoardAndStatusId(boardId, statusId);
@@ -307,7 +308,7 @@ public class BoardController {
 
     @PutMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<Object> updateStatus(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization",required = false) String token,
             @Valid @RequestBody(required = false) StatusUDTO statusUDTO,
             @PathVariable String boardId,
             @PathVariable Integer statusId) {
@@ -326,7 +327,7 @@ public class BoardController {
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusDDTO> removeStatus(@RequestHeader("Authorization") String token,
+    public ResponseEntity<StatusDDTO> removeStatus(@RequestHeader(value = "Authorization",required = false) String token,
                                                    @PathVariable String boardId,
                                                    @PathVariable Integer statusId) {
         String oidFromToken = null;
@@ -341,7 +342,7 @@ public class BoardController {
     }
 
     @DeleteMapping("/{boardId}/statuses/{statusId}/{newId}")
-    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@RequestHeader("Authorization") String token,
+    public ResponseEntity<StatusTFDDTO> deleteTransferStatus(@RequestHeader(value = "Authorization",required = false) String token,
                                                              @PathVariable String boardId,
                                                              @PathVariable Integer statusId,
                                                              @PathVariable Integer newId) {
