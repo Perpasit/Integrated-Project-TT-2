@@ -7,28 +7,57 @@ CREATE TABLE global_settings (
     maximumTaskLimit INT NOT NULL DEFAULT 10,
     limitMaximumTask BOOLEAN NOT NULL DEFAULT TRUE
 );
+CREATE TABLE users (
+    oid CHAR(36) PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_oid CHECK (oid REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
+    CONSTRAINT chk_name_length CHECK (TRIM(name) != '' AND LENGTH(TRIM(name)) <= 100),
+    CONSTRAINT chk_username_length CHECK (TRIM(username) != '' AND LENGTH(TRIM(username)) <= 50),
+    CONSTRAINT chk_email_length CHECK (TRIM(email) != '' AND LENGTH(TRIM(email)) <= 50)
+);
+CREATE TABLE boards (
+    id CHAR(10) PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    owner_id CHAR(36) NOT NULL,
+    visibility ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PRIVATE', -- ใช้ ENUM สำหรับการตั้งค่า visibility
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_board_id CHECK (id REGEXP '^[A-Za-z0-9_-]{10}$'),
+    CONSTRAINT chk_board_name CHECK (TRIM(name) != ''),
+    FOREIGN KEY (owner_id) REFERENCES users(oid) ON DELETE CASCADE
+) ENGINE = InnoDB;
 CREATE TABLE statuses (
-    statusId INT AUTO_INCREMENT PRIMARY KEY,
-    statusName VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
-    statusDescription VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    colorCode VARCHAR(7) NOT NULL,
-    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(200),
+    color VARCHAR(7) NOT NULL,
+    board_id CHAR(10) NOT NULL,
     global_settings_id INT NOT NULL,
-    CONSTRAINT CHK_statusName_not_empty CHECK (statusName <> ''),
-    CONSTRAINT CHK_statusName_trim CHECK (statusName = TRIM(statusName)),
-    CONSTRAINT CHK_statusDescription_trim CHECK (statusDescription = TRIM(statusDescription) OR statusDescription IS NULL),
-    CONSTRAINT CHK_colorCode_valid CHECK (colorCode RLIKE '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'),
-    CONSTRAINT fk_global_settings FOREIGN KEY (global_settings_id) REFERENCES global_settings(id)
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_status_name_length CHECK (TRIM(name) != '' AND LENGTH(TRIM(name)) <= 50),
+    CONSTRAINT chk_status_description CHECK (description IS NULL OR (TRIM(description) != '' AND LENGTH(TRIM(description)) <= 200)),
+    CONSTRAINT chk_status_color CHECK (color REGEXP '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'),
+    CONSTRAINT fk_global_settings FOREIGN KEY (global_settings_id) REFERENCES global_settings(id),
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_status_per_board (name, board_id)
 );
 CREATE TABLE tasks (
-    taskId INT AUTO_INCREMENT PRIMARY KEY,
-    taskTitle VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    taskDescription VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    taskAssignees VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    statusId INT DEFAULT NULL,
-    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT CHK_taskTitle_not_empty CHECK (taskTitle <> ''),
-    CONSTRAINT fk_status FOREIGN KEY (statusId) REFERENCES statuses(statusId) ON DELETE SET NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    board_id CHAR(10) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    assignees VARCHAR(30),
+    status_id INT,
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_task_title_length CHECK (TRIM(title) != '' AND LENGTH(TRIM(title)) <= 100),
+    CONSTRAINT chk_task_description CHECK (description IS NULL OR (TRIM(description) != '' AND LENGTH(TRIM(description)) <= 500)),
+    CONSTRAINT chk_task_assignees CHECK (assignees IS NULL OR (TRIM(assignees) != '' AND LENGTH(TRIM(assignees)) <= 30)),
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    FOREIGN KEY (status_id) REFERENCES statuses(id) ON DELETE SET NULL
 );
