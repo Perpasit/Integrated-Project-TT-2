@@ -41,6 +41,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/v2/global-settings")) {
+            chain.doFilter(request, response);
+            return;
+        }
         final String requestTokenHeader = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
