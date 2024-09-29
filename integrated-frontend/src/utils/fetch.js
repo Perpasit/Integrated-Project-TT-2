@@ -7,38 +7,65 @@ const getToken = () => {
   return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.token
 }
 
-export const fetch = async (url, options = {}) => {
-  const token = getToken()
+export const fetchWithAuth = async (url, options = {}, router) => {
   const userStore = useUserStore()
-  const router = useRouter()
+  // const router = useRouter();
 
+  // Load the stored tokens
+  userStore.loadFromLocalStorage()
+
+  const token = userStore.accessToken
+  const refreshToken = userStore.refreshToken
+
+  // Check if the access token is expired
+  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000
+  if (Date.now() >= tokenExpirationTime) {
+    try {
+      // Send refresh token request to get a new access token
+      const refreshResponse = await window.fetch(
+        "http://localhost:8080/token",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      )
+
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json()
+        userStore.accessToken = data.access_token
+        userStore.saveToLocalStorage() // Save the new access token
+      } else {
+        // Refresh token failed or expired
+        userStore.logout()
+        throw new Error("Session expired, please login again.")
+      }
+    } catch (error) {
+      throw new Error("Failed to refresh token.")
+    }
+  }
+
+  // Proceed with the actual API call using the new or valid token
   const response = await window.fetch(url, {
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${userStore.accessToken}`
     }
   })
+
   const contentType = response.headers.get("content-type")
 
-  // Handle non-ok responses, especially 401 Unauthorized
   if (response.status === 401) {
-    // Clear token if needed and redirect to login page
-    userStore.logout() // Assuming you have a logout action in your store
+    userStore.logout()
     throw new Error("Unauthorized. Redirecting to login.")
   }
 
-  // if (contentType && contentType.includes("application/json")) {
-  //   const errorData = await response.json();
-  //   throw new Error(errorData.message);
-  // } else {
-  //   const errorMessage = await response.text();
-  //   throw new Error(errorMessage);
-  // }
-
   if (response.status === 403) {
-    router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
-    throw new Error("You do not have permission to change board visibility mode.")
+    router.push({ name: "AccessDenied" })
+    throw new Error("You do not have permission.")
   }
 
   if (contentType && contentType.includes("application/json")) {
@@ -48,11 +75,51 @@ export const fetch = async (url, options = {}) => {
   }
 }
 
-export const getItems = async (url) => {
+const checkAndRefreshToken = async () => {
   const userStore = useUserStore()
+  // const router = useRouter();
+
+  // Load the stored tokens
+  userStore.loadFromLocalStorage()
+
+  const token = userStore.accessToken
+  const refreshToken = userStore.refreshToken
+
+  // Check if the access token is expired
+  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000
+  if (Date.now() >= tokenExpirationTime) {
+    try {
+      // Send refresh token request to get a new access token
+      const refreshResponse = await window.fetch(
+        "http://localhost:8080/token",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+            "Content-Type": "application/json"
+          }
+        }
+      )
+
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json()
+        userStore.accessToken = data.access_token
+        userStore.saveToLocalStorage() // Save the new access token
+      } else {
+        // Refresh token failed or expired
+        userStore.logout()
+        throw new Error("Session expired, please login again.")
+      }
+    } catch (error) {
+      throw new Error("Failed to refresh token.")
+    }
+  }
+}
+
+export const getItems = async (url) => {
   try {
-    userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    await checkAndRefreshToken()
+    return await fetchWithAuth(url, {
       method: "GET"
     })
   } catch (error) {
@@ -61,10 +128,9 @@ export const getItems = async (url) => {
 }
 
 export const postItem = async (url, item) => {
-  const userStore = useUserStore()
   try {
-    userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    await checkAndRefreshToken()
+    return await fetchWithAuth(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -77,10 +143,9 @@ export const postItem = async (url, item) => {
 }
 
 export const putItem = async (url, item) => {
-  const userStore = useUserStore()
   try {
-    userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    await checkAndRefreshToken()
+    return await fetchWithAuth(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -93,10 +158,9 @@ export const putItem = async (url, item) => {
 }
 
 export const deleteItem = async (url) => {
-  const userStore = useUserStore()
   try {
-    userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    await checkAndRefreshToken()
+    return await fetchWithAuth(url, {
       method: "DELETE"
     })
   } catch (error) {
@@ -105,10 +169,9 @@ export const deleteItem = async (url) => {
 }
 
 export const patchItem = async (url, item) => {
-  const userStore = useUserStore()
   try {
-    userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    await checkAndRefreshToken()
+    return await fetchWithAuth(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json"
@@ -120,7 +183,6 @@ export const patchItem = async (url, item) => {
   }
 }
 
-// Correct the fetchLogin function to use window.fetch
 export const fetchLogin = async (url, options) => {
   const response = await window.fetch(url, options)
   const contentType = response.headers.get("content-type")

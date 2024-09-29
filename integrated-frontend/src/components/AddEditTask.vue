@@ -23,7 +23,7 @@ const boardOid = computed(() => boardStore.getBoardOid(boardId))
 const userOid = computed(() => userStore.getUserOid)
 
 const isSameOid = computed(() => {
-  return boardOid.value !== userOid.value // Disable if boardOid is not equal to userOid
+  return boardOid.value !== userOid.value 
 })
 
 const generalSetting = computed(
@@ -36,7 +36,7 @@ watch(
   () => route.params.boardId,
   async (newBoardId) => {
     boardId = newBoardId
-    await fetchTaskAndStatus(boardId) // Refetch when board changes
+    await fetchTaskAndStatus(boardId) 
   }
 )
 
@@ -398,7 +398,7 @@ onMounted(async () => {
                 'bg-gray-300 cursor-not-allowed': isSameOid,
               }"
               @click="isSameOid && saveTask()"
-              :disabled="!isSameOid"
+              :disabled="isSameOid"
               data-tip="You need to be the board owner to perform this action."
             >
             {{ mode === "add" ? "Add" : "Save" }}
