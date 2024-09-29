@@ -85,6 +85,11 @@ public class TaskService {
         }
     }
 
+    public Task findTaskById(Integer taskId) {
+        return taskRepository.findById(taskId)
+                .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist!"));
+    }
+
     public ResponseEntity<Object> getAllTasks(String boardId, String sortBy, List<String> filterStatuses, List<String> allParams) {
         if (filterStatuses != null && filterStatuses.stream().anyMatch(status -> status.contains("#"))) {
             return ResponseEntity.ok(new ArrayList<>());
