@@ -203,10 +203,10 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
         if (taskCDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
-        taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
@@ -222,11 +222,11 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         taskService.findTaskById(taskId);
         if (updatedTaskDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
-        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
 
@@ -240,8 +240,8 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        taskService.findTaskById(taskId);
         taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        taskService.findTaskById(taskId);
         return taskService.removeTask(boardId, taskId);
     }
 
@@ -285,10 +285,10 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         if (status == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.createStatus(boardId, status);
     }
 
@@ -318,11 +318,11 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
+        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         statusService.findStatusByIdAndBoardId(statusId,boardId);
         if (statusUDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
         return statusService.updateStatus(boardId, statusId, statusUDTO);
     }
 
@@ -336,8 +336,8 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.findStatusByIdAndBoardId(statusId,boardId);
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.findStatusByIdAndBoardId(statusId,boardId);
         return statusService.removeStatus(boardId, statusId);
     }
 
@@ -352,8 +352,8 @@ public class BoardController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.findStatusByIdAndBoardId(statusId,boardId);
         statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.findStatusByIdAndBoardId(statusId,boardId);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
 
