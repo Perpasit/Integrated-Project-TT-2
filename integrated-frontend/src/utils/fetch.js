@@ -4,69 +4,39 @@ import { useUserStore } from "../stores/userStore"
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.accessToken
+  return userStore.accessToken  || JSON.parse(localStorage.getItem("userStore"))?.accessToken
+}
+const getRefreshToken = () => {
+  const userStore = useUserStore() // Access the store within the function
+  return userStore.refreshToken  || JSON.parse(localStorage.getItem("userStore"))?.refreshToken
 }
 
-export const fetchWithAuth = async (url, options = {}) => {
-  const userStore = useUserStore()
 
+export const fetch = async (url, options = {}) => {
+
+  const userStore = useUserStore()
   const router = useRouter()
 
 
-  // Load the stored tokens
-  userStore.loadFromLocalStorage()
-
-  const token = userStore.accessToken
-  const refreshToken = userStore.refreshToken
-
-  // Check if the access token is expired
-  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000
-  if (Date.now() >= tokenExpirationTime) {
-    try {
-      // Send refresh token request to get a new access token
-      const refreshResponse = await window.fetch(
-        "http://localhost:8080/token",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-            "Content-Type": "application/json"
-          }
-        }
-      )
-
-      if (refreshResponse.ok) {
-        const data = await refreshResponse.json()
-        userStore.accessToken = data.access_token
-        userStore.saveToLocalStorage() // Save the new access token
-      } else {
-        // Refresh token failed or expired
-        userStore.logout()
-        throw new Error("Session expired, please login again.")
-      }
-    } catch (error) {
-      throw new Error("Failed to refresh token.")
-    }
-  }
-
-  // Proceed with the actual API call using the new or valid token
   const response = await window.fetch(url, {
     ...options,
     headers: {
       ...options.headers,
     }
   })
-
   const contentType = response.headers.get("content-type")
 
+  // Handle non-ok responses, especially 401 Unauthorized
   if (response.status === 401) {
-    userStore.logout()
+    // Clear token if needed and redirect to login page
+    userStore.logout() // Assuming you have a logout action in your store
     throw new Error("Unauthorized. Redirecting to login.")
   }
 
+
   if (response.status === 403) {
-    router.push({ name: "AccessDenied" })
-    throw new Error("You do not have permission.")
+    router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
+    throw new Error("You do not have permission to change board visibility mode.")
   }
 
   if (contentType && contentType.includes("application/json")) {
@@ -76,58 +46,57 @@ export const fetchWithAuth = async (url, options = {}) => {
   }
 }
 
-const checkAndRefreshToken = async () => {
-  const userStore = useUserStore()
 
-  // const router = useRouter();
+export const fetchWithAuthCheck = async (url, options = {}) => {
+  const userStore = useUserStore();
+  
+  if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
+    console.log("Access token expired or about to expire, attempting refresh...");
+    await userStore.refreshAccessToken(); 
+  }
+  const token = getToken(); 
 
-  // Load the stored tokens
-  userStore.loadFromLocalStorage()
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  const token = userStore.accessToken
-  const refreshToken = userStore.refreshToken
+    return response; 
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error; 
+  }
+};
 
-  // Check if the access token is expired
-  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000
-  if (Date.now() >= tokenExpirationTime) {
-    try {
-      // Send refresh token request to get a new access token
-      const refreshResponse = await window.fetch(
-        "http://localhost:8080/token",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-            "Content-Type": "application/json"
-          }
-        }
-      )
-
-      if (refreshResponse.ok) {
-        const data = await refreshResponse.json()
-        userStore.accessToken = data.access_token
-        userStore.saveToLocalStorage() // Save the new access token
-      } else {
-        // Refresh token failed or expired
-        userStore.logout()
-        throw new Error("Session expired, please login again.")
-      }
-    } catch (error) {
-      throw new Error("Failed to refresh token.")
-    }
+export const postRefreshToken = async (url) => {
+  const refreshToken = getRefreshToken()
+  try {
+    return await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${refreshToken}`
+      },
+    })
+  } catch (error) {
+    throw error
   }
 }
 
 export const getItems = async (url) => {
+  const userStore = useUserStore()
+  const token = getToken()
   try {
-    await checkAndRefreshToken()
-    return await fetchWithAuth(url, {
+    userStore.loadFromLocalStorage()
+    return await fetchWithAuthCheck(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
       },
-
     })
   } catch (error) {
     throw error
@@ -135,17 +104,16 @@ export const getItems = async (url) => {
 }
 
 export const postItem = async (url, item) => {
-
   const userStore = useUserStore()
   const token = getToken()
-
   try {
-    await checkAndRefreshToken()
-    return await fetchWithAuth(url, {
+    userStore.loadFromLocalStorage()
+    return await fetchWithAuthCheck(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
+
       },
       body: JSON.stringify(item)
     })
@@ -155,13 +123,11 @@ export const postItem = async (url, item) => {
 }
 
 export const putItem = async (url, item) => {
-
   const userStore = useUserStore()
   const token = getToken()
-
   try {
-    await checkAndRefreshToken()
-    return await fetchWithAuth(url, {
+    userStore.loadFromLocalStorage()
+    return await fetchWithAuthCheck(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -178,11 +144,13 @@ export const deleteItem = async (url) => {
   const userStore = useUserStore()
   const token = getToken()
   try {
-    await checkAndRefreshToken()
-    return await fetchWithAuth(url, {
+    userStore.loadFromLocalStorage()
+    return await fetchWithAuthCheck(url, {
       method: "DELETE",
-      Authorization: `Bearer ${token}`
-
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
     })
   } catch (error) {
     throw error
@@ -190,12 +158,11 @@ export const deleteItem = async (url) => {
 }
 
 export const patchItem = async (url, item) => {
-
   const userStore = useUserStore()
   const token = getToken()
   try {
-    await checkAndRefreshToken()
-    return await fetchWithAuth(url, {
+    userStore.loadFromLocalStorage()
+    return await fetchWithAuthCheck(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -208,6 +175,7 @@ export const patchItem = async (url, item) => {
   }
 }
 
+// Correct the fetchLogin function to use window.fetch
 export const fetchLogin = async (url, options) => {
   const response = await window.fetch(url, options)
   const contentType = response.headers.get("content-type")
@@ -279,6 +247,8 @@ export const getItemsNoUser = async (url) => {
     throw error
   }
 }
+
+
 
 // import { useRouter } from "vue-router";
 // import { useUserStore } from "../stores/userStore";

@@ -36,9 +36,12 @@ const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
 
 const boardId = route.params.boardId
+const boardOid = computed(() => boardStore.getBoardOid(boardId))
+const userOid = computed(() => userStore.getUserOid)
 
-const boardOid = ref();
-const userOid = ref();
+const isSameOid = computed(() => {
+  return boardOid.value !== userOid.value // Disable if boardOid is not equal to userOid
+})
 
 
 const boardName = ref("")
@@ -206,23 +209,21 @@ const toggleStatusFilter = (statusName) => {
   fetchTasksAndStatus(boardId)
 }
 
-  console.log(boardOid.value);
-  console.log(userOid.value);
   
 onMounted(async () => {
   
   await fetchBoardDetails()
  
   const boardId = route.params.boardId
-  userOid.value = userStore.getUserOid;
-  try {
-    const boardData = await boardStore.getBoardById(boardId)
-    boardOid.value = boardData.owner.oid
-  } catch (error) {
-    console.error("Error fetching board details:", error)
-  }
-  console.log("imMounted :" , boardOid.value);
-  console.log("imMounted :" , userOid.value);
+  // userOid.value = userStore.getUserOid;
+  // try {
+  //   const boardData = await boardStore.getBoardById(boardId)
+  //   boardOid.value = boardData.owner.oid
+  // } catch (error) {
+  //   console.error("Error fetching board details:", error)
+  // }
+  // console.log("imMounted :" , boardOid.value);
+  // console.log("imMounted :" , userOid.value);
 
   if (!boardId) {
     console.error("Board ID is missing")
@@ -252,9 +253,7 @@ onMounted(async () => {
   }
 
 })
-const isSameOid = () => {
-  return boardOid.value !== userOid.value;
-};
+
 
 </script>
 
