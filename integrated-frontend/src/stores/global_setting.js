@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { getItems, patchItem } from "../utils/fetch";
+import { getItems, patchItem ,getItemsNoUser} from "../utils/fetch";
 
 export const useGlobalSettingStore = defineStore("globalSetting", {
   state: () => ({
@@ -15,7 +15,7 @@ export const useGlobalSettingStore = defineStore("globalSetting", {
   actions: {
     async fetchAllGlobalSettings() {
       try {
-        this.globalSettings = await getItems(
+        this.globalSettings = await getItemsNoUser(
           `${import.meta.env.VITE_API_ENDPOINT}/global-settings`
         );
       } catch (error) {
@@ -25,7 +25,7 @@ export const useGlobalSettingStore = defineStore("globalSetting", {
     },
     async fetchGlobalSetting(name) {
       try {
-        this.currentGlobalSetting = await getItems(
+        this.currentGlobalSetting = await getItemsNoUser(
           `${import.meta.env.VITE_API_ENDPOINT}/global-settings/${name}`
         );
       } catch (error) {

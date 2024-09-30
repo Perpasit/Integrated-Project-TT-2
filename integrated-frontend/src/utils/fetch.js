@@ -4,54 +4,31 @@ import { useUserStore } from "../stores/userStore"
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.token
+  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.accessToken
 }
 
 export const fetch = async (url, options = {}) => {
   const token = getToken()
   const userStore = useUserStore()
   const router = useRouter()
-
-  const tokenExpirationTime = JSON.parse(atob(token.split(".")[1])).exp * 1000;
-  if (Date.now() >= tokenExpirationTime) {
-    try {
-      // Send refresh token request to get a new access token
-      const refreshResponse = await window.fetch(
-        "http://localhost:8080/token",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      if (refreshResponse.ok) {
-        const data = await refreshResponse.json();
-        userStore.accessToken = data.access_token;
-        userStore.saveToLocalStorage(); // Save the new access token
-      } else {
-        // Refresh token failed or expired
-        userStore.logout();
-        throw new Error("Session expired, please login again.");
-      }
-    } catch (error) {
-      throw new Error("Failed to refresh token.");
-    }
-  }
+  
+  
 
   const response = await window.fetch(url, {
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${token}`
     }
   })
   const contentType = response.headers.get("content-type")
 
   // Handle non-ok responses, especially 401 Unauthorized
   if (response.status === 401) {
+    // Clear token if needed and redirect to login page
+    userStore.logout() // Assuming you have a logout action in your store
+    throw new Error("Unauthorized. Redirecting to login.")
+  }
+  if (response.status === 500) {
     // Clear token if needed and redirect to login page
     userStore.logout() // Assuming you have a logout action in your store
     throw new Error("Unauthorized. Redirecting to login.")
@@ -79,10 +56,15 @@ export const fetch = async (url, options = {}) => {
 
 export const getItems = async (url) => {
   const userStore = useUserStore()
+  const token = getToken()
   try {
     userStore.loadFromLocalStorage()
     return await fetch(url, {
-      method: "GET"
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
     })
   } catch (error) {
     throw error
@@ -91,12 +73,14 @@ export const getItems = async (url) => {
 
 export const postItem = async (url, item) => {
   const userStore = useUserStore()
+  const token = getToken()
   try {
     userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -107,12 +91,14 @@ export const postItem = async (url, item) => {
 
 export const putItem = async (url, item) => {
   const userStore = useUserStore()
+  const token = getToken()
   try {
     userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -123,10 +109,12 @@ export const putItem = async (url, item) => {
 
 export const deleteItem = async (url) => {
   const userStore = useUserStore()
+  const token = getToken()
   try {
     userStore.loadFromLocalStorage()
     return await fetch(url, {
-      method: "DELETE"
+      method: "DELETE",
+      Authorization: `Bearer ${token}`
     })
   } catch (error) {
     throw error
@@ -135,12 +123,14 @@ export const deleteItem = async (url) => {
 
 export const patchItem = async (url, item) => {
   const userStore = useUserStore()
+  const token = getToken()
   try {
     userStore.loadFromLocalStorage()
     return await fetch(url, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -179,6 +169,43 @@ export const postItemLogin = async (url, item) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(item)
+    })
+  } catch (error) {
+    throw error
+  }
+}
+
+
+export const fetchNoUser = async (url, options = {}) => {
+  const response = await window.fetch(url, options)
+  const contentType = response.headers.get("content-type")
+
+  if (!response.ok) {
+    if (contentType && contentType.includes("application/json")) {
+      const errorData = await response.json()
+      throw new Error(errorData.message)
+    } else {
+      const errorMessage = await response.text()
+      throw new Error(errorMessage)
+    }
+  }
+
+  if (contentType && contentType.includes("application/json")) {
+    return await response.json()
+  } else {
+    return response.text()
+  }
+}
+
+export const getItemsNoUser = async (url) => {
+  const userStore = useUserStore()
+  try {
+    userStore.loadFromLocalStorage()
+    return await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
     })
   } catch (error) {
     throw error

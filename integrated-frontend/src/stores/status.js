@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
+import { useUserStore } from './userStore';
+import { getItems, postItem, putItem, deleteItem,getItemsNoUser } from "../utils/fetch";
 
 export const useStatusStore = defineStore("status", {
   state: () => ({
@@ -33,8 +34,16 @@ export const useStatusStore = defineStore("status", {
 
   actions: {
     async fetchAllStatuses(boardId) {
+      const userStore = useUserStore()
       try {
-        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+        let data;
+        if (userStore.getIsAuthenticated){
+          data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+
+        } else{
+       data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+
+        }
         this.statuses = data || [];
       } catch (error) {
         console.error("Error fetching statuses:", error);

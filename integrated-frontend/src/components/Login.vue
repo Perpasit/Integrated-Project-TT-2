@@ -40,12 +40,15 @@ const handleSubmit = async () => {
       );
 
       if (response) {
-        errorMessage.value = "";
+        errorMessage.value = ""
+        const decodedToken = jwtDecode.jwtDecode(response.access_token)
+        userStore.setUserInfo(
+          decodedToken,
+          response.access_token,
+          response.refresh_token
+        )
 
-        // Decode the JWT token
-        const decodedToken = jwtDecode.jwtDecode(response.access_token);
-        userStore.setUserInfo(decodedToken,response.access_token);
-        router.push({ name: "Board" });
+        router.push({ name: "Board" })
       }
     } catch (error) {
       errorMessage.value = "Username or Password is incorrect";

@@ -30,8 +30,8 @@ const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
 
 const boardId = route.params.boardId
-const boardOid = computed(() => boardStore.getBoardOid(boardId))
-const userOid = computed(() => userStore.getUserOid)
+const boardOid = ref(null);
+const userOid = ref(null);
 const boardName = ref("")
 const isSameOid = computed(() => {
   return boardOid.value !== userOid.value
@@ -210,7 +210,18 @@ const handleDeleteClick = (status) => {
 }
 
 onMounted(async () => {
-  await boardStore.fetchAllBoards()
+  const boardId = route.params.boardId
+  userOid.value = userStore.getUserOid;
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardOid.value = boardData.owner.oid
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+
+  console.log(boardOid.value);
+  console.log(userOid.value);
+  
   fetchStatuses(boardId)
   fetchBoardDetails()
 })

@@ -48,10 +48,7 @@ const goToBoard = () => {
 }
 
 onMounted(() => {
-  userStore.loadFromLocalStorage();
-  if (!userStore.getIsAuthenticated) {
-    router.push({ name: "Login" });
-  }
+
 })
 </script>
 

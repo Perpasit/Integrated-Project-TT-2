@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted, computed, onBeforeMount } from "vue"
 import { useTaskStore } from "../stores/task"
 import { useStatusStore } from "../stores/status"
 import { useRouter, useRoute } from "vue-router"
 import LimitTaskModal from "./LimitTaskModal.vue"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
+
 
 const router = useRouter()
 const route = useRoute()
@@ -35,13 +36,13 @@ const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
 
 const boardId = route.params.boardId
-const boardOid = computed(() => boardStore.getBoardOid(boardId))
-const userOid = computed(() => userStore.getUserOid)
-const boardName = ref("")
 
-const isSameOid = computed(() => {
-  return boardOid.value !== userOid.value 
-})
+const boardOid = ref();
+const userOid = ref();
+
+
+const boardName = ref("")
+console.log(boardName)
 
 const fetchBoardDetails = async () => {
   try {
@@ -205,10 +206,23 @@ const toggleStatusFilter = (statusName) => {
   fetchTasksAndStatus(boardId)
 }
 
+  console.log(boardOid.value);
+  console.log(userOid.value);
+  
 onMounted(async () => {
-  boardStore.fetchAllBoards() // Fetch the boards first
+  
   await fetchBoardDetails()
+ 
   const boardId = route.params.boardId
+  userOid.value = userStore.getUserOid;
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardOid.value = boardData.owner.oid
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+  console.log("imMounted :" , boardOid.value);
+  console.log("imMounted :" , userOid.value);
 
   if (!boardId) {
     console.error("Board ID is missing")
@@ -236,7 +250,12 @@ onMounted(async () => {
     selectedStatuses.value = []
     fetchTasksAndStatus(boardId)
   }
+
 })
+const isSameOid = () => {
+  return boardOid.value !== userOid.value;
+};
+
 </script>
 
 <template>
