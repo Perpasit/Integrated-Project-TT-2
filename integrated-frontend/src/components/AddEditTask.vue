@@ -7,7 +7,7 @@ import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
 import { useRouter, useRoute } from "vue-router"
-import { getItems } from "../utils/fetch"
+import { getItems, getItemsNoUser  } from "../utils/fetch"
 
 const router = useRouter()
 const route = useRoute()
@@ -91,9 +91,20 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
-        )
+        let response;
+
+        // ตรวจสอบว่า authenticated หรือไม่
+        if (userStore.getIsAuthenticated) {
+          // ถ้า authenticated ให้เรียก getItems
+          response = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
+          );
+        } else {
+          // ถ้าไม่ authenticated ให้เรียก getItemsNoUser
+          response = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
+          );
+        }
         if (response.status === 404) {
           editedTask.value = null
           setTimeout(() => {

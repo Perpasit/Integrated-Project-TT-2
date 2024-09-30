@@ -3,7 +3,7 @@ import { ref, computed, watch } from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter, useRoute } from "vue-router"
-import { getItems } from "../utils/fetch"
+import { getItems,getItemsNoUser } from "../utils/fetch"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
 
@@ -75,12 +75,21 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await getItems(
-          `${
-            import.meta.env.VITE_API_ENDPOINTV3
-          }/boards/${boardId}/statuses/${id}`
-        )
-        console.log(response)
+        let response;
+
+        // ตรวจสอบว่า authenticated หรือไม่
+        if (userStore.getIsAuthenticated) {
+          // ถ้า authenticated ให้เรียก getItems
+          response = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+          );
+        } else {
+          // ถ้าไม่ authenticated ให้เรียก getItemsNoUser
+          response = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+          );
+        }
+   
         if (response.status === 404) {
           setTimeout(() => {
             router.push({ name: "ManageStatus" })
