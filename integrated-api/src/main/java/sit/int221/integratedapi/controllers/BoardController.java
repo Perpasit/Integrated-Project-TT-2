@@ -90,7 +90,7 @@ public class BoardController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
         BoardCDTO createdBoard = boardService.createBoard(boardCDTO, oidFromToken);
-        return ResponseEntity.ok(createdBoard);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBoard);
     }
 
     @PatchMapping("/{boardId}")
