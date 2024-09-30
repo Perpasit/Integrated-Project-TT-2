@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import { useUserStore } from './userStore';
+import { useUserStore } from "../stores/userStore"
+
 import { getItems, postItem, putItem, patchItem,deleteItem ,getItemsNoUser } from "../utils/fetch";
 
 export const useBoardStore = defineStore("board", {
@@ -42,7 +43,7 @@ export const useBoardStore = defineStore("board", {
           data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
         }
     
-  
+        console.log(data);
         return data;
       } catch (error) {
         throw error;

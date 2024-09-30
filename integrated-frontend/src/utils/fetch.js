@@ -4,15 +4,19 @@ import { useUserStore } from "../stores/userStore"
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.accessToken
+  return userStore.accessToken  || JSON.parse(localStorage.getItem("userStore"))?.accessToken
+}
+const getRefreshToken = () => {
+  const userStore = useUserStore() // Access the store within the function
+  return userStore.refreshToken  || JSON.parse(localStorage.getItem("userStore"))?.refreshToken
 }
 
+
 export const fetch = async (url, options = {}) => {
-  const token = getToken()
+
   const userStore = useUserStore()
   const router = useRouter()
-  
-  
+
 
   const response = await window.fetch(url, {
     ...options,
@@ -29,13 +33,6 @@ export const fetch = async (url, options = {}) => {
     throw new Error("Unauthorized. Redirecting to login.")
   }
 
-  // if (contentType && contentType.includes("application/json")) {
-  //   const errorData = await response.json();
-  //   throw new Error(errorData.message);
-  // } else {
-  //   const errorMessage = await response.text();
-  //   throw new Error(errorMessage);
-  // }
 
   if (response.status === 403) {
     router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
@@ -49,12 +46,52 @@ export const fetch = async (url, options = {}) => {
   }
 }
 
+
+export const fetchWithAuthCheck = async (url, options = {}) => {
+  const userStore = useUserStore();
+  
+  if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
+    console.log("Access token expired or about to expire, attempting refresh...");
+    await userStore.refreshAccessToken(); 
+  }
+  const token = getToken(); 
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response; 
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error; 
+  }
+};
+
+export const postRefreshToken = async (url) => {
+  const refreshToken = getRefreshToken()
+  try {
+    return await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${refreshToken}`
+      },
+    })
+  } catch (error) {
+    throw error
+  }
+}
+
 export const getItems = async (url) => {
   const userStore = useUserStore()
   const token = getToken()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchWithAuthCheck(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -71,11 +108,12 @@ export const postItem = async (url, item) => {
   const token = getToken()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchWithAuthCheck(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
+
       },
       body: JSON.stringify(item)
     })
@@ -89,7 +127,7 @@ export const putItem = async (url, item) => {
   const token = getToken()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchWithAuthCheck(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -107,9 +145,12 @@ export const deleteItem = async (url) => {
   const token = getToken()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchWithAuthCheck(url, {
       method: "DELETE",
-      Authorization: `Bearer ${token}`
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
     })
   } catch (error) {
     throw error
@@ -121,7 +162,7 @@ export const patchItem = async (url, item) => {
   const token = getToken()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchWithAuthCheck(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -206,6 +247,8 @@ export const getItemsNoUser = async (url) => {
     throw error
   }
 }
+
+
 
 // import { useRouter } from "vue-router";
 // import { useUserStore } from "../stores/userStore";
