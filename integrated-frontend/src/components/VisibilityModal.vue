@@ -5,14 +5,14 @@ const props = defineProps({
   newVisibility: String,
 })
 
-// Watch props to verify if they're passed correctly
-watch(() => props.board, (newVal) => {
-  console.log("Board in modal:", newVal)
-})
+// // Watch props to verify if they're passed correctly
+// watch(() => props.board, (newVal) => {
+//   console.log("Board in modal:", newVal)
+// })
 
-watch(() => props.newVisibility, (newVal) => {
-  console.log("New visibility in modal:", newVal)
-})
+// watch(() => props.newVisibility, (newVal) => {
+//   console.log("New visibility in modal:", newVal)
+// })
 
 const emit = defineEmits(['close', 'confirm'])
 

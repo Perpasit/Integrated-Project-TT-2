@@ -58,8 +58,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
     userOid.value = userStore.getUserOid || null;
 
-    console.log("Fetched boardOid:", boardOid.value);
-    console.log("Fetched userOid:", userOid.value);
+  
 
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
@@ -74,7 +73,6 @@ watch(
 );
 
 const boardName = ref("")
-console.log(boardName)
 
 const fetchBoardDetails = async () => {
   try {

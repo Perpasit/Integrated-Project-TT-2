@@ -41,9 +41,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
     userOid.value = userStore.getUserOid || null;
 
-    console.log("Fetched boardOid:", boardOid.value);
-    console.log("Fetched userOid:", userOid.value);
-
+   
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
   }
@@ -116,9 +114,7 @@ const isTitleValid = computed(() => {
 })
 
 const originalTask = ref(null)
-watch([boardOid, userOid], () => {
-  console.log("isSameOid:", isSameOid.value); // Debugging เพื่อตรวจสอบค่าของ isSameOid
-});
+
 
 watch(
   () => router.currentRoute.value.params.id,
@@ -221,7 +217,7 @@ async function saveTask() {
           : "",
         status: editedTask.value.status,
       };
-      console.log(boardId, newTask);
+      // console.log(boardId, newTask);
       await taskStore.addTask(boardId, newTask);
       fetchTaskAndStatus(boardId);
       router.push({ name: "home" });

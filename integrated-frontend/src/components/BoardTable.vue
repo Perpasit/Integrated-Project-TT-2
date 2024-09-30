@@ -88,8 +88,7 @@ const fetchBoards = async () => {
 }
 
 // Eye toggle functionality
-const openVisibilityModal = (board) => {
-  console.log(board) 
+const openVisibilityModal = (board) => { 
   selectedBoard.value = board
   newVisibility.value = board.visibility === "PRIVATE" ? "PUBLIC" : "PRIVATE"
   showVisibilityModal.value = true
@@ -105,7 +104,7 @@ const confirmVisibilityChange = async () => {
     await boardStore.updateBoard(selectedBoard.value.id, {
       visibility: newVisibility.value
     })
-    console.log(`Board visibility updated to ${newVisibility.value}`)
+    // console.log(`Board visibility updated to ${newVisibility.value}`)
     selectedBoard.value.visibility = newVisibility.value
   } catch (error) {
     console.error("Error updating board visibility:", error)
