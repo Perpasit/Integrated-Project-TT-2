@@ -34,10 +34,10 @@ export const fetch = async (url, options = {}) => {
   }
 
 
-  // if (response.status === 403) {
-  //   router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
-  //   throw new Error("You do not have permission to change board visibility mode.")
-  // }
+  if (response.status === 403) {
+    router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
+    throw new Error("You do not have permission to change board visibility mode.")
+  }
 
   if (contentType && contentType.includes("application/json")) {
     return await response.json()
