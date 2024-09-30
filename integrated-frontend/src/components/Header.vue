@@ -25,6 +25,7 @@ const goHome = () => {
 
 const goToManageStatus = () => {
   router.push({ name: "ManageStatus", params: { boardId } })
+  
 }
 
 const addStatus = () => {

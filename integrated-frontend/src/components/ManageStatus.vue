@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted, computed ,watch, onBeforeMount} from "vue"
 import { useRouter, useRoute } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
@@ -7,6 +7,8 @@ import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
+import { getItems,getItemsNoUser } from "../utils/fetch";
+
 
 const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
@@ -30,8 +32,44 @@ const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
 
 const boardId = route.params.boardId
-const boardOid = ref(null);
-const userOid = ref(null);
+const userOid = computed(() => userStore.getUserOid)
+const boardOid = ref(null); 
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value !== userOid.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+
+  try {
+    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
+    let boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    // เก็บค่า boardOid
+    boardOid.value = boardData.owner.oid;
+
+    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
+    userOid.value = userStore.getUserOid || null;
+
+    console.log("Fetched boardOid:", boardOid.value);
+    console.log("Fetched userOid:", userOid.value);
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+};
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
+
 const boardName = ref("")
 
 const fetchBoardDetails = async () => {
@@ -206,12 +244,37 @@ const handleDeleteClick = (status) => {
   }
 }
 
-onMounted(async () => {
-  const boardId = route.params.boardId
 
-  fetchStatuses(boardId)
-  fetchBoardDetails()
-})
+
+onMounted(async () => {
+    const boardId = route.params.boardId;
+    const userStoreData = JSON.parse(localStorage.getItem('userStore'));
+    try {
+      let data;
+      if (userStoreData.isAuthenticated ) {
+        data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      } else {
+        data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      }
+      statusStore.setStatuses(data || []); // Assuming you have a method to set statuses in your store
+    } catch (error) {
+      console.error("Error fetching statuses:", error);
+    }
+        
+
+    try {
+      await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
+      fetchStatuses(boardId); // Fetch statuses
+      fetchBoardDetails(); // Fetch board details
+    } catch (error) {
+      console.error("Error during component mount:", error);
+    } finally {
+      // Clear the reload flag if necessary when leaving the page
+      localStorage.removeItem('hasReloaded');
+    }
+  
+});
+
 </script>
 
 <template>
