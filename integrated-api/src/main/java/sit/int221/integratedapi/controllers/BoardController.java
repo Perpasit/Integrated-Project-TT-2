@@ -105,10 +105,11 @@ public class BoardController {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
         boardService.validateBoardOwnershipForModification(boardId, oidFromToken);
-        BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
         if (boardCDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
+        BoardCDTO updatedBoard = boardService.updateBoard(boardId, boardCDTO, oidFromToken);
+
 
         return ResponseEntity.ok(updatedBoard);
     }
