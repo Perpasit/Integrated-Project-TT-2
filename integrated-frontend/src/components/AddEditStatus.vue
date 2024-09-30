@@ -20,26 +20,26 @@ const userOid = computed(() => userStore.getUserOid)
 const boardOid = ref(null); 
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value !== userOid.value;
+  return boardOid.value === userOid.value;
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
-    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
-    let boardData = await boardStore.getBoardById(boardId);
+    const boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`);
     }
 
-    // เก็บค่า boardOid
-    boardOid.value = boardData.owner.oid;
-
-    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
-    userOid.value = userStore.getUserOid || null;
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+    if (!isSameOid.value) {
+      router.push({ name: "AccessDenied" });
+    }
 
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
   }
 };
 watch(
@@ -332,7 +332,7 @@ onMounted(async () => {
           <div class="flex space-x-4">
             <!-- Button for non-board owners (when OIDs are not the same) -->
             <button
-              v-if="!isSameOid"
+              v-if="isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
@@ -366,11 +366,11 @@ onMounted(async () => {
 
             <!-- Button for board owners (when OIDs are the same) -->
             <button
-              v-if="isSameOid"
+              v-if="!isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
-                'bg-gray-300 cursor-not-allowed': isSameOid,
+                'bg-gray-300 cursor-not-allowed': !isSameOid,
               }"
               :disabled="true"
               data-tip="Only the board owner can perform this action."
