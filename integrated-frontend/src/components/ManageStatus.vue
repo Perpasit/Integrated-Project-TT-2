@@ -31,13 +31,13 @@ const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
 
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null)
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return true // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value !== userOid.value
+  return boardOid.value === userOid.value
 })
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -235,35 +235,46 @@ const handleDeleteClick = (status) => {
 }
 
 onMounted(async () => {
-  const boardId = route.params.boardId
-  const userStoreData = JSON.parse(localStorage.getItem("userStore"))
+  const boardId = route.params.boardId;
+  
+  // Ensure localStorage value is checked for null or invalid content
+  const userStoreData = localStorage.getItem("userStore") 
+    ? JSON.parse(localStorage.getItem("userStore")) 
+    : null;
+
   try {
-    let data
-    if (userStoreData.isAuthenticated && userStoreData) {
+    let data;
+
+    // Check if userStoreData is not null and if isAuthenticated exists before accessing
+    if (userStoreData && userStoreData.isAuthenticated) {
       data = await getItems(
         `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`
-      )
+      );
     } else {
       data = await getItemsNoUser(
         `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`
-      )
+      );
     }
-    statusStore.setStatuses(data || []) // Assuming you have a method to set statuses in your store
+
+    // Assuming you have a method to set statuses in your store
+    statusStore.setStatuses(data || []); 
+
   } catch (error) {
-    console.error("Error fetching statuses:", error)
+    console.error("Error fetching statuses:", error);
   }
 
   try {
-    await fetchBoardAndUserOids(boardId) // Fetch board and user OIDs after token validation
-    fetchStatuses(boardId) // Fetch statuses
-    fetchBoardDetails() // Fetch board details
+    await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
+    await fetchStatuses(boardId); // Fetch statuses
+    await fetchBoardDetails(); // Fetch board details
   } catch (error) {
-    console.error("Error during component mount:", error)
+    console.error("Error during component mount:", error);
   } finally {
     // Clear the reload flag if necessary when leaving the page
-    localStorage.removeItem("hasReloaded")
+    localStorage.removeItem("hasReloaded");
   }
-})
+});
+
 </script>
 
 <template>
@@ -338,12 +349,12 @@ onMounted(async () => {
                 class="itbkk-button-action px-4 py-2 rounded-r-lg text-center"
               >
                 <button
-                  :disabled="isSameOid"
+                  :disabled="!isSameOid"
                   :class="{
                     'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1':
-                      !isSameOid,
+                      isSameOid,
                     'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                      isSameOid
+                      !isSameOid
                   }"
                   data-tip="You need to be board owner to perform this action."
                   @click="editStatus(status)"
@@ -771,7 +782,7 @@ onMounted(async () => {
         <div class="flex space-x-4">
           <!-- Button for non-board owners (when OIDs are not the same) -->
           <button
-            v-if="!isSameOid"
+            v-if="isSameOid"
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             @click="confirmDeleteStatus"
           >
@@ -780,7 +791,7 @@ onMounted(async () => {
 
           <!-- Button for board owners (when OIDs are the same) -->
           <button
-            v-if="isSameOid"
+            v-if="!isSameOid"
             class="itbkk-button-confirm bg-gray-300 cursor-not-allowed text-white px-4 py-2 rounded tooltip tooltip-secondary tooltip-left"
             data-tip="Only the board owner can delete."
             disabled

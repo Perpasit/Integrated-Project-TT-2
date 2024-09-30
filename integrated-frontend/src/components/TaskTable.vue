@@ -35,13 +35,13 @@ const displayStatusLimit = ref(5)
 const showAllStatuses = ref(false)
 
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null)
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return true // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value !== userOid.value
+  return boardOid.value === userOid.value
 })
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -316,7 +316,7 @@ onMounted(async () => {
                     :class="{
                       'hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500': true,
                       'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                        isSameOid
+                        !isSameOid
                     }"
                     data-tip="You need to be board owner to perform this action."
                   >
@@ -336,7 +336,7 @@ onMounted(async () => {
                     </svg>
                   </button>
                   <div
-                    v-if="isDropdownOpen && !isSameOid"
+                    v-if="isDropdownOpen && isSameOid"
                     class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
@@ -503,11 +503,11 @@ onMounted(async () => {
             </td>
             <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button
-                :disabled="isSameOid"
+                :disabled="!isSameOid"
                 :class="{
-                  'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out': !isSameOid,
+                  'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out': isSameOid,
                   'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                    isSameOid
+                    !isSameOid
                 }"
                 data-tip="You need to be board owner to perform this action."
                 @click="editTask(task)"
@@ -577,11 +577,11 @@ onMounted(async () => {
           class="itbkk-button-confirm text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
           :class="{
-            'bg-red-500 hover:bg-red-600 ': !isSameOid,
+            'bg-red-500 hover:bg-red-600 ': isSameOid,
             'bg-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-              isSameOid
+              !isSameOid
           }"
-          :disabled="isSameOid"
+          :disabled="!isSameOid"
           data-tip="You need to be board owner to perform this action."
         >
           Delete
