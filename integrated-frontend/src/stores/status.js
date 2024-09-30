@@ -33,6 +33,9 @@ export const useStatusStore = defineStore("status", {
   },
 
   actions: {
+    setStatuses(newStatuses) {
+      this.statuses = newStatuses;
+    },
     async fetchAllStatuses(boardId) {
       const userStore = useUserStore()
       try {
