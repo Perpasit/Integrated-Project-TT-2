@@ -29,21 +29,20 @@ const isSameOid = computed(() => {
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
-    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
-    let boardData = await boardStore.getBoardById(boardId);
+    const boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`);
     }
 
-    // เก็บค่า boardOid
-    boardOid.value = boardData.owner.oid;
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+    if (!isSameOid.value) {
+      router.push({ name: "AccessDenied" });
+    }
 
-    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
-    userOid.value = userStore.getUserOid || null;
-
-   
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
   }
 };
 
