@@ -49,28 +49,60 @@ export const fetch = async (url, options = {}) => {
 
 export const fetchWithAuthCheck = async (url, options = {}) => {
   const userStore = useUserStore();
-  
+
+  // ตรวจสอบว่า access token หมดอายุหรือไม่
   if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
     console.log("Access token expired or about to expire, attempting refresh...");
-    await userStore.refreshAccessToken(); 
+    await userStore.refreshAccessToken(); // รีเฟรช access token
   }
-  const token = getToken(); 
+
+  const token = getToken(); // รับ access token ปัจจุบัน
 
   try {
-    const response = await fetch(url, {
+    let response = await window.fetch(url, {
       ...options,
       headers: {
         ...options.headers,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // ใช้ access token ปัจจุบัน
       },
     });
 
-    return response; 
+    // ตรวจสอบว่า response status เป็น 401 หรือไม่ (token หมดอายุ)
+    if (response.status === 401) {
+      console.log("Unauthorized (401), attempting token refresh...");
+
+      // รีเฟรช access token โดยใช้ refresh token
+      await userStore.refreshAccessToken();
+
+      // ใช้ access token ใหม่ที่รีเฟรชแล้วในการ retry คำขอ
+      const newToken = getToken();
+      response = await window.fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${newToken}`, // ใช้ access token ใหม่
+        },
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    // ตรวจสอบประเภทของ content ที่ได้รับ
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return await response.json(); // คืนค่าเป็น JSON ถ้าเป็น JSON
+    } else {
+      return response.text(); // คืนค่าเป็นข้อความถ้าไม่ใช่ JSON
+    }
   } catch (error) {
     console.error("Fetch error:", error);
-    throw error; 
+    throw error;
   }
 };
+
+
 
 export const postRefreshToken = async (url) => {
   const refreshToken = getRefreshToken()
@@ -247,6 +279,9 @@ export const getItemsNoUser = async (url) => {
     throw error
   }
 }
+
+
+
 
 
 
