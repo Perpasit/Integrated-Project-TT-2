@@ -2,10 +2,35 @@
 import { computed, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
+import { useBoardStore } from "../stores/boardStore"
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const boardStore = useBoardStore()
+const boardId = route.params.boardId
+const userOid = computed(() => userStore.getUserOid)
+const boardOid = ref(null)
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false 
+  }
+  return boardOid.value === userOid.value
+})
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    let boardData = await boardStore.getBoardById(boardId)
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`)
+    }
+
+    boardOid.value = boardData.owner.oid
+
+    userOid.value = userStore.getUserOid || null
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error)
+  }
+}
 
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.includes("/status")
@@ -18,14 +43,13 @@ const isTaskPage = computed(() => {
 const addTask = () => {
   router.push({ name: "AddTask" })
 }
-const boardId = route.params.boardId
+
 const goHome = () => {
   router.push({ name: "home", params: { boardId } })
 }
 
 const goToManageStatus = () => {
   router.push({ name: "ManageStatus", params: { boardId } })
-  
 }
 
 const addStatus = () => {
@@ -48,8 +72,11 @@ const goToBoard = () => {
   router.push("/board")
 }
 
-onMounted(() => {
-
+onMounted(async () => {
+  await fetchBoardAndUserOids(boardId)
+  console.log("Mounted: Board OID:", boardOid.value)
+  console.log("Mounted: User OID:", userOid.value)
+  console.log("Mounted: Is same OID:", isSameOid.value)
 })
 </script>
 
@@ -67,7 +94,7 @@ onMounted(() => {
       <span
         :class="[
           'itbkk-button-home text-2xl  cursor-pointer px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out  flex justify-end items-end ',
-          isTaskPage ? 'text-white' : 'text-blue-600 hover:text-white',
+          isTaskPage ? 'text-white' : 'text-blue-600 hover:text-white'
         ]"
         @click="goHome"
       >
@@ -76,7 +103,7 @@ onMounted(() => {
       <span
         :class="[
           'itbkk-manage-status text-2xl cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
-          isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white',
+          isManageStatusPage ? 'text-white' : 'text-blue-600 hover:text-white'
         ]"
         @click="goToManageStatus"
       >
@@ -146,15 +173,27 @@ onMounted(() => {
 
       <button
         v-show="isTaskPage"
-        @click="addTask"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded"
+        @click="isSameOid ? addTask() : null"
+        :class="{
+          'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded': true,
+          ' text-blue-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+            !isSameOid
+        }"
+        :disabled="!isSameOid"
+        data-tip="You need to be board owner to perform this action."
       >
         + NEW TASK
       </button>
       <button
         v-show="isManageStatusPage"
-        @click="addStatus"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded"
+        @click="isSameOid ? addStatus() : null"
+        :class="{
+          'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
+          'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+            !isSameOid
+        }"
+        :disabled="!isSameOid"
+        data-tip="You need to be board owner to perform this action."
       >
         ADD STATUS
       </button>
