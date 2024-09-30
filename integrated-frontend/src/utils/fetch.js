@@ -28,11 +28,6 @@ export const fetch = async (url, options = {}) => {
     userStore.logout() // Assuming you have a logout action in your store
     throw new Error("Unauthorized. Redirecting to login.")
   }
-  if (response.status === 500) {
-    // Clear token if needed and redirect to login page
-    userStore.logout() // Assuming you have a logout action in your store
-    throw new Error("Unauthorized. Redirecting to login.")
-  }
 
   // if (contentType && contentType.includes("application/json")) {
   //   const errorData = await response.json();
