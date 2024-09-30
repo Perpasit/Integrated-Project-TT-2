@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch ,onMounted} from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useRouter, useRoute } from "vue-router"
@@ -16,12 +16,42 @@ const userStore = useUserStore()
 const successModalTimeout = ref(null)
 
 const boardId = route.params.boardId
-const boardOid = computed(() => boardStore.getBoardOid(boardId))
 const userOid = computed(() => userStore.getUserOid)
-
+const boardOid = ref(null); 
 const isSameOid = computed(() => {
-  return boardOid.value !== userOid.value // Disable if boardOid is not equal to userOid
-})
+  if (!boardOid.value || !userOid.value) {
+    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value !== userOid.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
+    let boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    // เก็บค่า boardOid
+    boardOid.value = boardData.owner.oid;
+
+    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
+    userOid.value = userStore.getUserOid || null;
+
+    console.log("Fetched boardOid:", boardOid.value);
+    console.log("Fetched userOid:", userOid.value);
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+};
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
@@ -192,6 +222,18 @@ function closeModal() {
 const fetchStatus = async () => {
   await statusStore.fetchAllStatuses(boardId)
 }
+onMounted(async () => {
+  const boardId = route.params.boardId
+  await fetchBoardAndUserOids(boardId);
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    boardOid.value = boardData.owner.oid;
+    userOid.value = userStore.getUserOid;
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+}
+)
 </script>
 
 <template>
