@@ -16,7 +16,7 @@ const userStore = useUserStore()
 const successModalTimeout = ref(null)
 
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null); 
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {

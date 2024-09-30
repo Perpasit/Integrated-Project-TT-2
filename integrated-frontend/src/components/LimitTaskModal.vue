@@ -13,13 +13,13 @@ const userStore = useUserStore()
 const route = useRoute()
 
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null); 
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value !== userOid.value;
+  return boardOid.value === userOid.value;
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -274,7 +274,7 @@ onMounted(async () => {
           <div class="flex space-x-4">
             <!-- Button for isMaxTasksValid, only show when OIDs are not the same -->
             <button
-              v-if="!isSameOid"
+              v-if="isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
@@ -290,16 +290,16 @@ onMounted(async () => {
 
             <!-- Button for Board Owner Only -->
             <button
-              v-if="isSameOid"
+              v-if="!isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                  !isSameOid,
-                'bg-gray-300 cursor-not-allowed': isSameOid,
+                  isSameOid,
+                'bg-gray-300 cursor-not-allowed': !isSameOid,
               }"
-              @click="!isSameOid && saveMaxTasks()"
-              :disabled="isSameOid"
+              @click="isSameOid && saveMaxTasks()"
+              :disabled="!isSameOid"
               data-tip="You need to be the board owner to perform this action."
             >
               Save 

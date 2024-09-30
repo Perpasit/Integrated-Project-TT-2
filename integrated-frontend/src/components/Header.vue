@@ -9,7 +9,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const boardStore = useBoardStore()
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null)
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
@@ -74,9 +74,9 @@ const goToBoard = () => {
 
 onMounted(async () => {
   await fetchBoardAndUserOids(boardId)
-  console.log("Mounted: Board OID:", boardOid.value)
-  console.log("Mounted: User OID:", userOid.value)
-  console.log("Mounted: Is same OID:", isSameOid.value)
+  // console.log("Mounted: Board OID:", boardOid.value)
+  // console.log("Mounted: User OID:", userOid.value)
+  // console.log("Mounted: Is same OID:", isSameOid.value)
 })
 </script>
 
