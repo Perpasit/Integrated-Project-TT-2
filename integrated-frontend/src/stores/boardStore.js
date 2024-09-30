@@ -43,7 +43,7 @@ export const useBoardStore = defineStore("board", {
           data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
         }
     
-        console.log(data);
+       
         return data;
       } catch (error) {
         throw error;

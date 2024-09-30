@@ -55,8 +55,6 @@ const fetchBoardAndUserOids = async (boardId) => {
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
     userOid.value = userStore.getUserOid || null;
 
-    console.log("Fetched boardOid:", boardOid.value);
-    console.log("Fetched userOid:", userOid.value);
 
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
@@ -121,8 +119,7 @@ const saveStatus = (status) => {
 async function confirmDeleteStatus() {
   if (selectedStatusToDelete) {
     try {
-      console.log("selectedStatus : ", selectedStatusToDelete.id)
-      console.log("BoardID : ", boardId)
+
       const result = await statusStore.deleteStatus(
         boardId,
         selectedStatusToDelete.id
@@ -230,8 +227,7 @@ const getStatusColor = (status) => {
 }
 
 const handleDeleteClick = (status) => {
-  console.log("status", status)
-  console.log("statusid", status.id)
+
   if (
     status.name.toLowerCase() === "no status" ||
     status.name.toLowerCase() === "done"
@@ -251,7 +247,7 @@ onMounted(async () => {
     const userStoreData = JSON.parse(localStorage.getItem('userStore'));
     try {
       let data;
-      if (userStoreData.isAuthenticated ) {
+      if (userStoreData.isAuthenticated && userStoreData  ) {
         data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
       } else {
         data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);

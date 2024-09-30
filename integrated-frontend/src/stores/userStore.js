@@ -69,7 +69,7 @@ export const useUserStore = defineStore("user", {
         refreshInProgress: this.refreshInProgress,
       };
       localStorage.setItem("userStore", JSON.stringify(data));
-      console.log("LocalStorage updated:", data); // Log saved data
+      
     },
 
     loadFromLocalStorage() {
@@ -103,8 +103,6 @@ export const useUserStore = defineStore("user", {
           if(response){
             const data = response
             const decodedToken = jwtDecode.jwtDecode(response.access_token)
-            console.log('New access token received:', data);
-            console.log('New Expired token received:', decodedToken);
 
             this.accessToken = data.access_token; // Save the new access token
             

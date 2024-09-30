@@ -102,7 +102,7 @@ export const useStatusStore = defineStore("status", {
     async deleteStatus(boardId, id) {
       try {
         const response = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}/tasks`);
-        console.log(response);
+        
         // if (!response.ok) {
         //   if (response.status === 404) {
         //     return { notFound: true };
