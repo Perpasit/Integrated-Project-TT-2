@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import { getItems, postItem, putItem, patchItem,deleteItem } from "../utils/fetch";
+import { useUserStore } from './userStore';
+import { getItems, postItem, putItem, patchItem,deleteItem ,getItemsNoUser } from "../utils/fetch";
 
 export const useBoardStore = defineStore("board", {
   state: () => ({
@@ -29,15 +30,24 @@ export const useBoardStore = defineStore("board", {
       }
     },
     async getBoardById(id) {
+      const userStore = useUserStore(); // Get access to the userStore
+    
       try {
-        const data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
-        console.log(data)
-        return data
+        let data;
+        if (userStore.getIsAuthenticated) {
+          // If the user is authenticated, use the accessToken for the authenticated request
+          data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
+        } else {
+          // If the user is not authenticated, make a request without token
+          data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
+        }
+    
+  
+        return data;
       } catch (error) {
         throw error;
       }
     },
-
     async addBoard(newBoard) {
       try {
         const formattedBoard = { name: newBoard.trim() };

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
-import { getItems, postItem, putItem, deleteItem } from "../utils/fetch";
+import { useUserStore } from './userStore';
+import { getItems, postItem, putItem, deleteItem,getItemsNoUser } from "../utils/fetch";
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
@@ -13,10 +14,17 @@ export const useTaskStore = defineStore("task", {
   },
   actions: {
     async fetchAllTasks(boardId) {
+      const userStore = useUserStore();
       try {
-        const data = await getItems(
+        let data;
+        if (userStore.getIsAuthenticated) {
+        data = await getItems(
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
-        );
+        )}else{
+          data = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks?sortBy=${this.sortBy}&filterStatuses=${this.filterStatuses.join(",")}`
+          )
+        }
         this.tasks = data || [];
       } catch (error) {
         console.error("Error fetching tasks:", error);

@@ -22,12 +22,7 @@ const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
 };
 
-onMounted(() => {
-  userStore.loadFromLocalStorage();
-  if (!userStore.getIsAuthenticated) {
-    router.push({ name: "Login" });
-  }
-});
+
 </script>
 
 <template>

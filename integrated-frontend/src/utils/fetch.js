@@ -4,12 +4,14 @@ import { useUserStore } from "../stores/userStore"
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.token
+  return userStore.token || JSON.parse(localStorage.getItem("userStore"))?.accessToken
 }
 
-export const fetchWithAuth = async (url, options = {}, router) => {
+export const fetchWithAuth = async (url, options = {}) => {
   const userStore = useUserStore()
-  // const router = useRouter();
+
+  const router = useRouter()
+
 
   // Load the stored tokens
   userStore.loadFromLocalStorage()
@@ -52,7 +54,6 @@ export const fetchWithAuth = async (url, options = {}, router) => {
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${userStore.accessToken}`
     }
   })
 
@@ -77,6 +78,7 @@ export const fetchWithAuth = async (url, options = {}, router) => {
 
 const checkAndRefreshToken = async () => {
   const userStore = useUserStore()
+
   // const router = useRouter();
 
   // Load the stored tokens
@@ -120,7 +122,12 @@ export const getItems = async (url) => {
   try {
     await checkAndRefreshToken()
     return await fetchWithAuth(url, {
-      method: "GET"
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+
     })
   } catch (error) {
     throw error
@@ -128,12 +135,17 @@ export const getItems = async (url) => {
 }
 
 export const postItem = async (url, item) => {
+
+  const userStore = useUserStore()
+  const token = getToken()
+
   try {
     await checkAndRefreshToken()
     return await fetchWithAuth(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -143,12 +155,17 @@ export const postItem = async (url, item) => {
 }
 
 export const putItem = async (url, item) => {
+
+  const userStore = useUserStore()
+  const token = getToken()
+
   try {
     await checkAndRefreshToken()
     return await fetchWithAuth(url, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -158,10 +175,14 @@ export const putItem = async (url, item) => {
 }
 
 export const deleteItem = async (url) => {
+  const userStore = useUserStore()
+  const token = getToken()
   try {
     await checkAndRefreshToken()
     return await fetchWithAuth(url, {
-      method: "DELETE"
+      method: "DELETE",
+      Authorization: `Bearer ${token}`
+
     })
   } catch (error) {
     throw error
@@ -169,12 +190,16 @@ export const deleteItem = async (url) => {
 }
 
 export const patchItem = async (url, item) => {
+
+  const userStore = useUserStore()
+  const token = getToken()
   try {
     await checkAndRefreshToken()
     return await fetchWithAuth(url, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(item)
     })
@@ -212,6 +237,43 @@ export const postItemLogin = async (url, item) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(item)
+    })
+  } catch (error) {
+    throw error
+  }
+}
+
+
+export const fetchNoUser = async (url, options = {}) => {
+  const response = await window.fetch(url, options)
+  const contentType = response.headers.get("content-type")
+
+  if (!response.ok) {
+    if (contentType && contentType.includes("application/json")) {
+      const errorData = await response.json()
+      throw new Error(errorData.message)
+    } else {
+      const errorMessage = await response.text()
+      throw new Error(errorMessage)
+    }
+  }
+
+  if (contentType && contentType.includes("application/json")) {
+    return await response.json()
+  } else {
+    return response.text()
+  }
+}
+
+export const getItemsNoUser = async (url) => {
+  const userStore = useUserStore()
+  try {
+    userStore.loadFromLocalStorage()
+    return await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
     })
   } catch (error) {
     throw error

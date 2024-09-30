@@ -1,8 +1,9 @@
 <script setup>
 import { onMounted, ref, computed } from "vue"
-import { getItems } from "../utils/fetch"
+import { getItems,getItemsNoUser } from "../utils/fetch"
 import { useRoute, useRouter } from "vue-router"
 import { useStatusStore } from "../stores/status"
+import { useUserStore } from '../stores/userStore';
 
 const statusStore = useStatusStore()
 const editedTask = ref({})
@@ -36,9 +37,14 @@ onMounted(async () => {
     editedTask.value = route.state.task
   } else {
     const id = route.params.taskId
-    const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`
-    )
+    const userStore = useUserStore()
+    let data;
+    if ( userStore.getIsAuthenticated){
+    data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`)
+    }else{
+    data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${id}`)
+    }
+    
     if (data.status == 404) {
       setTimeout(() => {
         router.push({ name: "home" })

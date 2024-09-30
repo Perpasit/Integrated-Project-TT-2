@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { getItems } from "../utils/fetch"
+import { getItems , getItemsNoUser } from "../utils/fetch"
+import { useUserStore } from '../stores/userStore';
 
 const route = useRoute()
 const router = useRouter()
@@ -24,9 +25,14 @@ const boardId = route.params.boardId
 onMounted(async () => {
   try {
     const id = route.params.statusId
-    const data = await getItems(
-      `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
-    )
+
+    const userStore = useUserStore()
+    let data;
+    if ( userStore.getIsAuthenticated){
+    data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`)
+    }else{
+    data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`)
+    }
     status.value = data
     // console.log(status)
   } catch (error) {
