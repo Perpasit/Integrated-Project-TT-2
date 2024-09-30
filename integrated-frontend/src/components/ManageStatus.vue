@@ -33,9 +33,6 @@ const boardId = route.params.boardId
 const boardOid = ref(null);
 const userOid = ref(null);
 const boardName = ref("")
-const isSameOid = computed(() => {
-  return boardOid.value !== userOid.value
-})
 
 const fetchBoardDetails = async () => {
   try {
@@ -211,17 +208,7 @@ const handleDeleteClick = (status) => {
 
 onMounted(async () => {
   const boardId = route.params.boardId
-  userOid.value = userStore.getUserOid;
-  try {
-    const boardData = await boardStore.getBoardById(boardId)
-    boardOid.value = boardData.owner.oid
-  } catch (error) {
-    console.error("Error fetching board details:", error)
-  }
 
-  console.log(boardOid.value);
-  console.log(userOid.value);
-  
   fetchStatuses(boardId)
   fetchBoardDetails()
 })

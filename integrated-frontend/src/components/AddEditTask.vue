@@ -19,12 +19,35 @@ const userStore = useUserStore()
 const globalSettingStore = useGlobalSettingStore()
 
 const boardId = route.params.boardId
-const boardOid = computed(() => boardStore.getBoardOid(boardId))
 const userOid = computed(() => userStore.getUserOid)
-
+const boardOid = ref(null); 
 const isSameOid = computed(() => {
-  return boardOid.value !== userOid.value 
-})
+  if (!boardOid.value || !userOid.value) {
+    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value === userOid.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
+    let boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    // เก็บค่า boardOid
+    boardOid.value = boardData.owner.oid;
+
+    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
+    userOid.value = userStore.getUserOid || null;
+
+    console.log("Fetched boardOid:", boardOid.value);
+    console.log("Fetched userOid:", userOid.value);
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+};
 
 const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
@@ -32,6 +55,14 @@ const generalSetting = computed(
 const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
 
 const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
+
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
@@ -85,6 +116,9 @@ const isTitleValid = computed(() => {
 })
 
 const originalTask = ref(null)
+watch([boardOid, userOid], () => {
+  console.log("isSameOid:", isSameOid.value); // Debugging เพื่อตรวจสอบค่าของ isSameOid
+});
 
 watch(
   () => router.currentRoute.value.params.id,
@@ -147,7 +181,14 @@ function resetForm() {
 
 async function saveTask() {
   try {
-    errorMessage.value = ""
+    errorMessage.value = "";
+
+    // ตรวจสอบสิทธิ์เฉพาะเมื่อทำการบันทึก task
+    if (!isSameOid.value) {
+      console.error("You don't have permission to edit this task.");
+      errorMessage.value = "You don't have permission to edit this task.";
+      return;
+    }
 
     const updatedTask = {
       title: editedTask.value.title.trim(),
@@ -158,16 +199,16 @@ async function saveTask() {
         ? editedTask.value.assignees.trim()
         : "",
       status: { id: editedTask.value.status },
-    }
+    };
 
     if (props.mode === "edit") {
-      const taskId = router.currentRoute.value.params.id
+      const taskId = router.currentRoute.value.params.id;
       if (taskId) {
-        await taskStore.updateTask(boardId, taskId, updatedTask)
-        fetchTaskAndStatus(boardId)
-        modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
+        await taskStore.updateTask(boardId, taskId, updatedTask);
+        fetchTaskAndStatus(boardId);
+        modalStore.openTaskSuccessModal(updatedTask.title, props.mode);
       } else {
-        console.error("The task does not exist.")
+        console.error("The task does not exist.");
       }
     } else {
       const newTask = {
@@ -179,26 +220,28 @@ async function saveTask() {
           ? editedTask.value.assignees.trim()
           : "",
         status: editedTask.value.status,
-      }
-      console.log(boardId, newTask)
-      await taskStore.addTask(boardId, newTask)
-      fetchTaskAndStatus(boardId)
-      router.push({ name: "home" })
-      modalStore.openTaskSuccessModal(newTask.title, props.mode)
+      };
+      console.log(boardId, newTask);
+      await taskStore.addTask(boardId, newTask);
+      fetchTaskAndStatus(boardId);
+      router.push({ name: "home" });
+      modalStore.openTaskSuccessModal(newTask.title, props.mode);
 
-      const status = statusStore.statuses.find((s) => s.id === newTask.status)
+      const status = statusStore.statuses.find((s) => s.id === newTask.status);
       if (status) {
-        status.noOfTasks++
+        status.noOfTasks++;
       }
 
-      closeModal()
+      closeModal();
     }
-    router.push({ name: "home" })
-    fetchTaskAndStatus(boardId)
+    router.push({ name: "home" });
+    fetchTaskAndStatus(boardId);
   } catch (error) {
-    errorMessage.value = error.message
+    errorMessage.value = error.message;
   }
 }
+
+
 const errorMessage = ref("")
 
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -238,10 +281,31 @@ const fetchTaskAndStatus = async (boardId) => {
   await statusStore.fetchAllStatuses(boardId)
   await taskStore.fetchAllTasks(boardId)
 }
+
 onMounted(async () => {
-  fetchTaskAndStatus(boardId)
-  editedTask.value.status = statusStore.statuses[0].id
-})
+  const boardId = route.params.boardId;
+
+
+  try {
+    await fetchTaskAndStatus(boardId);
+    const boardData = await boardStore.getBoardById(boardId);
+    boardOid.value = boardData.owner.oid;
+    userOid.value = userStore.getUserOid;
+    editedTask.value.status = statusStore.statuses[0].id;
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+  await fetchBoardAndUserOids(boardId);
+  if (isSameOid.value) {
+    await fetchTaskAndStatus(boardId);  
+  } else {
+    console.warn("You do not have permission to access this board.");
+  }
+});
+
+
+
+
 </script>
 
 <template>
@@ -379,7 +443,7 @@ onMounted(async () => {
           <div class="flex space-x-4">
             <!-- Button for non-board owners (when OIDs are not the same) -->
             <button
-              v-if="!isSameOid"
+              v-if="isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
@@ -400,16 +464,16 @@ onMounted(async () => {
 
             <!-- Button for board owners (when OIDs are the same) -->
             <button
-              v-if="isSameOid"
+              v-if="!isSameOid"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                  !isSameOid,
-                'bg-gray-300 cursor-not-allowed': isSameOid,
+                  isSameOid,
+                'bg-gray-300 cursor-not-allowed': !isSameOid,
               }"
               @click="isSameOid && saveTask()"
-              :disabled="isSameOid"
+              :disabled="!isSameOid"
               data-tip="You need to be the board owner to perform this action."
             >
             {{ mode === "add" ? "Add" : "Save" }}
