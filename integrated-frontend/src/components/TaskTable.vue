@@ -7,7 +7,6 @@ import LimitTaskModal from "./LimitTaskModal.vue"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
 
-
 const router = useRouter()
 const route = useRoute()
 const taskStore = useTaskStore()
@@ -37,40 +36,37 @@ const showAllStatuses = ref(false)
 
 const boardId = route.params.boardId
 const userOid = computed(() => userStore.getUserOid)
-const boardOid = ref(null); 
+const boardOid = ref(null)
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return true // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value !== userOid.value;
-});
+  return boardOid.value !== userOid.value
+})
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
-    let boardData = await boardStore.getBoardById(boardId);
+    let boardData = await boardStore.getBoardById(boardId)
     if (!boardData) {
-      throw new Error(`Board with id ${boardId} not found.`);
+      throw new Error(`Board with id ${boardId} not found.`)
     }
 
     // เก็บค่า boardOid
-    boardOid.value = boardData.owner.oid;
+    boardOid.value = boardData.owner.oid
 
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
-    userOid.value = userStore.getUserOid || null;
-
-  
-
+    userOid.value = userStore.getUserOid || null
   } catch (error) {
-    console.error("Error fetching board or user OID:", error);
+    console.error("Error fetching board or user OID:", error)
   }
-};
+}
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
-    boardId = newBoardId;
-    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+    boardId = newBoardId
+    await fetchBoardAndUserOids(newBoardId) // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
   }
-);
+)
 
 const boardName = ref("")
 
@@ -86,7 +82,7 @@ const fetchBoardDetails = async () => {
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
-    params: { taskId: task.id },
+    params: { taskId: task.id }
   })
 }
 
@@ -159,7 +155,7 @@ const toggleDropdown = () => {
 
 const selectedStatuses = computed({
   get: () => taskStore.filterStatuses,
-  set: (value) => taskStore.setFilterStatuses(value, boardId),
+  set: (value) => taskStore.setFilterStatuses(value, boardId)
 })
 
 const filteredStatuses = computed(() => {
@@ -174,7 +170,7 @@ const filteredStatuses = computed(() => {
 
 const sortBy = computed({
   get: () => taskStore.sortBy,
-  set: (value) => taskStore.setSortBy(value, boardId),
+  set: (value) => taskStore.setSortBy(value, boardId)
 })
 
 const togglesortBy = () => {
@@ -197,7 +193,7 @@ const openLimitTaskModal = async () => {
     currentStatusesWithTaskCounts.value = statusStore.statuses.map(
       (status) => ({
         name: status.name,
-        noOfTasks: status.noOfTasks || 0,
+        noOfTasks: status.noOfTasks || 0
       })
     )
 
@@ -236,14 +232,10 @@ const toggleStatusFilter = (statusName) => {
   fetchTasksAndStatus(boardId)
 }
 
-  
 onMounted(async () => {
-  
   await fetchBoardDetails()
-  
-  const boardId = route.params.boardId
-  
 
+  const boardId = route.params.boardId
 
   if (!boardId) {
     console.error("Board ID is missing")
@@ -272,27 +264,25 @@ onMounted(async () => {
     fetchTasksAndStatus(boardId)
   }
   try {
-
-  // Fetch board details and statuses after token validation
-  await fetchBoardAndUserOids(boardId);
+    // Fetch board details and statuses after token validation
+    await fetchBoardAndUserOids(boardId)
   } catch (error) {
-  console.error("Error during component mount:", error);
-}
+    console.error("Error during component mount:", error)
+  }
 })
-
-
 </script>
 
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="flex mb-1 justify-center flex-col items-center">
-      <div class="flex text-4xl mt-10 text-white  justify-center font-extrabold w-screen">
+      <div
+        class="flex text-4xl mt-10 text-white justify-center font-extrabold w-screen"
+      >
         {{ boardName }}
       </div>
       <thead class="flex mt-2">
         <th class="w-full text-xl flex font-medium">
-          
-          <div class=" flex mt-4 text-white">
+          <div class="flex mt-4 text-white">
             <span v-if="selectedStatuses.length > 0" class="flex"
               >Filter :
             </span>
@@ -309,7 +299,6 @@ onMounted(async () => {
               </button>
             </div>
           </div>
-
         </th>
       </thead>
     </div>
@@ -321,12 +310,13 @@ onMounted(async () => {
           <tr class="text-white w-full">
             <th class="w-19 py-2 rounded-l-lg text-xl font-medium">
               <div class="flex">
-                <div class="relative " >
+                <div class="relative">
                   <button
                     @click="toggleDropdown"
                     :class="{
                       'hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500': true,
-                      'text-gray-700 cursor-not-allowed tooltip tooltip-secondary': isSameOid,
+                      'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
+                        isSameOid
                     }"
                     data-tip="You need to be board owner to perform this action."
                   >
@@ -513,7 +503,13 @@ onMounted(async () => {
             </td>
             <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button
-                class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
+                :disabled="isSameOid"
+                :class="{
+                  'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out': !isSameOid,
+                  'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid
+                }"
+                data-tip="You need to be board owner to perform this action."
                 @click="editTask(task)"
               >
                 <svg
@@ -531,6 +527,7 @@ onMounted(async () => {
                   />
                 </svg>
               </button>
+
               <button
                 class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                 @click="confirmDelete(task)"
@@ -582,7 +579,7 @@ onMounted(async () => {
           :class="{
             'bg-red-500 hover:bg-red-600 ': !isSameOid,
             'bg-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-              isSameOid,
+              isSameOid
           }"
           :disabled="isSameOid"
           data-tip="You need to be board owner to perform this action."
