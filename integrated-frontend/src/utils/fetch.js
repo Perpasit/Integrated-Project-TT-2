@@ -1,4 +1,4 @@
-import { useRouter } from "vue-router"
+//import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 
 // Define the fetch function to include token dynamically
@@ -15,7 +15,7 @@ const getRefreshToken = () => {
 export const fetch = async (url, options = {}) => {
 
   const userStore = useUserStore()
-  const router = useRouter()
+  // const router = useRouter()
 
 
   const response = await window.fetch(url, {
@@ -34,10 +34,10 @@ export const fetch = async (url, options = {}) => {
   }
 
 
-  if (response.status === 403) {
-    router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
-    throw new Error("You do not have permission to change board visibility mode.")
-  }
+  // if (response.status === 403) {
+  //   router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
+  //   throw new Error("You do not have permission to change board visibility mode.")
+  // }
 
   if (contentType && contentType.includes("application/json")) {
     return await response.json()
