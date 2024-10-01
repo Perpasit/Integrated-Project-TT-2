@@ -32,7 +32,7 @@ const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
 
 const boardId = route.params.boardId
-const userOid = computed(() => userStore.getUserOid)
+const userOid = ref("")
 const boardOid = ref(null); 
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {

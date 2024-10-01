@@ -45,8 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/v3/boards/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-                // .httpBasic(org.springframework.security.config.Customizer.withDefaults());
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(org.springframework.security.config.Customizer.withDefaults());
 
         return http.build();
     }
