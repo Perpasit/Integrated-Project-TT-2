@@ -35,7 +35,7 @@ const displayStatusLimit = ref(5);
 const showAllStatuses = ref(false);
 
 const boardId = route.params.boardId;
-const userOid = computed(() => userStore.getUserOid);
+const userOid = ref("");
 const boardOid = ref(null);
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
