@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(org.springframework.security.config.Customizer.withDefaults());
+                // .httpBasic(org.springframework.security.config.Customizer.withDefaults());
 
         return http.build();
     }
