@@ -53,8 +53,8 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
     const visibility = boardData.visibility;
-    console.log("Board Visibility:", visibility);
-    console.log(isSameOid.value)
+    // console.log("Board Visibility:", visibility);
+    // console.log(isSameOid.value)
 
     if (!isSameOid.value && visibility === "PRIVATE") {
       router.push({ name: "AccessDenied" });

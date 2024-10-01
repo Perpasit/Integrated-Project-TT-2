@@ -50,8 +50,8 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
     const visibility = boardData.visibility;
-    console.log("Board Visibility:", visibility);
-    console.log(isSameOid.value)
+    // console.log("Board Visibility:", visibility);
+    // console.log(isSameOid.value)
 
     if (!isSameOid.value && visibility === "PRIVATE") {
       router.push({ name: "AccessDenied" });
@@ -249,7 +249,7 @@ onMounted(async () => {
     const userStoreData = JSON.parse(localStorage.getItem('userStore'));
     try {
       let data;
-      if (userStoreData.isAuthenticated && userStoreData  ) {
+      if (userStoreData && userStoreData.isAuthenticated) {
         data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
       } else {
         data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);

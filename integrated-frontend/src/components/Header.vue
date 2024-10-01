@@ -25,7 +25,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     const userStoreData = JSON.parse(localStorage.getItem('userStore'));
     try {
         let data;
-        if (userStoreData.isAuthenticated && userStoreData) {
+        if (userStoreData && userStoreData.isAuthenticated ) {
           // If the user is authenticated, use the accessToken for the authenticated request
           data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}`);
         } else {
