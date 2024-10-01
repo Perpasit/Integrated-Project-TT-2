@@ -281,8 +281,8 @@ onMounted(async () => {
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
 
-    <div class="container mx-auto px-4 pt-2 ">
-      <div class="overflow-x-auto flex flex-col mb-5 justify-center items-center gap-8">
+    <div class="container mx-auto  pt-2 ">
+      <div class="flex flex-col mb-5 justify-center items-center gap-8">
         <div class="flex text-4xl mt-10 text-white font-extrabold">
         {{ boardName }}
       </div>
@@ -344,7 +344,13 @@ onMounted(async () => {
               >
                 <button
                   class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                  :class="{
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Grey and disabled when OID is the same
+                }"
                   @click="editStatus(status)"
+                  :disabled="isSameOid"
+                  data-tip="You need to be the board owner to perform this action."
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -363,7 +369,14 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  :class="{
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Grey and disabled when OID is the same
+                }"
                   @click="handleDeleteClick(status)"
+                  :disabled="isSameOid"
+                  data-tip="You need to be the board owner to perform this action."
+                
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

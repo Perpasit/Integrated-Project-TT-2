@@ -2,10 +2,38 @@
 import { computed, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
+import { useBoardStore } from "../stores/boardStore";
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const boardStore = useBoardStore();
+
+const userOid = computed(() => userStore.getUserOid);
+const boardOid = ref(null);
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value !== userOid.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
+    let boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    // เก็บค่า boardOid
+    boardOid.value = boardData.owner.oid;
+
+    // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
+    userOid.value = userStore.getUserOid || null;
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+};
 
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.includes("/status")
@@ -48,8 +76,13 @@ const goToBoard = () => {
   router.push("/board")
 }
 
-onMounted(() => {
-
+onMounted(async() => {
+try {
+    // Fetch board details and statuses after token validation
+    await fetchBoardAndUserOids(boardId);
+  } catch (error) {
+    console.error("Error during component mount:", error);
+  }
 })
 </script>
 
@@ -147,14 +180,28 @@ onMounted(() => {
       <button
         v-show="isTaskPage"
         @click="addTask"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded"
+        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent text-blue-700 font-semibold py-3 px-5 border border-blue-500  shadow-lg shadow-blue-500/50 rounded"
+        :class="{
+            'hover:bg-gradient-to-r from-cyan-500 to-blue-500 hover:text-white hover:border-transparent   ': !isSameOid,
+            'cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+              isSameOid, // Grey and disabled when OID is the same
+              }"
+        :disabled="isSameOid"
+        data-tip="You need to be the board owner to perform this action." 
       >
         + NEW TASK
       </button>
       <button
         v-show="isManageStatusPage"
         @click="addStatus"
-        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded"
+        class="itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent  text-orange-700 font-semibold  py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 rounded"
+        :class="{
+            'hover:bg-gradient-to-r from-orange-300 to-amber-300 hover:text-white hover:border-transparent   ': !isSameOid,
+            'cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+              isSameOid, // Grey and disabled when OID is the same
+              }"
+        :disabled="isSameOid"
+        data-tip="You need to be the board owner to perform this action."  
       >
         ADD STATUS
       </button>
