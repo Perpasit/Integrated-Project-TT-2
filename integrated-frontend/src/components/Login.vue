@@ -3,11 +3,12 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { postItemLogin } from "../utils/fetch";
 import { useUserStore } from "../stores/userStore";
+import { useBoardStore } from '../stores/boardStore';
 import * as jwtDecode from "jwt-decode";
 
 const router = useRouter();
 const userStore = useUserStore();
-
+const boardStore = useBoardStore();
 // Form state
 const username = ref("");
 const password = ref("");
@@ -47,8 +48,16 @@ const handleSubmit = async () => {
           response.access_token,
           response.refresh_token
         )
+        await boardStore.fetchAllBoards();
+        const boards = boardStore.getBoards;
 
-        router.push({ name: "Board" })
+        if (boards && boards.length > 0) {
+        const firstBoard = boards[0];
+        console.log(firstBoard.id)
+        router.push({ name: "home", params: { boardId: firstBoard.id } });
+        } else {
+          router.push({ name: "Board" });
+        }       
       }
     } catch (error) {
       errorMessage.value = "Username or Password is incorrect";
