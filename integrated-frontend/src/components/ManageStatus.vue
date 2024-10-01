@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch, onBeforeMount } from "vue"
+import { ref, onMounted, computed ,watch, onBeforeMount} from "vue"
 import { useRouter, useRoute } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
@@ -7,7 +7,8 @@ import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
-import { getItems, getItemsNoUser } from "../utils/fetch"
+import { getItems,getItemsNoUser } from "../utils/fetch";
+
 
 const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
@@ -31,38 +32,41 @@ const cannotDeleteEditTimeout = ref(null)
 const newStatusId = ref(1)
 
 const boardId = route.params.boardId
-const userOid = ref("")
-const boardOid = ref(null)
+const userOid = computed(() => userStore.getUserOid)
+const boardOid = ref(null); 
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value === userOid.value
-})
+  return boardOid.value !== userOid.value;
+});
 const fetchBoardAndUserOids = async (boardId) => {
+
   try {
     // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
-    let boardData = await boardStore.getBoardById(boardId)
+    let boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
-      throw new Error(`Board with id ${boardId} not found.`)
+      throw new Error(`Board with id ${boardId} not found.`);
     }
 
     // เก็บค่า boardOid
-    boardOid.value = boardData.owner.oid
+    boardOid.value = boardData.owner.oid;
 
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
-    userOid.value = userStore.getUserOid || null
+    userOid.value = userStore.getUserOid || null;
+
+
   } catch (error) {
-    console.error("Error fetching board or user OID:", error)
+    console.error("Error fetching board or user OID:", error);
   }
-}
+};
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
-    boardId = newBoardId
-    await fetchBoardAndUserOids(newBoardId) // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
   }
-)
+);
 
 const boardName = ref("")
 
@@ -78,7 +82,7 @@ const fetchBoardDetails = async () => {
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
-    params: { statusId: status.id }
+    params: { statusId: status.id },
   })
 }
 
@@ -115,6 +119,7 @@ const saveStatus = (status) => {
 async function confirmDeleteStatus() {
   if (selectedStatusToDelete) {
     try {
+
       const result = await statusStore.deleteStatus(
         boardId,
         selectedStatusToDelete.id
@@ -222,6 +227,7 @@ const getStatusColor = (status) => {
 }
 
 const handleDeleteClick = (status) => {
+
   if (
     status.name.toLowerCase() === "no status" ||
     status.name.toLowerCase() === "done"
@@ -234,45 +240,35 @@ const handleDeleteClick = (status) => {
   }
 }
 
+
+
 onMounted(async () => {
-  const boardId = route.params.boardId;
-  
-  // Ensure localStorage value is checked for null or invalid content
-  const userStoreData = localStorage.getItem("userStore") 
-    ? JSON.parse(localStorage.getItem("userStore")) 
-    : null;
-
-  try {
-    let data;
-
-    // Check if userStoreData is not null and if isAuthenticated exists before accessing
-    if (userStoreData && userStoreData.isAuthenticated) {
-      data = await getItems(
-        `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`
-      );
-    } else {
-      data = await getItemsNoUser(
-        `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`
-      );
+    const boardId = route.params.boardId;
+    const userStoreData = JSON.parse(localStorage.getItem('userStore'));
+    try {
+      let data;
+      if (userStoreData.isAuthenticated && userStoreData  ) {
+        data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      } else {
+        data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      }
+      statusStore.setStatuses(data || []); // Assuming you have a method to set statuses in your store
+    } catch (error) {
+      console.error("Error fetching statuses:", error);
     }
+        
 
-    // Assuming you have a method to set statuses in your store
-    statusStore.setStatuses(data || []); 
-
-  } catch (error) {
-    console.error("Error fetching statuses:", error);
-  }
-
-  try {
-    await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
-    await fetchStatuses(boardId); // Fetch statuses
-    await fetchBoardDetails(); // Fetch board details
-  } catch (error) {
-    console.error("Error during component mount:", error);
-  } finally {
-    // Clear the reload flag if necessary when leaving the page
-    localStorage.removeItem("hasReloaded");
-  }
+    try {
+      await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
+      fetchStatuses(boardId); // Fetch statuses
+      fetchBoardDetails(); // Fetch board details
+    } catch (error) {
+      console.error("Error during component mount:", error);
+    } finally {
+      // Clear the reload flag if necessary when leaving the page
+      localStorage.removeItem('hasReloaded');
+    }
+  
 });
 
 </script>
@@ -285,13 +281,11 @@ onMounted(async () => {
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
 
-    <div class="container mx-auto px-4 pt-2">
-      <div
-        class="overflow-x-auto flex flex-col mb-5 justify-center items-center gap-8"
-      >
+    <div class="container mx-auto  pt-2 ">
+      <div class="flex flex-col mb-5 justify-center items-center gap-8">
         <div class="flex text-4xl mt-10 text-white font-extrabold">
-          {{ boardName }}
-        </div>
+        {{ boardName }}
+      </div>
         <table
           class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
         >
@@ -349,15 +343,14 @@ onMounted(async () => {
                 class="itbkk-button-action px-4 py-2 rounded-r-lg text-center"
               >
                 <button
-                  :disabled="!isSameOid"
+                  class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
                   :class="{
-                    'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1':
-                      isSameOid,
-                    'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                      !isSameOid
-                  }"
-                  data-tip="You need to be board owner to perform this action."
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Grey and disabled when OID is the same
+                }"
                   @click="editStatus(status)"
+                  :disabled="isSameOid"
+                  data-tip="You need to be the board owner to perform this action."
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -376,7 +369,14 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                  :class="{
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Grey and disabled when OID is the same
+                }"
                   @click="handleDeleteClick(status)"
+                  :disabled="isSameOid"
+                  data-tip="You need to be the board owner to perform this action."
+                
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -782,7 +782,7 @@ onMounted(async () => {
         <div class="flex space-x-4">
           <!-- Button for non-board owners (when OIDs are not the same) -->
           <button
-            v-if="isSameOid"
+            v-if="!isSameOid"
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             @click="confirmDeleteStatus"
           >
@@ -791,7 +791,7 @@ onMounted(async () => {
 
           <!-- Button for board owners (when OIDs are the same) -->
           <button
-            v-if="!isSameOid"
+            v-if="isSameOid"
             class="itbkk-button-confirm bg-gray-300 cursor-not-allowed text-white px-4 py-2 rounded tooltip tooltip-secondary tooltip-left"
             data-tip="Only the board owner can delete."
             disabled

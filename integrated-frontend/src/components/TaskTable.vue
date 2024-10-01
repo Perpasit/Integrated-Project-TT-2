@@ -1,275 +1,275 @@
 <script setup>
-import { ref, onMounted, computed, watch } from "vue"
-import { useTaskStore } from "../stores/task"
-import { useStatusStore } from "../stores/status"
-import { useRouter, useRoute } from "vue-router"
-import LimitTaskModal from "./LimitTaskModal.vue"
-import { useBoardStore } from "../stores/boardStore"
-import { useUserStore } from "../stores/userStore"
+import { ref, onMounted, computed, watch } from "vue";
+import { useTaskStore } from "../stores/task";
+import { useStatusStore } from "../stores/status";
+import { useRouter, useRoute } from "vue-router";
+import LimitTaskModal from "./LimitTaskModal.vue";
+import { useBoardStore } from "../stores/boardStore";
+import { useUserStore } from "../stores/userStore";
 
-const router = useRouter()
-const route = useRoute()
-const taskStore = useTaskStore()
-const statusStore = useStatusStore()
-const boardStore = useBoardStore()
-const userStore = useUserStore()
-const tasks = computed(() => taskStore.getTasks)
-const selectedTask = ref(null)
+const router = useRouter();
+const route = useRoute();
+const taskStore = useTaskStore();
+const statusStore = useStatusStore();
+const boardStore = useBoardStore();
+const userStore = useUserStore();
+const tasks = computed(() => taskStore.getTasks);
+const selectedTask = ref(null);
 
-const showDeleteConfirmation = ref(false)
-let selectedTaskToDelete = null
-const showSuccessModal = ref(false)
-const showNotFoundModal = ref(false)
-const showLimitTaskModal = ref(false)
-const maxTasksPerStatus = ref(10)
+const showDeleteConfirmation = ref(false);
+let selectedTaskToDelete = null;
+const showSuccessModal = ref(false);
+const showNotFoundModal = ref(false);
+const showLimitTaskModal = ref(false);
+const maxTasksPerStatus = ref(10);
 
-const isDropdownOpen = ref(false)
+const isDropdownOpen = ref(false);
 
-const currentTaskCountForStatus = ref({})
-const currentStatusNames = ref([])
-const currentStatusesWithTaskCounts = ref([])
-const maxTasks = ref()
+const currentTaskCountForStatus = ref({});
+const currentStatusNames = ref([]);
+const currentStatusesWithTaskCounts = ref([]);
+const maxTasks = ref();
 
-const searchKeyword = ref("")
-const displayStatusLimit = ref(5)
-const showAllStatuses = ref(false)
+const searchKeyword = ref("");
+const displayStatusLimit = ref(5);
+const showAllStatuses = ref(false);
 
-const boardId = route.params.boardId
-const userOid = ref("")
-const boardOid = ref(null)
+const boardId = route.params.boardId;
+const userOid = computed(() => userStore.getUserOid);
+const boardOid = ref(null);
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return true; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value === userOid.value
-})
+  return boardOid.value !== userOid.value;
+});
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     // ดึงข้อมูลบอร์ดจาก API หรือ state ถ้ายังไม่มี
-    let boardData = await boardStore.getBoardById(boardId)
+    let boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
-      throw new Error(`Board with id ${boardId} not found.`)
+      throw new Error(`Board with id ${boardId} not found.`);
     }
 
     // เก็บค่า boardOid
-    boardOid.value = boardData.owner.oid
+    boardOid.value = boardData.owner.oid;
 
     // ตรวจสอบว่ามีค่า userOid หรือไม่ ถ้าไม่มีให้กำหนดเป็น null
-    userOid.value = userStore.getUserOid || null
+    userOid.value = userStore.getUserOid || null;
   } catch (error) {
-    console.error("Error fetching board or user OID:", error)
+    console.error("Error fetching board or user OID:", error);
   }
-}
+};
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
-    boardId = newBoardId
-    await fetchBoardAndUserOids(newBoardId) // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
   }
-)
+);
 
-const boardName = ref("")
+const boardName = ref("");
 
 const fetchBoardDetails = async () => {
   try {
-    const boardData = await boardStore.getBoardById(boardId)
-    boardName.value = boardData.name
+    const boardData = await boardStore.getBoardById(boardId);
+    boardName.value = boardData.name;
   } catch (error) {
-    console.error("Error fetching board details:", error)
+    console.error("Error fetching board details:", error);
   }
-}
+};
 
 const showTaskDetail = (task) => {
   router.push({
     name: "taskDetail",
-    params: { taskId: task.id }
-  })
-}
+    params: { taskId: task.id },
+  });
+};
 
 const clearStatusFilter = () => {
-  taskStore.setFilterStatuses([], boardId) // Pass boardId here
-  searchKeyword.value = ""
-}
+  taskStore.setFilterStatuses([], boardId); // Pass boardId here
+  searchKeyword.value = "";
+};
 
 const fetchTasksAndStatus = async (boardId) => {
-  await taskStore.fetchAllTasks(boardId)
-  await statusStore.fetchAllStatuses(boardId)
-}
+  await taskStore.fetchAllTasks(boardId);
+  await statusStore.fetchAllStatuses(boardId);
+};
 
 const formattedStatus = computed(() => {
   return (task) => {
-    const status = statusStore.getStatusByName(task.status)
+    const status = statusStore.getStatusByName(task.status);
     if (status) {
-      return status.name
+      return status.name;
     } else {
-      return "Unknown"
+      return "Unknown";
     }
-  }
-})
+  };
+});
 
 const confirmDelete = (task) => {
-  selectedTaskToDelete = task
-  showDeleteConfirmation.value = true
-}
+  selectedTaskToDelete = task;
+  showDeleteConfirmation.value = true;
+};
 
 const deleteTask = async () => {
-  showDeleteConfirmation.value = false
+  showDeleteConfirmation.value = false;
   try {
-    await taskStore.deleteTask(boardId, selectedTaskToDelete.id)
-    showSuccessModal.value = true
-    selectedTaskToDelete = null
-    fetchTasksAndStatus(boardId)
+    await taskStore.deleteTask(boardId, selectedTaskToDelete.id);
+    showSuccessModal.value = true;
+    selectedTaskToDelete = null;
+    fetchTasksAndStatus(boardId);
 
     setTimeout(() => {
-      closeDeleteModal()
-    }, 3000)
+      closeDeleteModal();
+    }, 3000);
   } catch (error) {
     if (error.message.includes("does not exist")) {
-      showNotFoundModal.value = true
-      fetchTasksAndStatus(boardId)
+      showNotFoundModal.value = true;
+      fetchTasksAndStatus(boardId);
       setTimeout(() => {
-        closeDeleteModal()
-      }, 3000)
+        closeDeleteModal();
+      }, 3000);
     }
   }
-}
+};
 
 function closeDeleteModal() {
-  showSuccessModal.value = false
-  showNotFoundModal.value = false
+  showSuccessModal.value = false;
+  showNotFoundModal.value = false;
 }
 const cancelDelete = () => {
-  selectedTaskToDelete = null
-  showDeleteConfirmation.value = false
-}
+  selectedTaskToDelete = null;
+  showDeleteConfirmation.value = false;
+};
 
 const editTask = (task) => {
   if (task && task.id) {
-    router.push({ name: "EditTask", params: { id: task.id } })
+    router.push({ name: "EditTask", params: { id: task.id } });
   }
-}
+};
 
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const selectedStatuses = computed({
   get: () => taskStore.filterStatuses,
-  set: (value) => taskStore.setFilterStatuses(value, boardId)
-})
+  set: (value) => taskStore.setFilterStatuses(value, boardId),
+});
 
 const filteredStatuses = computed(() => {
   const results = statusStore.statuses.filter((status) =>
     status.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-  )
+  );
   if (showAllStatuses.value) {
-    return results
+    return results;
   }
-  return results.slice(0, displayStatusLimit.value)
-})
+  return results.slice(0, displayStatusLimit.value);
+});
 
 const sortBy = computed({
   get: () => taskStore.sortBy,
-  set: (value) => taskStore.setSortBy(value, boardId)
-})
+  set: (value) => taskStore.setSortBy(value, boardId),
+});
 
 const togglesortBy = () => {
   if (sortBy.value === "createOn") {
-    sortBy.value = "asc"
+    sortBy.value = "asc";
   } else if (sortBy.value === "asc") {
-    sortBy.value = "desc"
+    sortBy.value = "desc";
   } else {
-    sortBy.value = "createOn"
+    sortBy.value = "createOn";
   }
-  taskStore.setSortBy(sortBy.value, boardId) // Pass boardId here
-}
+  taskStore.setSortBy(sortBy.value, boardId); // Pass boardId here
+};
 const updateMaxTasksPerStatus = (limit) => {
-  maxTasksPerStatus.value = limit
-}
+  maxTasksPerStatus.value = limit;
+};
 
 const openLimitTaskModal = async () => {
   try {
-    await statusStore.fetchAllStatuses(boardId)
+    await statusStore.fetchAllStatuses(boardId);
     currentStatusesWithTaskCounts.value = statusStore.statuses.map(
       (status) => ({
         name: status.name,
-        noOfTasks: status.noOfTasks || 0
+        noOfTasks: status.noOfTasks || 0,
       })
-    )
+    );
 
     // Update the maxTasks value based on the first status
-    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10
+    maxTasks.value = currentStatusesWithTaskCounts.value[0]?.noOfTasks || 10;
 
     currentTaskCountForStatus.value =
       currentStatusesWithTaskCounts.value.reduce((counts, status) => {
-        counts[status.name] = status.noOfTasks
-        return counts
-      }, {})
+        counts[status.name] = status.noOfTasks;
+        return counts;
+      }, {});
 
     currentStatusNames.value = currentStatusesWithTaskCounts.value.map(
       (status) => status.name
-    )
+    );
 
-    showLimitTaskModal.value = true
+    showLimitTaskModal.value = true;
   } catch (error) {
-    console.error("Error fetching status data:", error)
+    console.error("Error fetching status data:", error);
   }
-}
+};
 
 const closeLimitTaskModal = () => {
-  showLimitTaskModal.value = false
-}
+  showLimitTaskModal.value = false;
+};
 
 const toggleStatusFilter = (statusName) => {
-  const isSelected = selectedStatuses.value.includes(statusName)
+  const isSelected = selectedStatuses.value.includes(statusName);
   if (isSelected) {
     selectedStatuses.value = selectedStatuses.value.filter(
       (status) => status !== statusName
-    )
+    );
   } else {
-    selectedStatuses.value.push(statusName)
+    selectedStatuses.value.push(statusName);
   }
-  fetchTasksAndStatus(boardId)
-}
+  fetchTasksAndStatus(boardId);
+};
 
 onMounted(async () => {
-  await fetchBoardDetails()
+  await fetchBoardDetails();
 
-  const boardId = route.params.boardId
+  const boardId = route.params.boardId;
 
   if (!boardId) {
-    console.error("Board ID is missing")
-    return
+    console.error("Board ID is missing");
+    return;
   }
 
-  const sortByFromUrl = route.query.sortBy
+  const sortByFromUrl = route.query.sortBy;
   if (
     sortByFromUrl === "asc" ||
     sortByFromUrl === "desc" ||
     sortByFromUrl === "createOn"
   ) {
-    sortBy.value = sortByFromUrl
-    fetchTasksAndStatus(boardId)
+    sortBy.value = sortByFromUrl;
+    fetchTasksAndStatus(boardId);
   }
 
   // Check the filterStatus query parameter from the URL
-  const filterStatusFromUrl = route.query.filterStatus
+  const filterStatusFromUrl = route.query.filterStatus;
   if (filterStatusFromUrl) {
-    const statusArray = filterStatusFromUrl.split(",")
-    selectedStatuses.value = statusArray
-    fetchTasksAndStatus(boardId)
+    const statusArray = filterStatusFromUrl.split(",");
+    selectedStatuses.value = statusArray;
+    fetchTasksAndStatus(boardId);
   } else {
     // If filterStatus is not provided, clear the selectedStatuses
-    selectedStatuses.value = []
-    fetchTasksAndStatus(boardId)
+    selectedStatuses.value = [];
+    fetchTasksAndStatus(boardId);
   }
   try {
     // Fetch board details and statuses after token validation
-    await fetchBoardAndUserOids(boardId)
+    await fetchBoardAndUserOids(boardId);
   } catch (error) {
-    console.error("Error during component mount:", error)
+    console.error("Error during component mount:", error);
   }
-})
+});
 </script>
 
 <template>
@@ -316,7 +316,7 @@ onMounted(async () => {
                     :class="{
                       'hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500': true,
                       'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                        !isSameOid
+                        isSameOid,
                     }"
                     data-tip="You need to be board owner to perform this action."
                   >
@@ -336,7 +336,7 @@ onMounted(async () => {
                     </svg>
                   </button>
                   <div
-                    v-if="isDropdownOpen && isSameOid"
+                    v-if="isDropdownOpen && !isSameOid"
                     class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
@@ -437,9 +437,18 @@ onMounted(async () => {
               </button>
             </th>
             <th class="w-1/8 px-4 py-2 rounded-r-lg">
-              <button class="itbkk-status-setting" @click="openLimitTaskModal">
+              <button
+                class="itbkk-status-setting hover:scale-110 transition-all duration-200 ease-in-out"
+                @click="openLimitTaskModal"
+                :class="{
+                  'cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Normal hover effect if OID matches
+                }"
+                :disabled="isSameOid"
+                data-tip="You need to be the board owner to perform this action."
+              >
                 <svg
-                  class="w-5 h-5 mr-7 text-white dark:text-white"
+                  class="w-5 h-5 text-white dark:text-white"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -503,14 +512,14 @@ onMounted(async () => {
             </td>
             <td class="itbkk-button-action px-1 py-2 rounded-r-lg">
               <button
-                :disabled="!isSameOid"
+                class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                 :class="{
-                  'itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out': isSameOid,
-                  'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                    !isSameOid
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    isSameOid, // Grey and disabled when OID is the same
                 }"
-                data-tip="You need to be board owner to perform this action."
                 @click="editTask(task)"
+                :disabled="isSameOid"
+                data-tip="You need to be the board owner to perform this action."
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -527,10 +536,14 @@ onMounted(async () => {
                   />
                 </svg>
               </button>
-
               <button
                 class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
+                :class="{
+    'tooltip tooltip-secondary cursor-not-allowed': isSameOid, // Grey and tooltip if OID is the same
+  }"
                 @click="confirmDelete(task)"
+                :disabled="isSameOid"
+                data-tip="You need to be the board owner to perform this action."
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -577,11 +590,11 @@ onMounted(async () => {
           class="itbkk-button-confirm text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
           :class="{
-            'bg-red-500 hover:bg-red-600 ': isSameOid,
+            'bg-red-500 hover:bg-red-600 ': !isSameOid,
             'bg-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-              !isSameOid
+              isSameOid,
           }"
-          :disabled="!isSameOid"
+          :disabled="isSameOid"
           data-tip="You need to be board owner to perform this action."
         >
           Delete
