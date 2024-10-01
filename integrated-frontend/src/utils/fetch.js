@@ -65,11 +65,26 @@ export const fetchWithAuthCheck = async (url, options = {}) => {
       },
     });
 
-    return response; 
+    response
+    // Handle non-ok responses, especially 401 Unauthorized
+  if (response.status === 401) {
+    // Clear token if needed and redirect to login page
+    userStore.logout() // Assuming you have a logout action in your store
+    throw new Error("Unauthorized. Redirecting to login.")
+  }
+
+
+  if (response.status === 403) {
+    router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
+    throw new Error("You do not have permission to change board visibility mode.")
+  }
+ 
+    
   } catch (error) {
     console.error("Fetch error:", error);
     throw error; 
   }
+  
 };
 
 export const postRefreshToken = async (url) => {
