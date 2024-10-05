@@ -8,14 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.*;
-import sit.int221.integratedapi.entities.Board;
-import sit.int221.integratedapi.entities.GlobalSetting;
-import sit.int221.integratedapi.entities.Status;
-import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.entities.*;
 import sit.int221.integratedapi.exceptions.*;
-import sit.int221.integratedapi.repositories.primary.BoardRepository;
-import sit.int221.integratedapi.repositories.primary.StatusRepository;
-import sit.int221.integratedapi.repositories.primary.TaskRepository;
+import sit.int221.integratedapi.repositories.primary.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.time.ZonedDateTime;
@@ -38,14 +33,21 @@ public class StatusService {
 
     private final BoardRepository boardRepository;
 
+    private final CollaboratorRepository collaboratorRepository;
+
+    private final TaskUserRepository taskUserRepository;
+
+
     @Autowired
-    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper,BoardRepository boardRepository){
+    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper, BoardRepository boardRepository, CollaboratorRepository collaboratorRepository, TaskUserRepository taskUserRepository) {
         this.statusRepository = statusRepository;
         this.taskRepository = taskRepository;
         this.globalSettingService = globalSettingService;
         this.listMapper = listMapper;
         this.modelMapper = modelMapper;
         this.boardRepository = boardRepository;
+        this.collaboratorRepository = collaboratorRepository;
+        this.taskUserRepository = taskUserRepository;
     }
 
     public Status findStatusByIdAndBoardId(Integer statusId, String boardId) {
@@ -63,6 +65,7 @@ public class StatusService {
         }
         return statusDTOs;
     }
+
     public int getNoOfTasksByStatusId(Integer statusId) {
         return taskRepository.countByStatusId(statusId);
     }
@@ -133,6 +136,27 @@ public class StatusService {
         }
     }
 
+    public void validateWriteAccess(String boardId, String oidFromToken) {
+        // ค้นหาบอร์ดที่ต้องการเข้าถึง
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            if (user == null) {
+                throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
+            }
+
+            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
+                throw new ForbiddenException("You do not have permission to modify this board");
+            }
+        }
+    }
+
+
+
     @Transactional
     public ResponseEntity<Object> createStatus(String boardId, StatusCDTO statusCDTO) {
         // ตรวจสอบค่า boardId ว่ามีอยู่จริงหรือไม่
@@ -188,7 +212,6 @@ public class StatusService {
         StatusCDTO createdStatusCDTO = modelMapper.map(createdStatus, StatusCDTO.class);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdStatusCDTO);
     }
-
 
 
     @Transactional
@@ -254,8 +277,6 @@ public class StatusService {
     }
 
 
-
-
     @Transactional
     public ResponseEntity<Object> updateStatus(String boardId, Integer statusId, StatusUDTO statusUDTO) {
         // ตรวจสอบว่าสถานะนี้อยู่ในบอร์ดที่กำหนดหรือไม่
@@ -299,7 +320,6 @@ public class StatusService {
         StatusUDTO responseStatusUDTO = modelMapper.map(savedStatus, StatusUDTO.class);
         return ResponseEntity.ok(responseStatusUDTO);
     }
-
 
 
     private void setDefaultValuesForStatus(Status status, String globalSettingName) {

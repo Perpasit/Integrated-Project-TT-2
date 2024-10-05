@@ -138,4 +138,48 @@ public class CollaboratorService {
         return collaboratorDTO;
     }
 
+    public CollaboratorDTO updateCollaboratorAccessRight(String boardId, String collabOid, String newAccessRight, String oidFromToken) {
+        // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
+        validateBoardOwnershipForModification(boardId, oidFromToken);
+
+        TaskUser user = taskUserRepository.findById(collabOid)
+                .orElseThrow(() -> new ItemNotFoundException("User with id " + collabOid + " not found"));
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        // ดึง collaborator จากฐานข้อมูล
+        Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+        if (collaborator == null) {
+            throw new ItemNotFoundException("Collaborator not found");
+        }
+
+        // อัปเดต accessRight ใหม่
+        collaborator.setAccessRight(Collaborator.AccessRight.valueOf(newAccessRight));
+        collaboratorRepository.save(collaborator);
+
+        return listMapper.mapObject(collaborator, CollaboratorDTO.class);
+    }
+
+    public void removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
+        // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
+        validateBoardOwnershipForModification(boardId, oidFromToken);
+
+        TaskUser user = taskUserRepository.findById(collabOid)
+                .orElseThrow(() -> new ItemNotFoundException("User with id " + collabOid + " not found"));
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        // ลบ collaborator
+        Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+        if (collaborator == null) {
+            throw new ItemNotFoundException("Collaborator not found");
+        }
+
+        collaboratorRepository.delete(collaborator);
+    }
+
+
+
 }

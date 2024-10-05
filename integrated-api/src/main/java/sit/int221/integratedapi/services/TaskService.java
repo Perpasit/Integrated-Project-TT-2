@@ -14,15 +14,9 @@ import sit.int221.integratedapi.dtos.TaskCDTO;
 import sit.int221.integratedapi.dtos.TaskDDTO;
 import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
-import sit.int221.integratedapi.entities.Board;
-import sit.int221.integratedapi.entities.Status;
-import sit.int221.integratedapi.entities.Task;
-import sit.int221.integratedapi.entities.TaskUser;
+import sit.int221.integratedapi.entities.*;
 import sit.int221.integratedapi.exceptions.*;
-import sit.int221.integratedapi.repositories.primary.BoardRepository;
-import sit.int221.integratedapi.repositories.primary.StatusRepository;
-import sit.int221.integratedapi.repositories.primary.TaskRepository;
-import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
+import sit.int221.integratedapi.repositories.primary.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
 
@@ -46,7 +40,9 @@ public class TaskService {
     @Autowired
     private BoardRepository boardRepository;
     @Autowired
-    TaskUserRepository taskUserRepository;
+    private TaskUserRepository taskUserRepository;
+    @Autowired
+    private CollaboratorRepository collaboratorRepository;
 
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
@@ -82,6 +78,25 @@ public class TaskService {
 
         if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
             throw new ForbiddenException("You do not have permission to modify this board.");
+        }
+    }
+
+    public void validateWriteAccess(String boardId, String oidFromToken) {
+        // ค้นหาบอร์ดที่ต้องการเข้าถึง
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            if (user == null) {
+                throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
+            }
+
+            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
+                throw new ForbiddenException("You do not have permission to modify this board");
+            }
         }
     }
 
