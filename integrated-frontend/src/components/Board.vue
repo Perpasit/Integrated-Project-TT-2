@@ -1,8 +1,9 @@
 <script setup>
 import { ref } from "vue";
 import HeaderBoard from "./HeaderBoard.vue";
-import BoardTable from "./BoardTable.vue";
 import { RouterView } from "vue-router";
+import CollabBoard from "./CollabBoard.vue";
+import PersonalBoard from "./PersonalBoard.vue";
 </script>
 
 <template>
@@ -11,7 +12,8 @@ import { RouterView } from "vue-router";
     class="bg-gradient-to-br from-[#c4e4e0] to-[#9ad4d3] min-h-screen"
   >
     <HeaderBoard />
-    <BoardTable />
+    <PersonalBoard />
+    <CollabBoard />
     <RouterView />
   </div>
 </template>

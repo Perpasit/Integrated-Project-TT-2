@@ -120,7 +120,7 @@ onMounted(async () => {
 <template>
   <div class="container mx-auto px-4 pt-2">
     <div class="overflow-visible">
-      <h2 class="text-center text-5xl font-bold text-white mb-4 py-1">Board List</h2>
+      <h2 class="text-center text-5xl font-bold text-white mb-4 py-1">Personal Board</h2>
 
       <div class="flex justify-end mb-6 pb-4 border-b border-white">
         <button @click="openAddEditBoardModal()"
