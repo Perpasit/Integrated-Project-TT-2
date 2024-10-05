@@ -139,7 +139,6 @@ public class CollaboratorService {
     }
 
     public CollaboratorDTO updateCollaboratorAccessRight(String boardId, String collabOid, String newAccessRight, String oidFromToken) {
-        // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
         validateBoardOwnershipForModification(boardId, oidFromToken);
 
         TaskUser user = taskUserRepository.findById(collabOid)
@@ -148,7 +147,6 @@ public class CollaboratorService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        // ดึง collaborator จากฐานข้อมูล
         Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
         if (collaborator == null) {
             throw new ItemNotFoundException("Collaborator not found");
@@ -158,10 +156,15 @@ public class CollaboratorService {
         collaborator.setAccessRight(Collaborator.AccessRight.valueOf(newAccessRight));
         collaboratorRepository.save(collaborator);
 
-        return listMapper.mapObject(collaborator, CollaboratorDTO.class);
+        CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaborator, CollaboratorDTO.class);
+        collaboratorDTO.setOid(user.getOid());
+        collaboratorDTO.setName(user.getName());
+        collaboratorDTO.setEmail(user.getEmail());
+
+        return collaboratorDTO;
     }
 
-    public void removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
+    public CollaboratorDTO removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
         // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
         validateBoardOwnershipForModification(boardId, oidFromToken);
 
@@ -171,15 +174,19 @@ public class CollaboratorService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        // ลบ collaborator
         Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
         if (collaborator == null) {
             throw new ItemNotFoundException("Collaborator not found");
         }
 
+        CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaborator, CollaboratorDTO.class);
+        collaboratorDTO.setOid(user.getOid());
+        collaboratorDTO.setName(user.getName());
+        collaboratorDTO.setEmail(user.getEmail());
+
         collaboratorRepository.delete(collaborator);
+
+        return collaboratorDTO;
     }
-
-
 
 }

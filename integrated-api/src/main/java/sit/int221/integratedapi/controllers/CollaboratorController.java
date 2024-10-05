@@ -104,7 +104,7 @@ public class CollaboratorController {
     }
 
     @DeleteMapping("/{boardId}/collabs/{collabOid}")
-    public ResponseEntity<?> removeCollaborator(
+    public ResponseEntity<CollaboratorDTO> removeCollaborator(
             @RequestHeader(value = "Authorization") String token,
             @PathVariable String boardId,
             @PathVariable String collabOid) {
@@ -112,9 +112,13 @@ public class CollaboratorController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
-        collaboratorService.removeCollaboratorFromBoard(boardId, collabOid, oidFromToken);
-        return ResponseEntity.noContent().build();  // 204 No Content when successfully deleted
+
+        CollaboratorDTO removedCollaborator = collaboratorService.removeCollaboratorFromBoard(boardId, collabOid, oidFromToken);
+
+
+        return ResponseEntity.ok(removedCollaborator);
     }
+
 
 
 }
