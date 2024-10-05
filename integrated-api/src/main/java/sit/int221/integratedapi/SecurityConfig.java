@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/v2/global-settings/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
+                        .requestMatchers("/token/**").permitAll()
                         .requestMatchers("/v3/boards/**").permitAll()
                         .anyRequest().authenticated()
                 )

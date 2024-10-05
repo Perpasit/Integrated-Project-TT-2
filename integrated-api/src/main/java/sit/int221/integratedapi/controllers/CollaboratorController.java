@@ -86,4 +86,35 @@ public class CollaboratorController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
+
+    @PatchMapping("/{boardId}/collabs/{collabOid}")
+    public ResponseEntity<CollaboratorDTO> updateCollaboratorAccessRight(
+            @RequestHeader(value = "Authorization") String token,
+            @PathVariable String boardId,
+            @PathVariable String collabOid,
+            @RequestBody CollaboratorCDTO collaboratorCDTO) {
+
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+
+        CollaboratorDTO updatedCollaborator = collaboratorService.updateCollaboratorAccessRight(
+                boardId, collabOid, collaboratorCDTO.getAccessRight(), oidFromToken);
+
+        return ResponseEntity.ok(updatedCollaborator);
+    }
+
+    @DeleteMapping("/{boardId}/collabs/{collabOid}")
+    public ResponseEntity<?> removeCollaborator(
+            @RequestHeader(value = "Authorization") String token,
+            @PathVariable String boardId,
+            @PathVariable String collabOid) {
+
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+
+        collaboratorService.removeCollaboratorFromBoard(boardId, collabOid, oidFromToken);
+        return ResponseEntity.noContent().build();  // 204 No Content when successfully deleted
+    }
+
+
 }

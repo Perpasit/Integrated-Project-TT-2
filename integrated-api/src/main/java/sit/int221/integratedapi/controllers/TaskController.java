@@ -104,7 +104,8 @@ public class TaskController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
+        // taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
+        taskService.validateWriteAccess(boardId, oidFromToken);
         if (taskCDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
@@ -123,7 +124,8 @@ public class TaskController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        taskService.validateWriteAccess(boardId, oidFromToken);
         taskService.findTaskById(taskId);
         if (updatedTaskDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
@@ -141,7 +143,8 @@ public class TaskController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        taskService.validateWriteAccess(boardId, oidFromToken);
         taskService.findTaskById(taskId);
         return taskService.removeTask(boardId, taskId);
     }

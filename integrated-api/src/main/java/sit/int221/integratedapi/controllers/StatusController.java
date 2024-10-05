@@ -66,7 +66,8 @@ public class StatusController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.validateWriteAccess(boardId, oidFromToken);
         if (status == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
         }
@@ -99,7 +100,8 @@ public class StatusController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.validateWriteAccess(boardId, oidFromToken);
         statusService.findStatusByIdAndBoardId(statusId,boardId);
         if (statusUDTO == null) {
             throw new IllegalArgumentException("Request body is missing or invalid. Please check the provided data and try again.");
@@ -117,7 +119,8 @@ public class StatusController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.validateWriteAccess(boardId, oidFromToken);
         statusService.findStatusByIdAndBoardId(statusId,boardId);
         return statusService.removeStatus(boardId, statusId);
     }
@@ -133,7 +136,8 @@ public class StatusController {
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        // statusService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        statusService.validateWriteAccess(boardId, oidFromToken);
         statusService.findStatusByIdAndBoardId(statusId,boardId);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
