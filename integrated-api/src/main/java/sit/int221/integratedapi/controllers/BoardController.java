@@ -18,6 +18,7 @@ import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.services.BoardService;
 import sit.int221.integratedapi.services.StatusService;
 import sit.int221.integratedapi.services.TaskService;
+import sit.int221.integratedapi.services.CollaboratorService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public class BoardController {
 
     @Autowired
     private StatusService statusService;
+
+    @Autowired
+    private CollaboratorService collaboratorService;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -357,6 +361,60 @@ public class BoardController {
         statusService.findStatusByIdAndBoardId(statusId,boardId);
         return statusService.deleteTransferStatus(boardId, statusId, newId);
     }
+
+    @GetMapping("/{boardId}/collabs")
+    public ResponseEntity<List<CollaboratorDTO>> getCollaboratorsByBoardId(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId) {
+
+        String oidFromToken = null;
+
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
+
+        List<CollaboratorDTO> collaborators = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
+        return ResponseEntity.ok(collaborators);
+    }
+
+
+    @GetMapping("/{boardId}/collabs/{collabOid}")
+    public ResponseEntity<CollaboratorDTO> getCollaboratorById(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable String collabOid) {
+
+        String oidFromToken = null;
+
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        }
+
+        boardService.validateBoardAccessForGet(boardId, oidFromToken);
+
+        CollaboratorDTO collaborator = collaboratorService.getCollaboratorById(boardId, collabOid, oidFromToken);
+        if (collaborator == null) {
+            throw new ItemNotFoundException("Collaborator not found");
+        }
+
+        return ResponseEntity.ok(collaborator);
+    }
+
+    @PostMapping("/{boardId}/collabs")
+    public ResponseEntity<CollaboratorDTO> addCollaborator(
+            @RequestHeader(value = "Authorization") String token,
+            @PathVariable String boardId,
+            @Valid @RequestBody CollaboratorCDTO collaboratorCDTO) {
+
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+
+        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId, collaboratorCDTO.getUserEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
+    }
+
+
 
 
 }

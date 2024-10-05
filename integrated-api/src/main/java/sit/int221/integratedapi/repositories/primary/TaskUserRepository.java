@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface TaskUserRepository extends JpaRepository<TaskUser, String> {
     TaskUser findByOid(String oid);
+
+    Optional<TaskUser> findByEmail(String email);
 }

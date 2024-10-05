@@ -9,17 +9,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sit.int221.integratedapi.dtos.BoardCDTO;
-import sit.int221.integratedapi.dtos.BoardDTO;
-import sit.int221.integratedapi.dtos.OwnerDTO;
-import sit.int221.integratedapi.dtos.StatusCDTO;
+import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
+import sit.int221.integratedapi.entities.Collaborator;
 import sit.int221.integratedapi.entities.Status;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
+import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
 import sit.int221.integratedapi.repositories.primary.StatusRepository;
 import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
@@ -47,6 +46,9 @@ public class BoardService {
 
     @Autowired
     private TaskUserRepository taskUserRepository;
+
+    @Autowired
+    private CollaboratorRepository collaboratorRepository;
 
     @Autowired
     private StatusService statusService;
@@ -224,7 +226,7 @@ public class BoardService {
             board.setName(boardCDTO.getName());
         }
 
-        // Check if visibility is null in the request
+
         if (boardCDTO.getVisibility() == null) {
             throw new IllegalArgumentException("Request body must contain a valid 'visibility' value.");
         }
@@ -242,17 +244,17 @@ public class BoardService {
 
 
 
-        // Save the updated board entity
+
         board = boardRepository.save(board);
 
-        // Fetch owner details to include in the response
+
         String ownerId = board.getOwnerId();
         TaskUser taskUser = taskUserRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
-        // Return updated BoardCDTO with owner information and visibility status
+
         return new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
     }
 
@@ -285,4 +287,6 @@ public class BoardService {
 
         return boardDTO;
     }
+
+
 }
