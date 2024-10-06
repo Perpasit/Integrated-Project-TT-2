@@ -61,3 +61,14 @@ CREATE TABLE tasks (
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
     FOREIGN KEY (status_id) REFERENCES statuses(id) ON DELETE SET NULL
 );
+CREATE TABLE collaborators (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    board_id CHAR(10) NOT NULL,
+    access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
+    added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(oid) ON DELETE CASCADE,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_collaborator_per_board (user_id, board_id)
+);
