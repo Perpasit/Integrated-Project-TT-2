@@ -29,9 +29,11 @@ public class SecurityConfig {
     @Autowired
     private JwtUserDetailsService jwtUserDetailsService;
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(request -> {
+        http
+                .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(Collections.singletonList("*"));
                     config.setAllowedMethods(Collections.singletonList("*"));
@@ -39,18 +41,19 @@ public class SecurityConfig {
                     return config;
                 }))
                 .csrf(csrf -> csrf.disable())
-                .authorizeRequests(authorizeRequests -> authorizeRequests
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/v2/global-settings/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/token/**").permitAll()
                         .requestMatchers("/v3/boards/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception -> exception.authenticationEntryPoint((request, response, authException) -> response.setStatus(401)))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-                // .httpBasic(org.springframework.security.config.Customizer.withDefaults());
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

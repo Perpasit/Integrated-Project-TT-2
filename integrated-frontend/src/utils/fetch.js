@@ -28,8 +28,11 @@ export const fetch = async (url, options = {}) => {
 
   // Handle non-ok responses, especially 401 Unauthorized
   if (response.status === 401) {
-    // Clear token if needed and redirect to login page
-    userStore.logout() // Assuming you have a logout action in your store
+    if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
+      console.log("Access token expired or about to expire, attempting refresh...");
+      await userStore.refreshAccessToken(); 
+    }
+     // Assuming you have a logout action in your store
     throw new Error("Unauthorized. Redirecting to login.")
   }
 
@@ -48,12 +51,6 @@ export const fetch = async (url, options = {}) => {
 
 
 export const fetchWithAuthCheck = async (url, options = {}) => {
-  const userStore = useUserStore();
-  
-  if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
-    console.log("Access token expired or about to expire, attempting refresh...");
-    await userStore.refreshAccessToken(); 
-  }
   const token = getToken(); 
 
   try {

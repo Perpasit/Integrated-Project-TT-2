@@ -152,7 +152,7 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(CustomAuthenticationException .class)
+    @ExceptionHandler(CustomAuthenticationException.class)
     public ResponseEntity<CustomErrorResponse> handleAuthenticationException(CustomAuthenticationException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
