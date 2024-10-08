@@ -1,24 +1,24 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useCollabStore } from '../stores/collaboratorStore';
-import { useRoute,useRouter } from "vue-router"
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const collabStore = useCollabStore();
-const collaborators = ref([]); // Initialize as an empty array
+const collaborators = ref([]);
+const isDeleteModalVisible = ref(false);
+const showSuccessModal = ref(false); // Control visibility of success modal
+const collaboratorToDelete = ref(null);
 
-const boardId = route.params.boardId; // Get boardId from the route params
-
-console.log(boardId); // Debugging, make sure you see this in the console
+const boardId = route.params.boardId;
 
 const fetchCollaborator = async () => {
   try {
     const collabAll = await collabStore.fetchCollaborators(boardId);
     collaborators.value = collabAll.map(collab => ({
       ...collab,
-      // Use the backend format directly
-      accessRight: collab.accessRight // Access rights should be either "READ" or "WRITE"
+      accessRight: collab.accessRight
     })) || [];
   } catch (error) {
     console.error("Failed to fetch collaborators:", error);
@@ -26,7 +26,6 @@ const fetchCollaborator = async () => {
   }
 };
 
-// Function to handle changes in accessRight and update the collaborator
 const updateAccessRight = async (collaborator) => {
   const updatedAccessRight = collaborator.accessRight === "WRITE" ? "WRITE" : "READ"; 
   try {
@@ -36,9 +35,32 @@ const updateAccessRight = async (collaborator) => {
     console.error("Failed to update access right:", error);
   }
 };
+
 const openAddCollaboratorModal = () => {
-  console.log("open Modal")
   router.push({ name: "AddCollabManage", params: { boardId } }); 
+};
+
+const confirmDelete = (collaborator) => {
+  collaboratorToDelete.value = collaborator;
+  isDeleteModalVisible.value = true;
+};
+
+const deleteCollaborator = async () => {
+  if (collaboratorToDelete.value) {
+    try {
+      await collabStore.removeCollaborator(boardId, collaboratorToDelete.value.oid);
+      isDeleteModalVisible.value = false;
+      showSuccessModal.value = true; // Show success modal after deletion
+      collaboratorToDelete.value = null;
+      await fetchCollaborator();
+    } catch (error) {
+      console.error("Failed to delete collaborator:", error);
+    }
+  }
+};
+
+const closeDeleteModal = () => {
+  showSuccessModal.value = false; // Close success modal
 };
 
 onMounted(async () => {
@@ -84,13 +106,13 @@ onMounted(async () => {
           <td class="px-4 py-2">
             <select v-model="collaborator.accessRight" @change="updateAccessRight(collaborator)"
               class="itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out">
-              <option value="READ">Read</option> <!-- Match the backend value -->
-              <option value="WRITE">Write</option> <!-- Match the backend value -->
+              <option value="READ">Read</option>
+              <option value="WRITE">Write</option>
             </select>
           </td>
           <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
             <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-              @click.stop="confirmDelete(collaborator)">
+              @click="confirmDelete(collaborator)">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -102,10 +124,70 @@ onMounted(async () => {
     </table>
   </div>
 
-  
-
   <div v-if="collaborators.length <= 0" class="text-center mt-4 text-gray-500">
     No Collaborators
+  </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="isDeleteModalVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
+      <h3 class="text-2xl font-semibold mb-4">Confirm Deletion</h3>
+      <p>Are you sure you want to delete {{ collaboratorToDelete?.name }}?</p>
+      <div class="flex justify-end mt-6 space-x-3">
+        <button @click="isDeleteModalVisible = false" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Cancel</button>
+        <button @click="deleteCollaborator" class="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Success Modal -->
+  <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-start justify-center min-h-screen">
+      <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-gray-900">
+              Success
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeDeleteModal"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="itbkk-message text-sm leading-5 text-gray-500">
+              The Task is deleted successfully.
+            </p>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeDeleteModal"
+            >
+              OK
+            </button>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <router-view />
@@ -113,4 +195,5 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Custom styles for modal background and transition */
 </style>

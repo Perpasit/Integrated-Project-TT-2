@@ -78,6 +78,41 @@ const fetchCollabsBoards = async () => {
   }
 }
 
+
+// Function to leave a board
+const leaveBoard = async (board) => {
+  try {
+    await boardStore.leaveBoard(board.id, currentUser.id);
+    await fetchCollabsBoards();
+  } catch (error) {
+    console.error("Error leaving board:", error);
+  }
+};
+
+// Eye toggle functionality
+const openVisibilityModal = (board) => {
+  selectedBoard.value = board;
+  newVisibility.value = board.visibility === "PRIVATE" ? "PUBLIC" : "PRIVATE";
+  showVisibilityModal.value = true;
+};
+
+const closeVisibilityModal = () => {
+  showVisibilityModal.value = false;
+};
+
+const confirmVisibilityChange = async () => {
+  try {
+    await boardStore.updateBoard(selectedBoard.value.id, {
+      visibility: newVisibility.value,
+    });
+    selectedBoard.value.visibility = newVisibility.value;
+  } catch (error) {
+    console.error("Error updating board visibility:", error);
+  }
+  closeVisibilityModal();
+};
+
+
 onMounted(async () => {
   await fetchCollabsBoards()
   console.log(boards.value.length)
