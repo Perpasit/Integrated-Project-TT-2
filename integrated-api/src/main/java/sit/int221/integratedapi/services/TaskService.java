@@ -67,8 +67,16 @@ public class TaskService {
             return;
         }
 
-        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
-            throw new ForbiddenException("You do not have permission to access this private board.");
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            if (user == null) {
+                throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
+            }
+
+            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.READ) {
+                throw new ForbiddenException("You do not have permission to modify this board");
+            }
         }
     }
 
