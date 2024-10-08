@@ -28,7 +28,6 @@ export const useCollabStore = defineStore("collab", {
       return state.collabs.length
     }
   },
-
   actions: {
     async fetchCollaborators(boardId) {
       try {
@@ -105,6 +104,27 @@ export const useCollabStore = defineStore("collab", {
       } catch (error) {
         console.error("Error removing collaborator:", error)
       }
+    },
+
+    getCollaboratorByBoardAndUser(boardId, userOid) {
+      // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
+      if (!Array.isArray(this.collabs)) {
+        console.error("Collaborators data is not available or not an array.");
+        return null;
+      }
+    
+      // แสดงโครงสร้างของแต่ละ collaborator ใน collabs
+      this.collabs.forEach((collaborator, index) => {
+        console.log(`Collaborator ${index}:`, JSON.stringify(collaborator, null, 2));
+      });
+    
+      // ใช้ oid แทน userOid ในการค้นหา
+      return this.collabs.find(
+        (collaborator) => collaborator.oid === userOid // ใช้ฟิลด์ oid สำหรับการตรวจสอบ userOid
+      );
     }
+    
+    
+    
   }
 })
