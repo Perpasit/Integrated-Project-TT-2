@@ -66,8 +66,16 @@ public class BoardService {
             return;
         }
 
-        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
-            throw new ForbiddenException("You do not have permission to access this private board.");
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            if (user == null) {
+                throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
+            }
+
+            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.READ) {
+                throw new ForbiddenException("You do not have permission to modify this board");
+            }
         }
     }
 
@@ -218,22 +226,12 @@ public class BoardService {
 
 
     public BoardDTO getBoardById(String boardId, String oid) {
-        // Find the board by its ID
+        // Validate board access using the new method
+        validateBoardAccessForGet(boardId, oid);
+
+        // Find the board by its ID (access check passed)
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found with id: " + boardId));
-
-        // Check visibility and oid to control access
-        if (oid == null) {
-            // If user is not logged in, only allow access if the board is public
-            if (board.getVisibility() != Board.Visibility.PUBLIC) {
-                throw new ForbiddenException("Login is required to view this private board.");
-            }
-        } else {
-            // If user is logged in, check if the user is the owner or if the board is public
-            if (!board.getOwnerId().equals(oid) && board.getVisibility() != Board.Visibility.PUBLIC) {
-                throw new ForbiddenException("User does not own this board and it is not public.");
-            }
-        }
 
         // Map the board to BoardDTO
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
@@ -248,6 +246,7 @@ public class BoardService {
 
         return boardDTO;
     }
+
 
 
 
