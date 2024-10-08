@@ -146,6 +146,7 @@ public class CollaboratorService {
         return collaboratorDTO;
     }
 
+    @Transactional
     public CollaboratorDTO updateCollaboratorAccessRight(String boardId, String collabOid, String newAccessRight, String oidFromToken) {
         validateBoardOwnershipForModification(boardId, oidFromToken);
 
@@ -172,21 +173,28 @@ public class CollaboratorService {
         return collaboratorDTO;
     }
 
+    @Transactional
     public CollaboratorDTO removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
-        // ตรวจสอบสิทธิ์การเป็นเจ้าของบอร์ด
-        validateBoardOwnershipForModification(boardId, oidFromToken);
+        // ดึงบอร์ดและผู้ใช้งานจาก repository
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         TaskUser user = taskUserRepository.findById(collabOid)
                 .orElseThrow(() -> new ItemNotFoundException("User with id " + collabOid + " not found"));
 
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        // ตรวจสอบว่าผู้ใช้ปัจจุบันเป็นเจ้าของบอร์ดหรือไม่ หรือเป็นผู้ที่ต้องการลบตนเอง
+        if (!oidFromToken.equals(collabOid)) {
+            // ถ้าไม่ใช่เจ้าของบอร์ดและไม่ตรงกับ collabOid ให้ตรวจสอบสิทธิ์
+            validateBoardOwnershipForModification(boardId, oidFromToken);
+        }
 
+        // ดึง collaborator และตรวจสอบว่ามีอยู่จริง
         Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
         if (collaborator == null) {
             throw new ItemNotFoundException("Collaborator not found");
         }
 
+        // ลบ collaborator และสร้าง DTO เพื่อนำกลับไปใช้
         CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaborator, CollaboratorDTO.class);
         collaboratorDTO.setOid(user.getOid());
         collaboratorDTO.setName(user.getName());
@@ -196,5 +204,6 @@ public class CollaboratorService {
 
         return collaboratorDTO;
     }
+
 
 }

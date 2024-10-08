@@ -51,14 +51,14 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
 
-    console.log("Board ID:", boardId, "User OID:", userOid.value);
+    // console.log("Board ID:", boardId, "User OID:", userOid.value);
     
     const visibility = boardData.visibility;
 
     await collabStore.fetchCollaborators(boardId);
 
     // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
-    console.log("Collaborators:", collabStore.collabs);
+    // console.log("Collaborators:", collabStore.collabs);
 
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOid.value && visibility === "PRIVATE") {
