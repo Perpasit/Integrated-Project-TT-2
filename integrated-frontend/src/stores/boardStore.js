@@ -5,19 +5,28 @@ import { getItems, postItem, putItem, patchItem,deleteItem ,getItemsNoUser } fro
 
 export const useBoardStore = defineStore("board", {
   state: () => ({
-    boards: [],
+    boards: {
+      personalBoards: [],
+      collabBoards: [],
+    },
   }),
 
   getters: {
-    getBoards: (state) => state.boards,
-    getBoardByBoardId: (state) => (boardId) => state.boards.find((board) => board.id === boardId),
+    getBoardsPersonal: (state) => state.boards.personalBoards,
+    getBoardsCollab: (state) => state.boards.collabBoards,
+    getBoardByBoardId: (state) => (boardId) => {
+      const allBoards = [...state.boards.personalBoards, ...state.boards.collabBoards];
+      return allBoards.find((board) => board.id === boardId);
+    },
     getBoardName: (state) => (boardId) => {
-      const board = state.boards.find((board) => board.id === boardId);
+      const allBoards = [...state.boards.personalBoards, ...state.boards.collabBoards];
+      const board = allBoards.find((board) => board.id === boardId);
       return board ? board.name : null;
     },
     getBoardOid: (state) => (boardId) => {
-      const board = state.boards.find((board) => board.id === boardId);
-      return board ? board.owner.oid : "boom"; // Get owner ID
+      const allBoards = [...state.boards.personalBoards, ...state.boards.collabBoards];
+      const board = allBoards.find((board) => board.id === boardId);
+      return board ? board.owner.oid : null; // Return owner ID
     },
   },
 
@@ -56,37 +65,33 @@ export const useBoardStore = defineStore("board", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards`,
           formattedBoard
         );
-        this.boards.push(createdBoard);
+        this.boards.personalBoards.push(createdBoard);
       } catch (error) {
         throw error;
       }
     },
 
-    async updateBoard(id, updatedData) {
+    async updateBoard(boardId, updatedData) {
       try {
-        const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
-        // Optionally, update the board in local state
-        const index = this.boards.findIndex(board => board.id === id);
-        if (index !== -1) {
-          this.boards[index] = { ...this.boards[index], ...updatedData };
-        }
+        const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}`, updatedData);
+        
+        const updateBoardList = (boardList) => {
+          const index = boardList.findIndex((board) => board.id === boardId);
+          if (index !== -1) {
+            boardList[index] = { ...boardList[index], ...updatedData };
+          }
+        };
+
+        // Update both personal and collaborative boards
+        updateBoardList(this.boards.personalBoards);
+        updateBoardList(this.boards.collabBoards);
+
         return response.data;
       } catch (error) {
         console.error("Error updating board:", error);
         throw error;
       }
     },
-    // async updateBoard(id, updatedData) {
-    //   try {
-    //     const response = await patchItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`, updatedData);
-    //     const index = this.boards.findIndex((board) => board.id === id);
-    //     if (index !== -1) {
-    //       this.boards[index] = response;
-    //     }
-    //   } catch (error) {
-    //     throw error;
-    //   }
-    // },
 
     async deleteBoard(id) {
       try {

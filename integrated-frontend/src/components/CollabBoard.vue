@@ -37,7 +37,7 @@ const deleteBoard = async () => {
     await boardStore.deleteBoard(selectedBoardToDelete.id);
     showSuccessModal.value = true;
     selectedBoardToDelete = null;
-    await fetchBoards();
+    await fetchCollabsBoards();
 
     setTimeout(() => {
       closeDeleteModal();
@@ -45,7 +45,7 @@ const deleteBoard = async () => {
   } catch (error) {
     if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true;
-      await fetchBoards();
+      await fetchCollabsBoards();
       setTimeout(() => {
         closeDeleteModal();
       }, 3000);
@@ -74,10 +74,10 @@ const navigateToTasks = (board) => {
   }
 };
 
-const fetchBoards = async () => {
+const fetchCollabsBoards = async () => {
   try {
     await boardStore.fetchAllBoards();
-    boards.value = boardStore.getBoards;
+    boards.value = boardStore.getBoardsCollab;
   } catch (error) {
     console.error("Error fetching boards:", error);
   }
@@ -87,7 +87,7 @@ const fetchBoards = async () => {
 const leaveBoard = async (board) => {
   try {
     await boardStore.leaveBoard(board.id, currentUser.id);
-    await fetchBoards();
+    await fetchCollabsBoards();
   } catch (error) {
     console.error("Error leaving board:", error);
   }
@@ -115,9 +115,9 @@ const confirmVisibilityChange = async () => {
   }
   closeVisibilityModal();
 };
-
+console.log(boards.length)
 onMounted(async () => {
-  await fetchBoards();
+  await fetchCollabsBoards();
 });
 </script>
 
@@ -159,9 +159,9 @@ onMounted(async () => {
                 </tbody>
             </table>
         </div>
-        <div v-if="boards.length <= 0" class="text-center mt-4 text-gray-500">
-            No Personal Board
-        </div>
+        <div v-if="!boards || boards.length <= 0" class="text-center mt-4 text-gray-500">
+    No Collaborative Board
+</div>
     </div>
 
     <!-- Modals and other components remain unchanged -->
@@ -169,7 +169,7 @@ onMounted(async () => {
     <VisibilityModal v-if="showVisibilityModal" :board="selectedBoard" :new-visibility="newVisibility"
         @close="closeVisibilityModal" @confirm="confirmVisibilityChange" />
     <!-- AddEditBoard component -->
-    <AddEditBoard v-model:showModal="showAddEditBoardModal" :editingBoard="selectedBoard" @boardSaved="fetchBoards" />
+    <AddEditBoard v-model:showModal="showAddEditBoardModal" :editingBoard="selectedBoard" @boardSaved="fetchCollabsBoards" />
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">

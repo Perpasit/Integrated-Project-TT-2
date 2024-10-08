@@ -37,7 +37,7 @@ const deleteBoard = async () => {
       await boardStore.deleteBoard(selectedBoardToDelete.id)
       showSuccessModal.value = true
       selectedBoardToDelete = null
-      await fetchBoards()
+      await fetchPersonalBoards()
 
       setTimeout(() => {
         closeDeleteModal()
@@ -45,7 +45,7 @@ const deleteBoard = async () => {
     } catch (error) {
       if (error.message.includes("does not exist")) {
         showNotFoundModal.value = true
-        await fetchBoards()
+        await fetchPersonalBoards()
         setTimeout(() => {
           closeDeleteModal()
         }, 3000)
@@ -78,10 +78,10 @@ const navigateToTasks = (board) => {
     }
 }
 
-const fetchBoards = async () => {
+const fetchPersonalBoards = async () => {
     try {
       await boardStore.fetchAllBoards()
-      boards.value = boardStore.getBoards
+      boards.value = boardStore.getBoardsPersonal
     } catch (error) {
       console.error("Error fetching boards:", error)
     }
@@ -113,7 +113,7 @@ const confirmVisibilityChange = async () => {
 }
 
 onMounted(async () => {
-  await fetchBoards()
+  await fetchPersonalBoards()
 })
 </script>
 
@@ -198,7 +198,7 @@ onMounted(async () => {
   <AddEditBoard
     v-model:showModal="showAddEditBoardModal"
     :editingBoard="selectedBoard"
-    @boardSaved="fetchBoards"
+    @boardSaved="fetchPersonalBoards"
   />
 
   <!-- Delete Confirmation Modal -->
