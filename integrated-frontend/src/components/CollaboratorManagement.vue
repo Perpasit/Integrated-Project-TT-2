@@ -1,13 +1,14 @@
 <script setup>
-
+import Header from './Header.vue';
+import ColllabTablle from './ColllabTablle.vue';
 </script>
- 
-<template>
-<div>
-    test
-</div>
-</template>
- 
-<style scoped>
 
-</style>
+<template>
+  <div class="flex flex-col bg-gradient-to-br from-[#c4e4e0] to-[#9ad4d3] min-h-screen">
+    <Header />
+    <ColllabTablle />
+
+  </div>
+</template>
+
+<style scoped></style>

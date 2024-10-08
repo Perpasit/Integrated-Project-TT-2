@@ -84,11 +84,11 @@ const toggleDropdown = () => {
 }
 
 const goToBoard = () => {
-  router.push("/board")
+  router.push({name:"board"})
 }
 
 const goToCollaborator = () => {
-  router.push("/collab")
+  router.push({name:"CollabManage", params: { boardId }})
 }
 onMounted(async () => {
     const boardId = route.params.boardId;

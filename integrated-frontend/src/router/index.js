@@ -26,11 +26,7 @@ const router = createRouter({
       name: "Login",
       component: Login
     },
-    {
-      path: "/collab",
-      name: "CollabManage",
-      component: CollaboratorManagement
-    },
+
     {
       path: "/board",
       name: "Board",
@@ -54,6 +50,11 @@ const router = createRouter({
           })
         }
       ]
+    },
+    {
+      path: "/board/:boardId/collab",
+      name: "CollabManage",
+      component: CollaboratorManagement
     },
 
     {
