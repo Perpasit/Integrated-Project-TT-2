@@ -6,6 +6,7 @@ import { useRouter, useRoute } from "vue-router";
 import LimitTaskModal from "./LimitTaskModal.vue";
 import { useBoardStore } from "../stores/boardStore";
 import { useUserStore } from "../stores/userStore";
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const router = useRouter();
 const route = useRoute();
@@ -13,6 +14,7 @@ const taskStore = useTaskStore();
 const statusStore = useStatusStore();
 const boardStore = useBoardStore();
 const userStore = useUserStore();
+const collabStore = useCollabStore();
 const tasks = computed(() => taskStore.getTasks);
 const selectedTask = ref(null);
 
@@ -52,12 +54,26 @@ const fetchBoardAndUserOids = async (boardId) => {
 
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
-    const visibility = boardData.visibility;
-    // console.log("Board Visibility:", visibility);
-    // console.log(isSameOid.value)
 
+    console.log("Board ID:", boardId, "User OID:", userOid.value);
+    
+    const visibility = boardData.visibility;
+
+    await collabStore.fetchCollaborators(boardId);
+
+    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
+    console.log("Collaborators:", collabStore.collabs);
+
+    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOid.value && visibility === "PRIVATE") {
-      router.push({ name: "AccessDenied" });
+      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(boardId, userOid.value);
+
+      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
+        console.log(collaboratorData)
+        router.push({ name: "AccessDenied" });
+      }
     }
 
   } catch (error) {
@@ -65,6 +81,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     router.push({ name: "AccessDenied" }); 
   }
 };
+
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
