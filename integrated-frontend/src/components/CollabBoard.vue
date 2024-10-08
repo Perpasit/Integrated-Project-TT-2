@@ -78,6 +78,7 @@ const fetchCollabsBoards = async () => {
     console.error("Error fetching boards:", error)
   }
 }
+
 onMounted(async () => {
   await fetchCollabsBoards()
 })

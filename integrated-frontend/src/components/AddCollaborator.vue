@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue"
+import { ref, onMounted } from 'vue';
 import { useCollabStore } from "../stores/collaboratorStore"
 import { useRoute,useRouter } from "vue-router"
 
@@ -10,6 +10,14 @@ const accessRight = ref("READ")
 const boardId = route.params.boardId;
 const collabStore = useCollabStore()
 
+const fetchCollaborator = async () => {
+  try {
+    await collabStore.fetchCollaborators(boardId);
+  } catch (error) {
+    console.error("Failed to fetch collaborators:", error);
+    collaborators.value = [];
+  }
+};
 // Handle form submission
 const handleSubmit = async () => {
   try {
@@ -19,6 +27,8 @@ const handleSubmit = async () => {
       accessRight.value
     )
     collabStore.fetchCollaborators(boardId)
+    fetchCollaborator();
+    console.log(collabStore.getCollaborators)
     router.push({ name: "CollabManage", params: { boardId: boardId } })
   } catch (error) {
     console.error("Error adding collaborator:", error)
@@ -28,6 +38,9 @@ const handleSubmit = async () => {
 const navigateBack = () => {
   router.push({ name: "CollabManage", params: { boardId: boardId } })
 }
+onMounted(async () => {
+  await fetchCollaborator(); 
+});
 </script>
 
 <template>

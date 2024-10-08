@@ -34,8 +34,7 @@ export const useCollabStore = defineStore("collab", {
         const response = await getItems(
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
         )
-        
-        this.collabs = response || [] 
+        this.collabs = response || [];
         return response
       } catch (error) {
         console.error("Error fetching collaborators:", error)
@@ -68,7 +67,10 @@ export const useCollabStore = defineStore("collab", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`,
           collaboratorData
         )
-        this.collabs.push(response.data) // Update state with the new collaborator
+        console.log(response)
+        console.log(this.collabs)
+        this.collabs.push(response.data)
+        return response // Update state with the new collaborator
       } catch (error) {
         console.error("Error adding collaborator:", error)
       }
@@ -91,8 +93,6 @@ export const useCollabStore = defineStore("collab", {
         }
       },
       
-      
-
       async removeCollaborator(boardId, collabOid) {
         try {
           // console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
@@ -103,8 +103,8 @@ export const useCollabStore = defineStore("collab", {
         } catch (error) {
           console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
         }
-      }
-      ,
+      },
+
 
     getCollaboratorByBoardAndUser(boardId, userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
