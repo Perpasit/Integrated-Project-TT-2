@@ -115,7 +115,7 @@ const confirmVisibilityChange = async () => {
   }
   closeVisibilityModal();
 };
-console.log(boards.length)
+
 onMounted(async () => {
   await fetchCollabsBoards();
 });
