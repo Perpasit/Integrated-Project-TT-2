@@ -12,6 +12,7 @@ import TaskTable from "../components/TaskTable.vue"
 import Board from "../components/Board.vue"
 import AddEditBoard from "../components/AddEditBoard.vue"
 import AccessDenied from "../components/AccessDenied.vue"
+import CollaboratorManagement from "../components/CollaboratorManagement.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,11 @@ const router = createRouter({
       path: "/login",
       name: "Login",
       component: Login
+    },
+    {
+      path: "/collab",
+      name: "CollabManage",
+      component: CollaboratorManagement
     },
     {
       path: "/board",

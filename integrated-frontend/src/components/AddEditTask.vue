@@ -290,7 +290,9 @@ onMounted(async () => {
     const boardData = await boardStore.getBoardById(boardId);
     boardOid.value = boardData.owner.oid;
     userOid.value = userStore.getUserOid;
-    editedTask.value.status = statusStore.statuses[0].id;
+    if (props.mode === "add" || !editedTask.value.status) {
+      editedTask.value.status = statusStore.statuses[0]?.id || null; 
+    }
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
   }

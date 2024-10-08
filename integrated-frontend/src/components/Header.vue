@@ -87,6 +87,9 @@ const goToBoard = () => {
   router.push("/board")
 }
 
+const goToCollaborator = () => {
+  router.push("/collab")
+}
 onMounted(async () => {
     const boardId = route.params.boardId;
     
@@ -107,7 +110,7 @@ onMounted(async () => {
     <div class="flex">
       <h1
         class="cursor-default text-6xl font-bold font-italiana pt-2 text-lime-100 hover:scale-110 transition-all duration-200 ease-in-out mr-4"
-        @click="goHome"
+        @click="goToBoard"
       >
         Kanban
       </h1>
@@ -165,25 +168,19 @@ onMounted(async () => {
           >
             <button
               @click="goToBoard"
-              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
               Board List
             </button>
             <button
-              @click="goToProfile"
-              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+              @click="goToCollaborator"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
-              Profile
-            </button>
-            <button
-              @click="goToSettings"
-              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
-            >
-              Settings
+              Collaborator
             </button>
             <button
               @click="logout"
-              class="text-gray-700 hover:text-white hover:bg-gray-700 px-4 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
               Logout
             </button>
