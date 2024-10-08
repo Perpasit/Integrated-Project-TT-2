@@ -1,6 +1,6 @@
 <script setup>
 import Header from './Header.vue';
-import ColllabTablle from './ColllabTablle.vue';
+import ColllabTablle from './ColllabTable.vue';
 </script>
 
 <template>
