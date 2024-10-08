@@ -3,14 +3,14 @@ import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 import { useBoardStore } from "../stores/boardStore"
-import AddEditBoard from "./AddEditBoard.vue"
-import VisibilityModal from "./VisibilityModal.vue"
+import { useCollabStore } from "../stores/collaboratorStore"
 
 const router = useRouter()
 const boardStore = useBoardStore()
-const userStore = useUserStore() // Assume this store contains current user info
+const userStore = useUserStore()
+const collabStore = useCollabStore()
 const boards = ref([])
-const currentUser = userStore.user // Assuming this gets the logged-in user
+const currentUser = userStore.user
 
 const showDeleteConfirmation = ref(false)
 let selectedBoardToDelete = null
@@ -18,31 +18,31 @@ const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 const showAddEditBoardModal = ref(false)
 const selectedBoard = ref(null)
-const showVisibilityModal = ref(false)
-const newVisibility = ref("")
-
-const editBoard = (board) => {
-  selectedBoard.value = board
-  showAddEditBoardModal.value = true
-}
 
 const confirmDelete = (board) => {
+  console.log("Selected board to delete:", board) // Log เพื่อดูว่า board ที่ส่งมามีค่าหรือไม่
   selectedBoardToDelete = board
   showDeleteConfirmation.value = true
 }
 
-const deleteBoard = async () => {
+const leaveBoard = async (board) => {
   showDeleteConfirmation.value = false
+  if (!board || !board.id) {
+    console.error("Board is undefined or has no id:", board) // เพิ่ม log ตรวจสอบปัญหา
+    return
+  }
   try {
-    await boardStore.deleteBoard(selectedBoardToDelete.id)
+    await collabStore.removeCollaborator(board.id, currentUser.id)
+    console.log(board.id)
+    console.log(currentUser.id)
     showSuccessModal.value = true
-    selectedBoardToDelete = null
     await fetchCollabsBoards()
 
     setTimeout(() => {
       closeDeleteModal()
     }, 3000)
   } catch (error) {
+    console.error("Error leaving board:", error)
     if (error.message.includes("does not exist")) {
       showNotFoundModal.value = true
       await fetchCollabsBoards()
@@ -63,11 +63,6 @@ const cancelDelete = () => {
   showDeleteConfirmation.value = false
 }
 
-const openAddEditBoardModal = (board = null) => {
-  selectedBoard.value = board
-  showAddEditBoardModal.value = true
-}
-
 const navigateToTasks = (board) => {
   if (board && board.id) {
     router.push({ name: "home", params: { boardId: board.id } })
@@ -81,39 +76,6 @@ const fetchCollabsBoards = async () => {
   } catch (error) {
     console.error("Error fetching boards:", error)
   }
-}
-
-// Function to leave a board
-const leaveBoard = async (board) => {
-  try {
-    await boardStore.leaveBoard(board.id, currentUser.id)
-    await fetchCollabsBoards()
-  } catch (error) {
-    console.error("Error leaving board:", error)
-  }
-}
-
-// Eye toggle functionality
-const openVisibilityModal = (board) => {
-  selectedBoard.value = board
-  newVisibility.value = board.visibility === "PRIVATE" ? "PUBLIC" : "PRIVATE"
-  showVisibilityModal.value = true
-}
-
-const closeVisibilityModal = () => {
-  showVisibilityModal.value = false
-}
-
-const confirmVisibilityChange = async () => {
-  try {
-    await boardStore.updateBoard(selectedBoard.value.id, {
-      visibility: newVisibility.value
-    })
-    selectedBoard.value.visibility = newVisibility.value
-  } catch (error) {
-    console.error("Error updating board visibility:", error)
-  }
-  closeVisibilityModal()
 }
 
 onMounted(async () => {
@@ -170,7 +132,7 @@ onMounted(async () => {
             >
               <button
                 class="itbkk-leave-board bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-all duration-200 ease-in-out"
-                @click.stop="leaveBoard(board)"
+                @click.stop="confirmDelete(board)"
               >
                 Leave
               </button>
@@ -188,45 +150,28 @@ onMounted(async () => {
     </div>
   </div>
 
-  <!-- Modals and other components remain unchanged -->
-
-  <VisibilityModal
-    v-if="showVisibilityModal"
-    :board="selectedBoard"
-    :new-visibility="newVisibility"
-    @close="closeVisibilityModal"
-    @confirm="confirmVisibilityChange"
-  />
-  <!-- AddEditBoard component -->
-  <AddEditBoard
-    v-model:showModal="showAddEditBoardModal"
-    :editingBoard="selectedBoard"
-    @boardSaved="fetchCollabsBoards"
-  />
-
-  <!-- Delete Confirmation Modal -->
+  <!-- Leave Confirmation Modal -->
   <div
     v-if="showDeleteConfirmation"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div class="bg-white p-8 rounded-lg">
-      <p class="itbkk-message text-lg mb-4">
-        Are you sure you want to delete
+      <p class="text-lg mb-4">
+        Are you sure you want to leave the
         <span class="text-red-500">{{ selectedBoardToDelete.name }}</span>
         board?
       </p>
       <div class="flex justify-end">
         <button
-          class="itbkk-button-cancel bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
+          class="bg-gray-200 text-gray-800 px-4 py-2 rounded mr-2"
           @click="cancelDelete"
         >
           Cancel
         </button>
         <button
-          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          @click="deleteBoard"
-        >
-          Delete
+          class="itbkk-leave-board bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-all duration-200 ease-in-out"
+          @click.stop="leaveBoard(selectedBoardToDelete)"
+          > Leave
         </button>
       </div>
     </div>
@@ -264,8 +209,8 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="itbkk-message text-sm leading-5 text-gray-500">
-              The Board is deleted successfully.
+            <p class="text-sm leading-5 text-gray-500">
+              You have successfully left the board.
             </p>
           </div>
         </div>
@@ -316,7 +261,7 @@ onMounted(async () => {
             </button>
           </div>
           <div>
-            <p class="itbkk-message text-sm leading-5 text-red-600">
+            <p class="text-sm leading-5 text-red-600">
               The Board is not found.
             </p>
           </div>

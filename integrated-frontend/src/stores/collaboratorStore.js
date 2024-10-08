@@ -93,18 +93,18 @@ export const useCollabStore = defineStore("collab", {
       
       
 
-    async removeCollaborator(boardId, collabOid) {
-      try {
-        const response = await deleteItem(
-          `${
-            import.meta.env.VITE_API_ENDPOINTV3
-          }/boards/${boardId}/collabs/${collabOid}`
-        )
-        this.collabs = this.collabs.filter((c) => c.oid !== collabOid)
-      } catch (error) {
-        console.error("Error removing collaborator:", error)
+      async removeCollaborator(boardId, collabOid) {
+        try {
+          console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
+          const response = await deleteItem(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/${collabOid}`
+          );
+          console.log("Collaborator removed successfully");
+        } catch (error) {
+          console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
+        }
       }
-    },
+      ,
 
     getCollaboratorByBoardAndUser(boardId, userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
@@ -114,9 +114,9 @@ export const useCollabStore = defineStore("collab", {
       }
     
       // แสดงโครงสร้างของแต่ละ collaborator ใน collabs
-      this.collabs.forEach((collaborator, index) => {
-        console.log(`Collaborator ${index}:`, JSON.stringify(collaborator, null, 2));
-      });
+      // this.collabs.forEach((collaborator, index) => {
+      //   console.log(`Collaborator ${index}:`, JSON.stringify(collaborator, null, 2));
+      // });
     
       // ใช้ oid แทน userOid ในการค้นหา
       return this.collabs.find(
