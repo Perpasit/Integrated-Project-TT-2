@@ -84,7 +84,7 @@ const toggleDropdown = () => {
 }
 
 const goToBoard = () => {
-  router.push({name:"board"})
+  router.push({name:"Board"})
 }
 
 const goToCollaborator = () => {
