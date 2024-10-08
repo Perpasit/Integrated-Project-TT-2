@@ -29,6 +29,7 @@ import sit.int221.integratedapi.utils.NanoIdGenerator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Qualifier("primaryDataSource")
@@ -79,33 +80,78 @@ public class BoardService {
         }
     }
 
-    public List<BoardDTO> getAllBoards(String oid) {
-        // Retrieve all boards where the task user's oid matches the given oid
-        List<Board> boards = boardRepository.findByOwnerId(oid);
-        List<BoardDTO> boardDTOs = new ArrayList<>();
+//    public List<BoardDTO> getAllBoards(String oid) {
+//        // Retrieve all boards where the task user's oid matches the given oid
+//        List<Board> boards = boardRepository.findByOwnerId(oid);
+//        List<BoardDTO> boardDTOs = new ArrayList<>();
+//
+//        for (Board board : boards) {
+//            // Fetch TaskUser by oid directly (null check will be used instead of Optional)
+//            TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
+//
+//            if (taskUser != null) {
+//                OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+//
+//                // Create and populate BoardDTO
+//                BoardDTO boardDTO = new BoardDTO();
+//                boardDTO.setId(board.getId());
+//                boardDTO.setName(board.getName());
+//                boardDTO.setOwner(ownerDTO);
+//
+//                // Map the visibility field
+//                boardDTO.setVisibility(board.getVisibility());
+//
+//                boardDTOs.add(boardDTO);
+//            }
+//        }
+//
+//        return boardDTOs;
+//    }
 
-        for (Board board : boards) {
-            // Fetch TaskUser by oid directly (null check will be used instead of Optional)
-            TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
+    public BoardListDTO getAllPersonalAndCollaboratingBoards(String userOid) {
+        // ดึงบอร์ดส่วนตัว (บอร์ดที่ผู้ใช้เป็นเจ้าของ)
+        List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
 
-            if (taskUser != null) {
-                OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+        // ดึง Collaborator records ที่เกี่ยวข้องกับ userOid
+        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
 
-                // Create and populate BoardDTO
-                BoardDTO boardDTO = new BoardDTO();
-                boardDTO.setId(board.getId());
-                boardDTO.setName(board.getName());
-                boardDTO.setOwner(ownerDTO);
+        // สร้าง List ของ Board สำหรับบอร์ดที่ผู้ใช้เป็น Collaborator
+        List<Board> collaboratingBoards = new ArrayList<>();
 
-                // Map the visibility field
-                boardDTO.setVisibility(board.getVisibility());
-
-                boardDTOs.add(boardDTO);
-            }
+        for (Collaborator collaborator : collaborators) {
+            // ดึงข้อมูลบอร์ดโดยใช้ boardId จาก Collaborator
+            Board board = boardRepository.findById(collaborator.getBoard().getId())
+                    .orElseThrow(() -> new ItemNotFoundException("Board with id " + collaborator.getBoard().getId() + " not found"));
+            collaboratingBoards.add(board);
         }
 
-        return boardDTOs;
+        // แปลงบอร์ดส่วนตัวเป็น BoardDTO
+        List<BoardDTO> personalBoardDTOs = personalBoards.stream()
+                .map(this::mapBoardToDTO)
+                .collect(Collectors.toList());
+
+        // แปลงบอร์ด Collaborator เป็น BoardDTO
+        List<BoardDTO> collabBoardDTOs = collaboratingBoards.stream()
+                .map(this::mapBoardToDTO)
+                .collect(Collectors.toList());
+
+        // คืนค่าในรูปแบบของ BoardListDTO
+        return new BoardListDTO(personalBoardDTOs, collabBoardDTOs);
     }
+
+    // ฟังก์ชันสำหรับแปลง Board เป็น BoardDTO
+    private BoardDTO mapBoardToDTO(Board board) {
+        TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
+        if (taskUser != null) {
+            OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+            return new BoardDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
+        } else {
+            throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
+        }
+    }
+
+
+
 
     @Transactional
     public BoardCDTO createBoard(BoardCDTO boardCDTO, String oid) {

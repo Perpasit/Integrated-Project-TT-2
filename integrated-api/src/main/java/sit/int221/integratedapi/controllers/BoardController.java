@@ -48,16 +48,25 @@ public class BoardController {
     @Autowired
     private ListMapper listMapper;
 
+//    @GetMapping("")
+//    public ResponseEntity<List<BoardDTO>> getAllBoards(@RequestHeader("Authorization") String token) {
+//        String oidFromToken = null;
+//        if (token != null && !token.isEmpty()) {
+//            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+//                    claims -> claims.get("oid", String.class));
+//        }
+//        List<BoardDTO> boardDTOs = boardService.getAllBoards(oidFromToken);
+//        return ResponseEntity.ok(boardDTOs);
+//    }
+
     @GetMapping("")
-    public ResponseEntity<List<BoardDTO>> getAllBoards(@RequestHeader("Authorization") String token) {
-        String oidFromToken = null;
-        if (token != null && !token.isEmpty()) {
-            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
-                    claims -> claims.get("oid", String.class));
-        }
-        List<BoardDTO> boardDTOs = boardService.getAllBoards(oidFromToken);
-        return ResponseEntity.ok(boardDTOs);
+    public ResponseEntity<BoardListDTO> getAllBoards(@RequestHeader("Authorization") String token) {
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+        BoardListDTO boardListDTO = boardService.getAllPersonalAndCollaboratingBoards(oidFromToken);
+        return ResponseEntity.ok(boardListDTO);
     }
+
 
     @GetMapping("/{boardId}")
     public ResponseEntity<BoardDTO> getBoardById(
