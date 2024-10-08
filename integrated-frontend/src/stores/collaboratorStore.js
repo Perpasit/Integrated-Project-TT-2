@@ -95,11 +95,11 @@ export const useCollabStore = defineStore("collab", {
 
       async removeCollaborator(boardId, collabOid) {
         try {
-          console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
-          const response = await deleteItem(
+          // console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
+          await deleteItem(
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/${collabOid}`
           );
-          console.log("Collaborator removed successfully");
+          // console.log("Collaborator removed successfully");
         } catch (error) {
           console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
         }

@@ -10,31 +10,32 @@ const boardStore = useBoardStore()
 const userStore = useUserStore()
 const collabStore = useCollabStore()
 const boards = ref([])
-const currentUser = userStore.user
+
 
 const showDeleteConfirmation = ref(false)
 let selectedBoardToDelete = null
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
-const showAddEditBoardModal = ref(false)
-const selectedBoard = ref(null)
+
 
 const confirmDelete = (board) => {
-  console.log("Selected board to delete:", board) // Log เพื่อดูว่า board ที่ส่งมามีค่าหรือไม่
+  // console.log("Selected board to delete:", board) 
   selectedBoardToDelete = board
   showDeleteConfirmation.value = true
 }
 
 const leaveBoard = async (board) => {
+  const currentUser = userStore.getUserInfo
+  // console.log(currentUser)
   showDeleteConfirmation.value = false
   if (!board || !board.id) {
-    console.error("Board is undefined or has no id:", board) // เพิ่ม log ตรวจสอบปัญหา
+    console.error("Board is undefined or has no id:", board) 
     return
   }
   try {
-    await collabStore.removeCollaborator(board.id, currentUser.id)
-    console.log(board.id)
-    console.log(currentUser.id)
+    await collabStore.removeCollaborator(board.id, currentUser.oid)
+    // console.log(board.id)
+    // console.log(currentUser.oid)
     showSuccessModal.value = true
     await fetchCollabsBoards()
 
@@ -77,10 +78,8 @@ const fetchCollabsBoards = async () => {
     console.error("Error fetching boards:", error)
   }
 }
-
 onMounted(async () => {
   await fetchCollabsBoards()
-  console.log(boards.value.length)
 })
 </script>
 
