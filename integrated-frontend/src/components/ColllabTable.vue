@@ -37,12 +37,19 @@ const fetchCollaborator = async () => {
 
 const userOid = ref("");
 const boardOid = ref(null);
-const isSameOid = computed(() => {
-  if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
-  }
-  return boardOid.value === userOid.value;
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
 });
+
+const isSameOidOrHasWriteAccess = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false;
+  }
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
+
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     const boardData = await boardStore.getBoardById(boardId);
@@ -64,13 +71,13 @@ const fetchBoardAndUserOids = async (boardId) => {
     // console.log("Collaborators:", collabStore.collabs);
 
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
-    if (!isSameOid.value && visibility === "PRIVATE") {
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
-      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(boardId, userOid.value);
-
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser( userOid.value);
+      console.log(collaboratorData)
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
-        // console.log(collaboratorData)
+        console.log(collaboratorData)
         router.push({ name: "AccessDenied" });
       }
     }
@@ -185,12 +192,12 @@ onMounted(async () => {
             <p class="itbkk-email truncate">{{ collaborator.email }}</p>
           </td>
           <td class="px-4 py-2"> 
-            <div :class="{'cursor-not-allowed tooltip tooltip-secondary w-full':!isSameOid}" 
-            :disabled="!isSameOid" 
+            <div :class="{'cursor-not-allowed tooltip tooltip-secondary w-full':!isSameOidOrHasWriteAccess}" 
+            :disabled="!isSameOidOrHasWriteAccess" 
             data-tip="You need to be board owner to perform this action.">
             <select v-model="collaborator.accessRight" @change="confirmAccessRightChange(collaborator)"
               class="itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900 items-start focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-              :disabled="!isSameOid"
+              :disabled="!isSameOidOrHasWriteAccess"
               >
                 <option value="READ">Read</option>
                 <option value="WRITE">Write</option>
@@ -201,9 +208,9 @@ onMounted(async () => {
             <button 
               :class="{
                 'itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2': true,
-                'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':!isSameOid,
+                'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':!isSameOidOrHasWriteAccess,
               }"
-              @click="isSameOid ? confirmDelete(collaborator) : null" :disabled="!isSameOid" data-tip="You need to be board owner to perform this action.">
+              @click="isSameOidOrHasWriteAccess ? confirmDelete(collaborator) : null" :disabled="!isSameOidOrHasWriteAccess" data-tip="You need to be board owner to perform this action.">
               
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

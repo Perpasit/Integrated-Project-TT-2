@@ -259,13 +259,13 @@ onMounted(async () => {
       </button>
       <button
         v-show="isCollaboratorPage"
-        @click="isSameOid ? addCollab() : null"
+        @click="isSameOidOrHasWriteAccess ? addCollab() : null"
         :class="{
           'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
           'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
-            !isSameOid
+            !isSameOidOrHasWriteAccess
         }"
-        :disabled="!isSameOid"
+        :disabled="!isSameOidOrHasWriteAccess"
         data-tip="You need to be board owner to perform this action."
       >
       ADD COLLAB
