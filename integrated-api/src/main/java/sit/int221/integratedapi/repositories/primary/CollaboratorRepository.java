@@ -1,6 +1,8 @@
 package sit.int221.integratedapi.repositories.primary;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import sit.int221.integratedapi.entities.Collaborator;
 import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.Board;
@@ -17,4 +19,5 @@ public interface CollaboratorRepository extends JpaRepository<Collaborator, Inte
     List<Collaborator> findByUserOid(String userOid);
 
     boolean existsByBoardIdAndUserEmail(String boardId, String userEmail);
+
 }

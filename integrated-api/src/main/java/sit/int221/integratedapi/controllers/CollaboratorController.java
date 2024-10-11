@@ -82,7 +82,9 @@ public class CollaboratorController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
-        if (collaboratorService.isBoardOwner(boardId, oidFromToken)) {
+        // Check if the user is the owner and is trying to add themselves
+        if (collaboratorService.isBoardOwner(boardId, oidFromToken) &&
+                collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getUserEmail())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Board owner cannot be collaborator of his/her own board.");
         }
@@ -97,6 +99,7 @@ public class CollaboratorController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
+
 
 
     @PatchMapping("/{boardId}/collabs/{collabOid}")
