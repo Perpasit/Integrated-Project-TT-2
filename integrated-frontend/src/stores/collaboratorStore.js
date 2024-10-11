@@ -92,20 +92,18 @@ export const useCollabStore = defineStore("collab", {
         }
       },
       
-      
+      async removeCollaborator(boardId, collabOid) {
+        try {
+          // console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
+          await deleteItem(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/${collabOid}`
+          );
+          // console.log("Collaborator removed successfully");
+        } catch (error) {
+          console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
+        }
+      },
 
-
-    async removeCollaborator(boardId, collabOid) {
-      try {
-        const response = await deleteItem(
-          `${
-            import.meta.env.VITE_API_ENDPOINTV3
-          }/boards/${boardId}/collabs/${collabOid}`
-        )
-       
-      } catch (error) {
-        console.error("Error removing collaborator:", error)
-      }},
 
     getCollaboratorByBoardAndUser(boardId, userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
