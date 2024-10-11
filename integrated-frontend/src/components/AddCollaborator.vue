@@ -27,20 +27,19 @@ const handleSubmit = async () => {
       accessRight.value
     )
     collabStore.fetchCollaborators(boardId)
-    fetchCollaborator();
-    console.log(collabStore.getCollaborators)
-    router.push({ name: "CollabManage", params: { boardId: boardId } })
   } catch (error) {
     console.error("Error adding collaborator:", error)
   }
+  router.push({ name: "CollabManage", params: { boardId: boardId } })
+
 }
 
 const navigateBack = () => {
   router.push({ name: "CollabManage", params: { boardId: boardId } })
 }
-onMounted(async () => {
-  await fetchCollaborator(); 
-});
+// onMounted(async () => {
+//   await fetchCollaborator(); 
+// });
 </script>
 
 <template>

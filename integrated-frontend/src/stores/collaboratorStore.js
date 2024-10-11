@@ -12,6 +12,7 @@ export const useCollabStore = defineStore("collab", {
   }),
 
   getters: {
+    getCollaborators: (state) => state.collabs,
     getCollaboratorByOid: (state) => (collabOid) => {
       return state.collabs.find(
         (collaborator) => collaborator.oid === collabOid
@@ -67,9 +68,7 @@ export const useCollabStore = defineStore("collab", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`,
           collaboratorData
         )
-        console.log(response)
-        console.log(this.collabs)
-        this.collabs.push(response.data)
+        this.collabs.push(response)
         return response // Update state with the new collaborator
       } catch (error) {
         console.error("Error adding collaborator:", error)

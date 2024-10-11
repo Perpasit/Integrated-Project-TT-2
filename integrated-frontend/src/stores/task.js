@@ -44,7 +44,6 @@ export const useTaskStore = defineStore("task", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks`,
           formattedTask
         );
-      
         this.tasks.push(createdTask);
       } catch (error) {
         console.error("Error adding task:", error);

@@ -1,15 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useCollabStore } from '../stores/collaboratorStore';
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const collabStore = useCollabStore();
-const collaborators = ref([]);
+const collaborators = computed(() => collabStore.getCollaborators)
 const isDeleteModalVisible = ref(false);
-const showSuccessModal = ref(false); // Control visibility of success modal
+const showSuccessModal = ref(false);
+const showAccessModal = ref(false); // Modal for access right change
 const collaboratorToDelete = ref(null);
+const collaboratorToUpdate = ref(null); // Track collaborator for access change
+const newAccessRight = ref(''); // Hold new access right to confirm
+
 
 const boardId = route.params.boardId;
 
@@ -26,18 +30,28 @@ const fetchCollaborator = async () => {
   }
 };
 
-const updateAccessRight = async (collaborator) => {
-  const updatedAccessRight = collaborator.accessRight === "WRITE" ? "WRITE" : "READ"; 
-  try {
-    await collabStore.updateCollaborator(boardId, collaborator.oid, updatedAccessRight); 
-    console.log(`Access right updated to ${updatedAccessRight} for ${collaborator.name}`);
-  } catch (error) {
-    console.error("Failed to update access right:", error);
+const confirmAccessRightChange = (collaborator) => {
+  collaboratorToUpdate.value = collaborator;
+  newAccessRight.value = collaborator.accessRight === "WRITE" ? "READ" : "WRITE"; // Determine new access right
+  showAccessModal.value = true;
+};
+
+const updateAccessRight = async () => {
+  if (collaboratorToUpdate.value) {
+    try {
+      await collabStore.updateCollaborator(boardId, collaboratorToUpdate.value.oid, newAccessRight.value);
+      console.log(`Access right updated to ${newAccessRight.value} for ${collaboratorToUpdate.value.name}`);
+      showAccessModal.value = false; // Close modal after success
+      collaboratorToUpdate.value = null; // Clear collaborator
+      await fetchCollaborator(); // Refresh list
+    } catch (error) {
+      console.error("Failed to update access right:", error);
+    }
   }
 };
 
 const openAddCollaboratorModal = () => {
-  router.push({ name: "AddCollabManage", params: { boardId } }); 
+  router.push({ name: "AddCollabManage", params: { boardId } });
 };
 
 const confirmDelete = (collaborator) => {
@@ -50,7 +64,7 @@ const deleteCollaborator = async () => {
     try {
       await collabStore.removeCollaborator(boardId, collaboratorToDelete.value.oid);
       isDeleteModalVisible.value = false;
-      showSuccessModal.value = true; // Show success modal after deletion
+      showSuccessModal.value = true;
       collaboratorToDelete.value = null;
       await fetchCollaborator();
     } catch (error) {
@@ -60,11 +74,11 @@ const deleteCollaborator = async () => {
 };
 
 const closeDeleteModal = () => {
-  showSuccessModal.value = false; // Close success modal
+  showSuccessModal.value = false;
 };
 
 onMounted(async () => {
-  await fetchCollaborator(); 
+  await fetchCollaborator();
 });
 </script>
 
@@ -104,11 +118,13 @@ onMounted(async () => {
             <p class="itbkk-email truncate">{{ collaborator.email }}</p>
           </td>
           <td class="px-4 py-2">
-            <select v-model="collaborator.accessRight" @change="updateAccessRight(collaborator)"
-              class="itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out">
-              <option value="READ">Read</option>
-              <option value="WRITE">Write</option>
-            </select>
+            <div @click="confirmAccessRightChange(collaborator)" class="flex  justify-between items-center cursor-pointer itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900  hover:scale-105  transition duration-150 ease-in-out text-center">
+              {{ collaborator.accessRight === "WRITE" ? "Write" : "Read" }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 " viewBox="0 0 320 512" >
+                <path d="M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"/>
+              </svg>
+            </div>
+           
           </td>
           <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
             <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
@@ -140,7 +156,7 @@ onMounted(async () => {
     </div>
   </div>
   
-  <!-- Success Modal -->
+ <!-- Success Modal -->
   <div v-if="showSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
     <div class="flex items-start justify-center min-h-screen">
       <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
@@ -189,7 +205,18 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
+    <!-- Access Right Change Modal -->
+  <div v-if="showAccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
+      <h3 class="text-2xl font-semibold mb-4">Confirm Access Right Change</h3>
+      <p>Are you sure you want to change {{ collaboratorToUpdate?.name }}'s access right to {{ newAccessRight }}?</p>
+      <div class="flex justify-end mt-6 space-x-3">
+        <button @click="showAccessModal = false" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Cancel</button>
+        <button @click="updateAccessRight" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Confirm</button>
+      </div>
+    </div>
+  </div>
+  
   <router-view />
 </div>
 </template>

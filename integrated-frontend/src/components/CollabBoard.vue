@@ -79,15 +79,15 @@ const fetchCollabsBoards = async () => {
 }
 
 
-// Function to leave a board
-const leaveBoard = async (board) => {
-  try {
-    await boardStore.leaveBoard(board.id, currentUser.id);
-    await fetchCollabsBoards();
-  } catch (error) {
-    console.error("Error leaving board:", error);
-  }
-};
+// // Function to leave a board
+// const leaveBoard = async (board) => {
+//   try {
+//     await boardStore.leaveBoard(board.id, currentUser.id);
+//     await fetchCollabsBoards();
+//   } catch (error) {
+//     console.error("Error leaving board:", error);
+//   }
+// };
 
 // Eye toggle functionality
 const openVisibilityModal = (board) => {
