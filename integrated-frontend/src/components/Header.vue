@@ -18,7 +18,12 @@ const hasWriteAccess = computed(() => {
   const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
   return collaboratorData?.accessRight === "WRITE";
 });
-
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value === userOid.value;
+});
 const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
     return false;
@@ -49,8 +54,10 @@ const fetchBoardAndUserOids = async (boardId) => {
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(userOid.value);
       console.log(collaboratorData)
+
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
         console.log(collaboratorData)
@@ -259,13 +266,13 @@ onMounted(async () => {
       </button>
       <button
         v-show="isCollaboratorPage"
-        @click="isSameOidOrHasWriteAccess ? addCollab() : null"
+        @click="isSameOid ? addCollab() : null"
         :class="{
           'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
           'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
-            !isSameOidOrHasWriteAccess
+            !isSameOid
         }"
-        :disabled="!isSameOidOrHasWriteAccess"
+        :disabled="!isSameOid"
         data-tip="You need to be board owner to perform this action."
       >
       ADD COLLAB

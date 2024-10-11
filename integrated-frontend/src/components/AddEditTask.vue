@@ -58,7 +58,8 @@ const fetchBoardAndUserOids = async (boardId) => {
     if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser( userOid.value);
-      console.log(collaboratorData)
+      console.log(collaboratorData.value)
+      console.log("test")
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
         console.log(collaboratorData)
