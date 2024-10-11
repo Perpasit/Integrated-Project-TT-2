@@ -1,52 +1,57 @@
 <script setup>
-import { computed, ref, onMounted } from "vue"
+import { computed, ref, onMounted, watch } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 import { useBoardStore } from "../stores/boardStore"
-import { getItems,getItemsNoUser } from "../utils/fetch";
-import { useCollabStore } from "../stores/collaboratorStore";
+import { getItems, getItemsNoUser } from "../utils/fetch"
+import { useCollabStore } from "../stores/collaboratorStore"
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const boardStore = useBoardStore()
-const collabStore = useCollabStore();
+const collabStore = useCollabStore()
 const boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null)
+
 const hasWriteAccess = computed(() => {
-  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
-  return collaboratorData?.accessRight === "WRITE";
-});
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(
+    userOid.value
+  )
+  return collaboratorData?.accessRight === "WRITE"
+})
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
   }
-  return boardOid.value === userOid.value;
-});
+  return boardOid.value === userOid.value
+})
 const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false;
+    return false
   }
 
-  return boardOid.value === userOid.value || hasWriteAccess.value;
-});
+  return boardOid.value === userOid.value || hasWriteAccess.value
+})
 
 const fetchBoardAndUserOids = async (boardId) => {
   try {
-    const boardData = await boardStore.getBoardById(boardId);
+    const boardData = await boardStore.getBoardById(boardId)
+    console.log(boardData)
+ 
     if (!boardData) {
-      throw new Error(`Board with id ${boardId} not found.`);
+      throw new Error(`Board with id ${boardId} not found.`)
     }
 
-    boardOid.value = boardData.owner.oid; 
-    userOid.value = userStore.getUserOid || null; 
+    boardOid.value = boardData.owner.oid
+    userOid.value = userStore.getUserOid || null
 
-    // console.log("Board ID:", boardId, "User OID:", userOid.value);
-    
-    const visibility = boardData.visibility;
+    console.log("Board OID:", boardOid.value, "User OID:", userOid.value)
 
-    await collabStore.fetchCollaborators(boardId);
+    const visibility = boardData.visibility
+
+    await collabStore.fetchCollaborators(boardId)
 
     // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
     // console.log("Collaborators:", collabStore.collabs);
@@ -54,23 +59,32 @@ const fetchBoardAndUserOids = async (boardId) => {
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
-      
-      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(userOid.value);
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(
+        userOid.value
+      )
       console.log(collaboratorData)
-
-      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+      if (
+        !collaboratorData ||
+        (collaboratorData.accessRight !== "READ" &&
+          collaboratorData.accessRight !== "WRITE")
+      ) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
         console.log(collaboratorData)
-        router.push({ name: "AccessDenied" });
+        router.push({ name: "AccessDenied" })
       }
     }
-
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
-    router.push({ name: "AccessDenied" }); 
+    router.push({ name: "AccessDenied" });
   }
-};
-
+}
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId
+    await fetchBoardAndUserOids(newBoardId) // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+)
 
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.includes("/status")
@@ -99,7 +113,7 @@ const addStatus = () => {
   router.push({ name: "AddStatus" })
 }
 const addCollab = () => {
-  router.push({ name: "AddCollabManage", params: { boardId } });
+  router.push({ name: "AddCollabManage", params: { boardId } })
 }
 
 const accountName = computed(() => userStore.getAccountName)
@@ -115,23 +129,29 @@ const toggleDropdown = () => {
 }
 
 const goToBoard = () => {
-  router.push({name:"Board"})
+  router.push({ name: "Board" })
 }
 
 const goToCollaborator = () => {
-  router.push({name:"CollabManage", params: { boardId }})
+  router.push({ name: "CollabManage", params: { boardId } })
 }
 onMounted(async () => {
-    const boardId = route.params.boardId;
-    
-        
-    try {
-      await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
-    } catch (error) {
-      console.error("Error during component mount:", error);
-    } 
-  
-});
+  const boardId = route.params.boardId
+  console.log("Board ID from route:", boardId)
+
+  if (userStore.getIsAuthenticated === false) {
+    console.log("Waiting for authentication...")
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  console.log("User is authenticated:", userStore.getIsAuthenticated)
+
+  try {
+    await fetchBoardAndUserOids(boardId)
+  } catch (error) {
+    console.error("Error during component mount:", error)
+  }
+})
 </script>
 
 <template>
@@ -170,7 +190,7 @@ onMounted(async () => {
         ]"
         @click="goToCollaborator"
       >
-      Collaborator
+        Collaborator
       </span>
     </div>
 
@@ -182,7 +202,7 @@ onMounted(async () => {
           >
             {{ accountName }}
           </span>
-          
+
           <div
             class="border p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200 ease-in-out"
             @click="toggleDropdown"
@@ -209,7 +229,7 @@ onMounted(async () => {
           >
             <button
               @click="goToBoard"
-              class="text-gray-700 hover:text-white  hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+              class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
               Board List
             </button>
@@ -235,7 +255,6 @@ onMounted(async () => {
         </svg>
       </div> -->
         </div>
-        
       </div>
 
       <button
@@ -262,7 +281,7 @@ onMounted(async () => {
         :disabled="!isSameOidOrHasWriteAccess"
         data-tip="You need to be board owner to perform this action."
       >
-      ADD STATUS
+        ADD STATUS
       </button>
       <button
         v-show="isCollaboratorPage"
@@ -275,7 +294,7 @@ onMounted(async () => {
         :disabled="!isSameOid"
         data-tip="You need to be board owner to perform this action."
       >
-      ADD COLLAB
+        ADD COLLAB
       </button>
     </div>
   </div>
