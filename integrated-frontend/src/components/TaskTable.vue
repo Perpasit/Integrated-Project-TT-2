@@ -39,12 +39,19 @@ const showAllStatuses = ref(false);
 const boardId = route.params.boardId;
 const userOid = ref("");
 const boardOid = ref(null);
-const isSameOid = computed(() => {
-  if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
-  }
-  return boardOid.value === userOid.value;
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
 });
+
+const isSameOidOrHasWriteAccess = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false;
+  }
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
+
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     const boardData = await boardStore.getBoardById(boardId);
@@ -66,13 +73,13 @@ const fetchBoardAndUserOids = async (boardId) => {
     // console.log("Collaborators:", collabStore.collabs);
 
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
-    if (!isSameOid.value && visibility === "PRIVATE") {
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
-      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(boardId, userOid.value);
-
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser( userOid.value);
+      console.log(collaboratorData)
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
-        // console.log(collaboratorData)
+        console.log(collaboratorData)
         router.push({ name: "AccessDenied" });
       }
     }
@@ -332,7 +339,7 @@ onMounted(async () => {
                     :class="{
                       'hover:scale-110 transition-all duration-200 ease-in-out text-white pl-1 py-2 rounded-md flex items-center justify-between w-36 hover:border-transparent hover:border-blue-500': true,
                       'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
-                        !isSameOid,
+                        !isSameOidOrHasWriteAccess,
                     }"
                     data-tip="You need to be board owner to perform this action."
                   >
@@ -352,7 +359,7 @@ onMounted(async () => {
                     </svg>
                   </button>
                   <div
-                    v-if="isDropdownOpen && isSameOid"
+                    v-if="isDropdownOpen && isSameOidOrHasWriteAccess"
                     class="absolute mt-1 w-48 bg-white rounded shadow-lg z-10 text-gray-700"
                   >
                     <div class="py-1">
@@ -458,9 +465,9 @@ onMounted(async () => {
                 @click="openLimitTaskModal"
                 :class="{
                   'cursor-not-allowed tooltip tooltip-secondary':
-                    !isSameOid, // Normal hover effect if OID matches
+                    !isSameOidOrHasWriteAccess, // Normal hover effect if OID matches
                 }"
-                :disabled="!isSameOid"
+                :disabled="!isSameOidOrHasWriteAccess"
                 data-tip="You need to be the board owner to perform this action."
               >
                 <svg
@@ -531,10 +538,10 @@ onMounted(async () => {
                 class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out"
                 :class="{
                   'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-                    !isSameOid, // Grey and disabled when OID is the same
+                    !isSameOidOrHasWriteAccess, // Grey and disabled when OID is the same
                 }"
                 @click="editTask(task)"
-                :disabled="!isSameOid"
+                :disabled="!isSameOidOrHasWriteAccess"
                 data-tip="You need to be the board owner to perform this action."
               >
                 <svg
@@ -555,10 +562,10 @@ onMounted(async () => {
               <button
                 class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                 :class="{
-    'tooltip tooltip-secondary cursor-not-allowed': !isSameOid, // Grey and tooltip if OID is the same
+    'tooltip tooltip-secondary cursor-not-allowed': !isSameOidOrHasWriteAccess, // Grey and tooltip if OID is the same
   }"
                 @click="confirmDelete(task)"
-                :disabled="!isSameOid"
+                :disabled="!isSameOidOrHasWriteAccess"
                 data-tip="You need to be the board owner to perform this action."
               >
                 <svg
@@ -606,11 +613,11 @@ onMounted(async () => {
           class="itbkk-button-confirm text-white px-4 py-2 rounded"
           @click="deleteTask(selectedTask)"
           :class="{
-            'bg-red-500 hover:bg-red-600 ': isSameOid,
+            'bg-red-500 hover:bg-red-600 ': isSameOidOrHasWriteAccess,
             'bg-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-              !isSameOid,
+              !isSameOidOrHasWriteAccess,
           }"
-          :disabled="!isSameOid"
+          :disabled="!isSameOidOrHasWriteAccess"
           data-tip="You need to be board owner to perform this action."
         >
           Delete

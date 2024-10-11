@@ -115,14 +115,14 @@ export const useCollabStore = defineStore("collab", {
       },
 
 
-    getCollaboratorByBoardAndUser(boardId, userOid) {
+    getCollaboratorByBoardAndUser(userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
       if (!Array.isArray(this.collabs)) {
         console.error("Collaborators data is not available or not an array.");
         return null;
       }
     
-      // แสดงโครงสร้างของแต่ละ collaborator ใน collabs
+      // // แสดงโครงสร้างของแต่ละ collaborator ใน collabs
       // this.collabs.forEach((collaborator, index) => {
       //   console.log(`Collaborator ${index}:`, JSON.stringify(collaborator, null, 2));
       // });
