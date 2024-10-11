@@ -8,6 +8,7 @@ import { useUserStore } from "../stores/userStore"
 import { useGlobalSettingStore } from "../stores/global_setting"
 import { useRouter, useRoute } from "vue-router"
 import { getItems, getItemsNoUser  } from "../utils/fetch"
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const router = useRouter()
 const route = useRoute()
@@ -16,16 +17,23 @@ const statusStore = useStatusStore()
 const modalStore = useModalStore()
 const boardStore = useBoardStore()
 const userStore = useUserStore()
+const collabStore = useCollabStore();
 const globalSettingStore = useGlobalSettingStore()
 
 const boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
-const isSameOid = computed(() => {
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false;
   }
-  return boardOid.value === userOid.value;
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -36,12 +44,26 @@ const fetchBoardAndUserOids = async (boardId) => {
 
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
-    // const visibility = boardData.visibility;
-    // console.log("Board Visibility:", visibility);
-    // console.log(isSameOid.value)
 
-    if (!isSameOid.value) {
-      router.push({ name: "AccessDenied" });
+    // console.log("Board ID:", boardId, "User OID:", userOid.value);
+    
+    const visibility = boardData.visibility;
+
+    await collabStore.fetchCollaborators(boardId);
+
+    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
+    // console.log("Collaborators:", collabStore.collabs);
+
+    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
+      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser( userOid.value);
+      console.log(collaboratorData)
+      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
+        console.log(collaboratorData)
+        router.push({ name: "AccessDenied" });
+      }
     }
 
   } catch (error) {
@@ -183,7 +205,7 @@ async function saveTask() {
     errorMessage.value = "";
 
     // ตรวจสอบสิทธิ์เฉพาะเมื่อทำการบันทึก task
-    if (!isSameOid.value) {
+    if (!isSameOidOrHasWriteAccess.value) {
       console.error("You don't have permission to edit this task.");
       errorMessage.value = "You don't have permission to edit this task.";
       return;
@@ -297,7 +319,7 @@ onMounted(async () => {
     console.error("Error fetching board or user OID:", error);
   }
   await fetchBoardAndUserOids(boardId);
-  if (isSameOid.value) {
+  if (isSameOidOrHasWriteAccess.value) {
     await fetchTaskAndStatus(boardId);  
   } else {
     console.warn("You do not have permission to access this board.");
@@ -444,7 +466,7 @@ onMounted(async () => {
           <div class="flex space-x-4">
             <!-- Button for non-board owners (when OIDs are not the same) -->
             <button
-              v-if="isSameOid"
+              v-if="isSameOidOrHasWriteAccess"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
@@ -465,16 +487,16 @@ onMounted(async () => {
 
             <!-- Button for board owners (when OIDs are the same) -->
             <button
-              v-if="!isSameOid"
+              v-if="!isSameOidOrHasWriteAccess"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                  isSameOid,
-                'bg-gray-300 cursor-not-allowed': !isSameOid,
+                  isSameOidOrHasWriteAccess,
+                'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess,
               }"
-              @click="isSameOid && saveTask()"
-              :disabled="!isSameOid"
+              @click="isSameOidOrHasWriteAccess && saveTask()"
+              :disabled="!isSameOidOrHasWriteAccess"
               data-tip="You need to be the board owner to perform this action."
             >
             {{ mode === "add" ? "Add" : "Save" }}

@@ -6,6 +6,7 @@ import { useRouter, useRoute } from "vue-router"
 import { getItems,getItemsNoUser } from "../utils/fetch"
 import { useBoardStore } from "../stores/boardStore"
 import { useUserStore } from "../stores/userStore"
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const router = useRouter()
 const route = useRoute()
@@ -13,16 +14,23 @@ const statusStore = useStatusStore()
 const modalStore = useModalStore()
 const boardStore = useBoardStore()
 const userStore = useUserStore()
+const collabStore = useCollabStore();
 const successModalTimeout = ref(null)
 
 const boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
-const isSameOid = computed(() => {
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false;
   }
-  return boardOid.value === userOid.value;
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -35,9 +43,9 @@ const fetchBoardAndUserOids = async (boardId) => {
     userOid.value = userStore.getUserOid || null; 
     // const visibility = boardData.visibility;
     // console.log("Board Visibility:", visibility);
-    // console.log(isSameOid.value)
+    // console.log(isSameOidOrHasWriteAccess.value)
 
-    if (!isSameOid.value) {
+    if (!isSameOidOrHasWriteAccess.value) {
       router.push({ name: "AccessDenied" });
     }
 
@@ -336,7 +344,7 @@ onMounted(async () => {
           <div class="flex space-x-4">
             <!-- Button for non-board owners (when OIDs are not the same) -->
             <button
-              v-if="isSameOid"
+              v-if="isSameOidOrHasWriteAccess"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
@@ -370,11 +378,11 @@ onMounted(async () => {
 
             <!-- Button for board owners (when OIDs are the same) -->
             <button
-              v-if="!isSameOid"
+              v-if="!isSameOidOrHasWriteAccess"
               type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
-                'bg-gray-300 cursor-not-allowed': !isSameOid,
+                'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess,
               }"
               :disabled="true"
               data-tip="Only the board owner can perform this action."

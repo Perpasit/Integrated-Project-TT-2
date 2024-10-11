@@ -4,47 +4,65 @@ import { useRouter, useRoute } from "vue-router"
 import { useUserStore } from "../stores/userStore"
 import { useBoardStore } from "../stores/boardStore"
 import { getItems,getItemsNoUser } from "../utils/fetch";
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const boardStore = useBoardStore()
+const collabStore = useCollabStore();
 const boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null)
-const isSameOid = computed(() => {
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
     return false;
   }
-  return boardOid.value === userOid.value;
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
 });
 
 const fetchBoardAndUserOids = async (boardId) => {
   try {
-    let boardData
-    const userStoreData = JSON.parse(localStorage.getItem('userStore'));
-    try {
-        let data;
-        if (userStoreData && userStoreData.isAuthenticated ) {
-          // If the user is authenticated, use the accessToken for the authenticated request
-          data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}`);
-        } else {
-          // If the user is not authenticated, make a request without token
-          data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}`);
-        }
-        boardData = data
-      } catch (error) {
-        throw error;
-      }
+    const boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`);
     }
-    boardOid.value = boardData.owner.oid;
-    userOid.value = userStore.getUserOid || null;
+
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+
+    // console.log("Board ID:", boardId, "User OID:", userOid.value);
+    
+    const visibility = boardData.visibility;
+
+    await collabStore.fetchCollaborators(boardId);
+
+    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
+    // console.log("Collaborators:", collabStore.collabs);
+
+    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
+      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(userOid.value);
+      console.log(collaboratorData)
+      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
+        console.log(collaboratorData)
+        router.push({ name: "AccessDenied" });
+      }
+    }
+
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
   }
-}
+};
 
 
 const isManageStatusPage = computed(() => {
@@ -190,26 +208,26 @@ onMounted(async () => {
 
       <button
         v-show="isTaskPage"
-        @click="isSameOid ? addTask() : null"
+        @click="isSameOidOrHasWriteAccess ? addTask() : null"
         :class="{
           'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-cyan-500 to-blue-500 text-blue-700 font-semibold hover:text-white py-3 px-5 border border-blue-500 shadow-lg shadow-blue-500/50 hover:border-transparent rounded': true,
           ' text-blue-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
-            !isSameOid
+            !isSameOidOrHasWriteAccess
         }"
-        :disabled="!isSameOid"
+        :disabled="!isSameOidOrHasWriteAccess"
         data-tip="You need to be board owner to perform this action."
       >
         + NEW TASK
       </button>
       <button
         v-show="isManageStatusPage"
-        @click="isSameOid ? addStatus() : null"
+        @click="isSameOidOrHasWriteAccess ? addStatus() : null"
         :class="{
           'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
           'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
-            !isSameOid
+            !isSameOidOrHasWriteAccess
         }"
-        :disabled="!isSameOid"
+        :disabled="!isSameOidOrHasWriteAccess"
         data-tip="You need to be board owner to perform this action."
       >
         ADD STATUS
