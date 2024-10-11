@@ -35,11 +35,17 @@ const newStatusId = ref(1)
 const boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
-const isSameOid = computed(() => {
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false;
   }
-  return boardOid.value === userOid.value;
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
 });
 const fetchBoardAndUserOids = async (boardId) => {
   try {
@@ -61,7 +67,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     // console.log("Collaborators:", collabStore.collabs);
 
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
-    if (!isSameOid.value && visibility === "PRIVATE") {
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
       // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(userOid.value);
       console.log(collaboratorData)
@@ -363,10 +369,10 @@ onMounted(async () => {
                   class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
                   :class="{
                   'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-                    !isSameOid, // Grey and disabled when OID is the same
+                    !isSameOidOrHasWriteAccess, // Grey and disabled when OID is the same
                 }"
                   @click="editStatus(status)"
-                  :disabled="!isSameOid"
+                  :disabled="!isSameOidOrHasWriteAccess"
                   data-tip="You need to be the board owner to perform this action."
                 >
                   <svg
@@ -388,10 +394,10 @@ onMounted(async () => {
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
                   :class="{
                   'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
-                    !isSameOid, // Grey and disabled when OID is the same
+                    !isSameOidOrHasWriteAccess, // Grey and disabled when OID is the same
                 }"
                   @click="handleDeleteClick(status)"
-                  :disabled="!isSameOid"
+                  :disabled="!isSameOidOrHasWriteAccess"
                   data-tip="You need to be the board owner to perform this action."
                 
                 >
@@ -799,7 +805,7 @@ onMounted(async () => {
         <div class="flex space-x-4">
           <!-- Button for non-board owners (when OIDs are not the same) -->
           <button
-            v-if="isSameOid"
+            v-if="isSameOidOrHasWriteAccess"
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             @click="confirmDeleteStatus"
           >
@@ -808,7 +814,7 @@ onMounted(async () => {
 
           <!-- Button for board owners (when OIDs are the same) -->
           <button
-            v-if="!isSameOid"
+            v-if="!isSameOidOrHasWriteAccess"
             class="itbkk-button-confirm bg-gray-300 cursor-not-allowed text-white px-4 py-2 rounded tooltip tooltip-secondary tooltip-left"
             data-tip="Only the board owner can delete."
             disabled
