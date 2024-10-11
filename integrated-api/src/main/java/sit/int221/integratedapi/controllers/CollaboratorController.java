@@ -46,6 +46,8 @@ public class CollaboratorController {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
 
+        boardService.validateBoardAccessForGet(boardId, oidFromToken);
+
         List<CollaboratorDTO> collaborators = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
         return ResponseEntity.ok(collaborators);
     }
