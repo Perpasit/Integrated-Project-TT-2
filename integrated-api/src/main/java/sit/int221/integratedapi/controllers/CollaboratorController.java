@@ -74,7 +74,7 @@ public class CollaboratorController {
     }
 
     @PostMapping("/{boardId}/collabs")
-    public ResponseEntity<CollaboratorDTO> addCollaborator(
+    public ResponseEntity<?> addCollaborator(
             @RequestHeader(value = "Authorization") String token,
             @PathVariable String boardId,
             @Valid @RequestBody CollaboratorCDTO collaboratorCDTO) {
@@ -82,10 +82,15 @@ public class CollaboratorController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
-        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId, collaboratorCDTO.getUserEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
+        if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getUserEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("The user is already the collaborator of this board.");
+        }
 
+        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId,
+                collaboratorCDTO.getUserEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
+
 
     @PatchMapping("/{boardId}/collabs/{collabOid}")
     public ResponseEntity<CollaboratorDTO> updateCollaboratorAccessRight(

@@ -32,6 +32,12 @@ public class CollaboratorService {
     @Autowired
     private ListMapper listMapper;
 
+
+    public boolean isUserAlreadyCollaborator(String boardId, String userEmail) {
+        return collaboratorRepository.existsByBoardIdAndUserEmail(boardId, userEmail);
+    }
+
+
     public void validateBoardAccessForGet(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));

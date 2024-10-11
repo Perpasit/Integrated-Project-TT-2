@@ -15,4 +15,6 @@ public interface CollaboratorRepository extends JpaRepository<Collaborator, Inte
     boolean existsByUserAndBoard(TaskUser user, Board board);
 
     List<Collaborator> findByUserOid(String userOid);
+
+    boolean existsByBoardIdAndUserEmail(String boardId, String userEmail);
 }
