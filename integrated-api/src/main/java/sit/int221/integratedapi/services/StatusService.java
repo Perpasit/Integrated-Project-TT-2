@@ -129,8 +129,10 @@ public class StatusService {
             }
 
             Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
-            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.READ) {
-                throw new ForbiddenException("You do not have permission to modify this board");
+            if (collaborator == null ||
+                    (collaborator.getAccessRight() != Collaborator.AccessRight.READ &&
+                            collaborator.getAccessRight() != Collaborator.AccessRight.WRITE)) {
+                throw new ForbiddenException("You do not have permission to access this board");
             }
         }
     }

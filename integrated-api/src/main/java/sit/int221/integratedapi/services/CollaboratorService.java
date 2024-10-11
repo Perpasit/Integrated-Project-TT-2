@@ -76,18 +76,30 @@ public class CollaboratorService {
             }
 
             Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
-            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.READ) {
-                throw new ForbiddenException("You do not have permission to modify this board");
+            if (collaborator == null ||
+                    (collaborator.getAccessRight() != Collaborator.AccessRight.READ &&
+                            collaborator.getAccessRight() != Collaborator.AccessRight.WRITE)) {
+                throw new ForbiddenException("You do not have permission to access this board");
             }
         }
     }
 
-    public void validateBoardOwnershipForModification(String boardId, String oidFromToken) {
+    public void validateWriteAccess(String boardId, String oidFromToken) {
+        // ค้นหาบอร์ดที่ต้องการเข้าถึง
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-        if (oidFromToken == null || !board.getOwnerId().equals(oidFromToken)) {
-            throw new ForbiddenException("You do not have permission to modify this board.");
+        // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            if (user == null) {
+                throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
+            }
+
+            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
+                throw new ForbiddenException("You do not have permission to modify this board");
+            }
         }
     }
 
@@ -141,7 +153,7 @@ public class CollaboratorService {
 
     @Transactional
     public CollaboratorDTO addCollaboratorByEmail(String boardId, String userEmail, String accessRight, String oidFromToken) {
-        validateBoardOwnershipForModification(boardId, oidFromToken);
+        validateWriteAccess(boardId, oidFromToken);
 
         TaskUser user = taskUserRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ItemNotFoundException("User with email " + userEmail + " not found"));
@@ -177,7 +189,7 @@ public class CollaboratorService {
 
     @Transactional
     public CollaboratorDTO updateCollaboratorAccessRight(String boardId, String collabOid, String newAccessRight, String oidFromToken) {
-        validateBoardOwnershipForModification(boardId, oidFromToken);
+        validateWriteAccess(boardId, oidFromToken);
 
         TaskUser user = taskUserRepository.findById(collabOid)
                 .orElseThrow(() -> new ItemNotFoundException("User with id " + collabOid + " not found"));
@@ -214,7 +226,7 @@ public class CollaboratorService {
         // ตรวจสอบว่าผู้ใช้ปัจจุบันเป็นเจ้าของบอร์ดหรือไม่ หรือเป็นผู้ที่ต้องการลบตนเอง
         if (!oidFromToken.equals(collabOid)) {
             // ถ้าไม่ใช่เจ้าของบอร์ดและไม่ตรงกับ collabOid ให้ตรวจสอบสิทธิ์
-            validateBoardOwnershipForModification(boardId, oidFromToken);
+            validateWriteAccess(boardId, oidFromToken);
         }
 
         // ดึง collaborator และตรวจสอบว่ามีอยู่จริง
