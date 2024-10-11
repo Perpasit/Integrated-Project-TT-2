@@ -4,8 +4,11 @@ import {
   postItem,
   putItem,
   patchItem,
-  deleteItem
+  deleteItem,
+  getItemsNoUser
 } from "../utils/fetch"
+import { useUserStore } from './userStore';
+
 export const useCollabStore = defineStore("collab", {
   state: () => ({
     collabs: []
@@ -13,48 +16,55 @@ export const useCollabStore = defineStore("collab", {
 
   getters: {
     getCollaborators: (state) => state.collabs,
-    getCollaboratorByOid: (state) => (collabOid) => {
-      return state.collabs.find(
-        (collaborator) => collaborator.oid === collabOid
-      )
-    },
+    // getCollaboratorByOid: (state) => (collabOid) => {
+    //   return state.collabs.find(
+    //     (collaborator) => collaborator.oid === collabOid
+    //   )
+    // },
 
-    getCollaboratorsByAccessRight: (state) => (accessRight) => {
-      return state.collabs.filter(
-        (collaborator) => collaborator.accessRight === accessRight
-      )
-    },
+    // getCollaboratorsByAccessRight: (state) => (accessRight) => {
+    //   return state.collabs.filter(
+    //     (collaborator) => collaborator.accessRight === accessRight
+    //   )
+    // },
 
-    totalCollaborators: (state) => {
-      return state.collabs.length
-    }
+    // totalCollaborators: (state) => {
+    //   return state.collabs.length
+    // }
   },
   actions: {
     async fetchCollaborators(boardId) {
+      const userStore = useUserStore();
       try {
-        const response = await getItems(
+        let data;
+        if (userStore.getIsAuthenticated) {
+        data = await getItems(
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
-        )
-        this.collabs = response || [];
-        return response
+        )}else{
+          data = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
+          )
+        }
+        this.collabs = data || [];
+        return data
       } catch (error) {
         console.error("Error fetching collaborators:", error)
       }
     },
 
-    async fetchCollaboratorById(boardId, collabOid) {
-      try {
-        const response = await getItems(
-          `${
-            import.meta.env.VITE_API_ENDPOINTV3
-          }/boards/${boardId}/collabs/${collabOid}`
-        )
-        return response.data
-      } catch (error) {
-        console.error("Error fetching collaborator:", error)
-        throw error
-      }
-    },
+    // async fetchCollaboratorById(boardId, collabOid) {
+    //   try {
+    //     const response = await getItems(
+    //       `${
+    //         import.meta.env.VITE_API_ENDPOINTV3
+    //       }/boards/${boardId}/collabs/${collabOid}`
+    //     )
+    //     return response.data
+    //   } catch (error) {
+    //     console.error("Error fetching collaborator:", error)
+    //     throw error
+    //   }
+    // },
 
     // Updated method to add a new collaborator using email
     async addCollaborator(boardId, email, accessRight = "READ") {

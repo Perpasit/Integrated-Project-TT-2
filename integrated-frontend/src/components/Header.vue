@@ -50,6 +50,9 @@ const fetchBoardAndUserOids = async (boardId) => {
 const isManageStatusPage = computed(() => {
   return router.currentRoute.value.path.includes("/status")
 })
+const isCollaboratorPage = computed(() => {
+  return router.currentRoute.value.path.includes("/collab")
+})
 
 const isTaskPage = computed(() => {
   return router.currentRoute.value.path.includes("/task")
@@ -69,6 +72,9 @@ const goToManageStatus = () => {
 
 const addStatus = () => {
   router.push({ name: "AddStatus" })
+}
+const addCollab = () => {
+  router.push({ name: "AddCollabManage", params: { boardId } });
 }
 
 const accountName = computed(() => userStore.getAccountName)
@@ -132,6 +138,15 @@ onMounted(async () => {
       >
         Manage Status
       </span>
+      <span
+        :class="[
+          'itbkk-manage-status text-2xl cursor-pointer  px-3 rounded hover:scale-110 transition-all duration-200 ease-in-out flex justify-end items-end',
+          isCollaboratorPage ? 'text-white' : 'text-blue-600 hover:text-white'
+        ]"
+        @click="goToCollaborator"
+      >
+      Collaborator
+      </span>
     </div>
 
     <div class="flex items-end space-x-4">
@@ -140,8 +155,9 @@ onMounted(async () => {
           <span
             class="itbkk-fullname text-blue-600 text-xl items-end font-medium"
           >
-            {{ accountName }}</span
-          >
+            {{ accountName }}
+          </span>
+          
           <div
             class="border p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200 ease-in-out"
             @click="toggleDropdown"
@@ -168,16 +184,16 @@ onMounted(async () => {
           >
             <button
               @click="goToBoard"
-              class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
+              class="text-gray-700 hover:text-white  hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
               Board List
             </button>
-            <button
+            <!-- <button
               @click="goToCollaborator"
               class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
             >
               Collaborator
-            </button>
+            </button> -->
             <button
               @click="logout"
               class="text-gray-700 hover:text-white hover:bg-gray-700 px-2 py-2 rounded transition duration-150 ease-in-out w-full text-left"
@@ -185,7 +201,16 @@ onMounted(async () => {
               Logout
             </button>
           </div>
+          <!-- <div
+        @click="goToCollaborator"
+        class="border p-2 rounded-full cursor-pointer flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200 ease-in-out">
+        <svg xmlns="http://www.w3.org/2000/svg"  fill="currentColor" class="bi bi-person-add h-6 w-6 text-slate-500" viewBox="0 0 16 16">
+          <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/>
+          <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z"/>
+        </svg>
+      </div> -->
         </div>
+        
       </div>
 
       <button
@@ -212,7 +237,20 @@ onMounted(async () => {
         :disabled="!isSameOid"
         data-tip="You need to be board owner to perform this action."
       >
-        ADD STATUS
+      ADD STATUS
+      </button>
+      <button
+        v-show="isCollaboratorPage"
+        @click="isSameOid ? addCollab() : null"
+        :class="{
+          'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
+          'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+            !isSameOid
+        }"
+        :disabled="!isSameOid"
+        data-tip="You need to be board owner to perform this action."
+      >
+      ADD COLLAB
       </button>
     </div>
   </div>

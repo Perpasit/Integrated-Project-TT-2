@@ -1,11 +1,16 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,watch } from 'vue';
 import { useCollabStore } from '../stores/collaboratorStore';
+import { useBoardStore } from '../stores/boardStore';
+import { useUserStore } from "../stores/userStore";
+
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const collabStore = useCollabStore();
+const boardStore = useBoardStore()
+const userStore = useUserStore();
 const collaborators = computed(() => collabStore.getCollaborators)
 const isDeleteModalVisible = ref(false);
 const showSuccessModal = ref(false);
@@ -13,7 +18,7 @@ const showAccessModal = ref(false); // Modal for access right change
 const collaboratorToDelete = ref(null);
 const collaboratorToUpdate = ref(null); // Track collaborator for access change
 const newAccessRight = ref(''); // Hold new access right to confirm
-
+const boardName = ref("");
 
 const boardId = route.params.boardId;
 
@@ -30,9 +35,62 @@ const fetchCollaborator = async () => {
   }
 };
 
+const userOid = ref("");
+const boardOid = ref(null);
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value === userOid.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    boardName.value = boardData.name;
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+
+  
+    
+    const visibility = boardData.visibility;
+
+    await collabStore.fetchCollaborators(boardId);
+
+    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
+    // console.log("Collaborators:", collabStore.collabs);
+
+    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
+    if (!isSameOid.value && visibility === "PRIVATE") {
+      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(boardId, userOid.value);
+
+      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
+        // console.log(collaboratorData)
+        router.push({ name: "AccessDenied" });
+      }
+    }
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
+  }
+};
+
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
 const confirmAccessRightChange = (collaborator) => {
   collaboratorToUpdate.value = collaborator;
-  newAccessRight.value = collaborator.accessRight === "WRITE" ? "READ" : "WRITE"; // Determine new access right
+  newAccessRight.value = collaborator.accessRight;
   showAccessModal.value = true;
 };
 
@@ -50,10 +108,13 @@ const updateAccessRight = async () => {
   }
 };
 
-const openAddCollaboratorModal = () => {
-  router.push({ name: "AddCollabManage", params: { boardId } });
-};
-
+// const openAddCollaboratorModal = () => {
+//   router.push({ name: "AddCollabManage", params: { boardId } });
+// };
+const closeAccessModal = () => {
+  showAccessModal.value = false;
+  fetchCollaborator();
+}
 const confirmDelete = (collaborator) => {
   collaboratorToDelete.value = collaborator;
   isDeleteModalVisible.value = true;
@@ -78,16 +139,22 @@ const closeDeleteModal = () => {
 };
 
 onMounted(async () => {
+  const boardId = route.params.boardId;
   await fetchCollaborator();
+  await fetchBoardAndUserOids(boardId);
 });
 </script>
 
 <template>
 <div class="container mx-auto px-4 pt-2">
-  <div class="overflow-visible">
-    <h2 class="text-center text-5xl font-bold text-white mb-4 py-1">Collaborator Table</h2>
+  <div class="overflow-visible flex flex-col gap-8">
+    <div
+        class="flex text-4xl mt-10 text-white justify-center font-extrabold"
+      >
+        {{ boardName }}
+      </div>
 
-    <div class="flex justify-end mb-6 pb-4 border-b border-white">
+    <!-- <div class="flex justify-end mb-6 pb-4 border-b border-white">
       <button @click="openAddCollaboratorModal"
         class="itbkk-button-create relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium text-white rounded-lg group bg-gradient-to-br from-[#eddbe8] to-[#e9b9de] group-hover:from-teal-300 transition duration-300 ease-in-out transform hover:scale-105">
         <span
@@ -95,7 +162,7 @@ onMounted(async () => {
           Add Collaborator
         </span>
       </button>
-    </div>
+    </div> -->
 
     <table class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2">
       <thead>
@@ -117,18 +184,27 @@ onMounted(async () => {
           <td class="px-4 py-2">
             <p class="itbkk-email truncate">{{ collaborator.email }}</p>
           </td>
-          <td class="px-4 py-2">
-            <div @click="confirmAccessRightChange(collaborator)" class="flex  justify-between items-center cursor-pointer itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900  hover:scale-105  transition duration-150 ease-in-out text-center">
-              {{ collaborator.accessRight === "WRITE" ? "Write" : "Read" }}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 " viewBox="0 0 320 512" >
-                <path d="M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z"/>
-              </svg>
-            </div>
-           
+          <td class="px-4 py-2"> 
+            <div :class="{'cursor-not-allowed tooltip tooltip-secondary w-full':!isSameOid}" 
+            :disabled="!isSameOid" 
+            data-tip="You need to be board owner to perform this action.">
+            <select v-model="collaborator.accessRight" @change="confirmAccessRightChange(collaborator)"
+              class="itbkk-select bg-white border w-full border-gray-300 rounded-md p-2 text-gray-900 items-start focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+              :disabled="!isSameOid"
+              >
+                <option value="READ">Read</option>
+                <option value="WRITE">Write</option>
+            </select>
+          </div>
           </td>
           <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
-            <button class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-              @click="confirmDelete(collaborator)">
+            <button 
+              :class="{
+                'itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2': true,
+                'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':!isSameOid,
+              }"
+              @click="isSameOid ? confirmDelete(collaborator) : null" :disabled="!isSameOid" data-tip="You need to be board owner to perform this action.">
+              
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -211,7 +287,7 @@ onMounted(async () => {
       <h3 class="text-2xl font-semibold mb-4">Confirm Access Right Change</h3>
       <p>Are you sure you want to change {{ collaboratorToUpdate?.name }}'s access right to {{ newAccessRight }}?</p>
       <div class="flex justify-end mt-6 space-x-3">
-        <button @click="showAccessModal = false" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Cancel</button>
+        <button @click="closeAccessModal" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Cancel</button>
         <button @click="updateAccessRight" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Confirm</button>
       </div>
     </div>

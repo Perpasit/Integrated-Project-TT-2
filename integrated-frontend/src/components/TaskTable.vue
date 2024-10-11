@@ -48,6 +48,7 @@ const isSameOid = computed(() => {
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     const boardData = await boardStore.getBoardById(boardId);
+    boardName.value = boardData.name;
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`);
     }
@@ -55,7 +56,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
 
-    // console.log("Board ID:", boardId, "User OID:", userOid.value);
+  
     
     const visibility = boardData.visibility;
 
@@ -92,14 +93,7 @@ watch(
 
 const boardName = ref("");
 
-const fetchBoardDetails = async () => {
-  try {
-    const boardData = await boardStore.getBoardById(boardId);
-    boardName.value = boardData.name;
-  } catch (error) {
-    console.error("Error fetching board details:", error);
-  }
-};
+
 
 const showTaskDetail = (task) => {
   router.push({
@@ -255,7 +249,7 @@ const toggleStatusFilter = (statusName) => {
 };
 
 onMounted(async () => {
-  await fetchBoardDetails();
+  
 
   const boardId = route.params.boardId;
 
