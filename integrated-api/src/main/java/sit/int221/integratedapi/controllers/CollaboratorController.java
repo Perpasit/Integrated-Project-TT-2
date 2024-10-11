@@ -82,12 +82,19 @@ public class CollaboratorController {
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
+        if (collaboratorService.isBoardOwner(boardId, oidFromToken)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Board owner cannot be collaborator of his/her own board.");
+        }
+
         if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getUserEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("The user is already the collaborator of this board.");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("The user is already the collaborator of this board.");
         }
 
         CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId,
                 collaboratorCDTO.getUserEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
 

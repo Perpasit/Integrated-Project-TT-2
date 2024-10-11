@@ -37,6 +37,12 @@ public class CollaboratorService {
         return collaboratorRepository.existsByBoardIdAndUserEmail(boardId, userEmail);
     }
 
+    public boolean isBoardOwner(String boardId, String userId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+        return board.getOwnerId().equals(userId);
+    }
+
 
     public void validateBoardAccessForGet(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
