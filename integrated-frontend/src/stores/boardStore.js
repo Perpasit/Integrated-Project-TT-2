@@ -96,7 +96,7 @@ export const useBoardStore = defineStore("board", {
     async deleteBoard(id) {
       try {
         await deleteItem(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${id}`);
-        this.boards = this.boards.filter((board) => board.id !== id);
+        // this.boards = this.boards.filter((board) => board.id !== id);
       } catch (error) {
         throw error;
       }

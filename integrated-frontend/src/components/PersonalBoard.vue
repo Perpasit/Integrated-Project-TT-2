@@ -36,7 +36,7 @@ const deleteBoard = async () => {
     try {
       await boardStore.deleteBoard(selectedBoardToDelete.id)
       showSuccessModal.value = true
-      selectedBoardToDelete = null
+      selectedBoardToDelete.value = null
       await fetchPersonalBoards()
 
       setTimeout(() => {
@@ -51,6 +51,7 @@ const deleteBoard = async () => {
         }, 3000)
       }
     }
+    
 }
 
 function closeDeleteModal() {
