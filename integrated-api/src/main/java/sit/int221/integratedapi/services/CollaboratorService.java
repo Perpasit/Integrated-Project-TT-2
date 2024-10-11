@@ -43,6 +43,23 @@ public class CollaboratorService {
         return board.getOwnerId().equals(userId);
     }
 
+    public boolean isEmailOfBoardOwner(String boardId, String email) {
+        // Get the user associated with the email
+        TaskUser user = taskUserRepository.findByEmail(email)
+                .orElseThrow(() -> new ItemNotFoundException("User with email " + email + " not found"));
+
+        // Get the oid of the board owner
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        String boardOwnerOid = board.getOwnerId();
+
+        // Compare the oids
+        return user.getOid().equals(boardOwnerOid);
+    }
+
+
+
+
 
     public void validateBoardAccessForGet(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)

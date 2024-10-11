@@ -6,7 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 const collabStore = useCollabStore();
-const collaborators = ref([]);
+const collaborators = computed(() => collabStore.getCollaborators)
 const isDeleteModalVisible = ref(false);
 const showSuccessModal = ref(false);
 const showAccessModal = ref(false); // Modal for access right change
