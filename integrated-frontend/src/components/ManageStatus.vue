@@ -30,7 +30,12 @@ let selectedStatusToDelete = null
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
-const newStatusId = ref(1)
+const newStatusId = ref(null)
+watch(statuses, (newStatuses) => {
+  if (newStatuses.length > 0) {
+    newStatusId.value = newStatuses[0].id 
+  }
+})
 
 const boardId = route.params.boardId
 const userOid = ref("")
