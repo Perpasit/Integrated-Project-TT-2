@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted , computed } from 'vue';
 import { useCollabStore } from "../stores/collaboratorStore";
+import { useUserStore } from "../stores/userStore";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -9,6 +10,13 @@ const email = ref("");
 const accessRight = ref("READ");
 const boardId = ref(route.params.boardId);
 const collabStore = useCollabStore();
+const userStore = useUserStore();
+
+
+const isAddDisabled = computed(() => {
+  const userEmail = ref(userStore.getUserEmail)
+  return email.value === userEmail.value;
+});
 
 const collaborators = ref([]); // ประกาศ ref สำหรับเก็บข้อมูล collaborators
 
@@ -40,6 +48,7 @@ const fetchCollaborator = async () => {
     }
   }
 };
+
 
 
 const handleSubmit = async () => {
@@ -98,6 +107,7 @@ onMounted(async () => {
           <label for="email" class="block text-sm font-medium text-gray-700"
             >Collaborator Email</label
           >
+          
           <input
             v-model="email"
             type="email"
@@ -105,6 +115,7 @@ onMounted(async () => {
             required
             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
+          <p v-if="isAddDisabled" class="text-xs font-medium text-red-500 ">Board owner cannot be collaborator of his/her own board</p>
         </div>
 
         <div class="mb-4">
@@ -132,8 +143,9 @@ onMounted(async () => {
             Cancel
           </button>
           <button
+            :disabled="isAddDisabled"
             type="submit"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Add Collaborator
           </button>

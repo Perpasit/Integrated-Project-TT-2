@@ -28,6 +28,7 @@ export const useUserStore = defineStore("user", {
     getAccessToken: (state) => state.accessToken,
     getRefreshToken: (state) => state.refreshToken,
     getUserOid: (state) => state.userInfo.oid,
+    getUserEmail: (state) => state.userInfo.email,
   },
 
   actions: {
