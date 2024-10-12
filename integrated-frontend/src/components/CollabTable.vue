@@ -49,12 +49,17 @@ const hasWriteAccess = computed(() => {
   return collaboratorData?.accessRight === "WRITE";
 });
 
+const hasReadAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "READ";
+});
+
 const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
     return false;
   }
 
-  return boardOid.value === userOid.value || hasWriteAccess.value;
+  return boardOid.value === userOid.value || hasWriteAccess.value || hasReadAccess.value;
 });
 
 const fetchBoardAndUserOids = async (boardId) => {
