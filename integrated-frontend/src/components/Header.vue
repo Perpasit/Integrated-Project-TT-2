@@ -136,14 +136,9 @@ const goToCollaborator = () => {
   router.push({ name: "CollabManage", params: { boardId } })
 }
 onMounted(async () => {
+  userStore.loadFromLocalStorage()
   const boardId = route.params.boardId
   console.log("Board ID from route:", boardId)
-
-  if (userStore.getIsAuthenticated === false) {
-    console.log("Waiting for authentication...")
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-
   console.log("User is authenticated:", userStore.getIsAuthenticated)
 
   try {

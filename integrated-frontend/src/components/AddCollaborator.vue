@@ -1,46 +1,86 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useCollabStore } from "../stores/collaboratorStore"
-import { useRoute,useRouter } from "vue-router"
+import { useCollabStore } from "../stores/collaboratorStore";
+import { useRoute, useRouter } from "vue-router";
 
-const route = useRoute()
-const router = useRouter()
-const email = ref("")
-const accessRight = ref("READ") 
-const boardId = route.params.boardId;
-const collabStore = useCollabStore()
+const route = useRoute();
+const router = useRouter();
+const email = ref("");
+const accessRight = ref("READ");
+const boardId = ref(route.params.boardId);
+const collabStore = useCollabStore();
 
+const collaborators = ref([]); // ประกาศ ref สำหรับเก็บข้อมูล collaborators
+
+// ฟังก์ชันดึงข้อมูล collaborators
 const fetchCollaborator = async () => {
   try {
-    await collabStore.fetchCollaborators(boardId);
+    const collabAll = await collabStore.fetchCollaborators(boardId.value);
+
+    if (Array.isArray(collabAll)) {
+      // ล้างค่า collaborators และบังคับให้ Vue ตรวจจับการเปลี่ยนแปลง
+      collaborators.value = [];  // ล้างค่าเดิม
+      collaborators.value = collabAll.map((collab) => ({
+        ...collab,
+        accessRight: collab.accessRight,
+      }));
+
+      // ตรวจสอบผลลัพธ์ใน console
+      console.log('Fetched collaborators:', collaborators.value);
+    } else {
+      console.error("Unexpected data format:", collabAll);
+      collaborators.value = [];
+    }
   } catch (error) {
-    console.error("Failed to fetch collaborators:", error);
-    collaborators.value = [];
+    if (error.response && error.response.status === 404) {
+      console.warn("No collaborators found for this board.");
+      collaborators.value = [];
+    } else {
+      console.error("Failed to fetch collaborators:", error);
+    }
   }
 };
-// Handle form submission
+
+
 const handleSubmit = async () => {
   try {
-    await collabStore.addCollaborator(
-        boardId,
-      email.value,
-      accessRight.value
-    )
-    collabStore.fetchCollaborators(boardId)
+    // เพิ่ม collaborator ใหม่
+    await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
+    
+    // ดึงข้อมูล collaborators ใหม่
+    await fetchCollaborator();
+    
+    // ตรวจสอบว่าข้อมูล collaborators ถูกอัปเดตหรือไม่
+    console.log('Collaborators after adding:', collaborators.value);
+    
+    // ล้างค่า email และ accessRight หลังจากเพิ่มเสร็จ
+    email.value = "";
+    accessRight.value = "READ";
+
+    // นำทางกลับไปที่หน้า Collaborator Management (หรือไม่ขึ้นอยู่กับความต้องการ)
+    navigateBack();
+  
   } catch (error) {
-    console.error("Error adding collaborator:", error)
+    console.error("Error adding collaborator:", error);
   }
-  router.push({ name: "CollabManage", params: { boardId: boardId } })
 
-}
+};
 
+
+// ฟังก์ชันนำทางกลับไปที่หน้า Collaborator Management
 const navigateBack = () => {
-  router.push({ name: "CollabManage", params: { boardId: boardId } })
-}
-// onMounted(async () => {
-//   await fetchCollaborator(); 
-// });
+  router.push({ name: "CollabManage", params: { boardId: boardId.value } });
+};
+
+// เรียก fetchCollaborator เมื่อ component ถูก mount
+onMounted(async () => {
+  await fetchCollaborator();
+  console.log(collaborators.value);
+
+});
 </script>
+
+
 
 <template>
   <div
