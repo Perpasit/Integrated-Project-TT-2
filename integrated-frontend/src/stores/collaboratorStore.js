@@ -131,7 +131,20 @@ export const useCollabStore = defineStore("collab", {
       return this.collabs.find(
         (collaborator) => collaborator.oid === userOid // ใช้ฟิลด์ oid สำหรับการตรวจสอบ userOid
       );
+    },
+
+    async fetchCollaboratorByCollabOid(boardId, collabOid) {
+      try {
+        const response = await getItems(
+          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/${collabOid}`
+        );
+        return response;
+      } catch (error) {
+        console.error("Error fetching collaborator by collabOid:", error);
+        throw error;
+      }
     }
+    
     
     
     

@@ -10,16 +10,60 @@ const boardStore = useBoardStore()
 const userStore = useUserStore()
 const collabStore = useCollabStore()
 const boards = ref([])
-
-
+const accessRights = ref({})
+const collaborator = ref({})
 const showDeleteConfirmation = ref(false)
 let selectedBoardToDelete = null
 const showSuccessModal = ref(false)
 const showNotFoundModal = ref(false)
 
+const fetchCollaboratorByCollabOid = async (boardId) => {
+  const userOid = userStore.getUserOid
+  if (!userOid) {
+    console.error("User OID not found")
+    return null
+  }
+
+  try {
+    const result = await collabStore.fetchCollaboratorByCollabOid(
+      boardId,
+      userOid
+    )
+
+    if (result) {
+      console.log("Collaborator accessRight:", result.accessRight)
+      collaborator.value = result // เก็บค่าลงใน collaborator
+    } else {
+      console.log("Collaborator not found.")
+    }
+
+    return result ? result.accessRight : null
+  } catch (error) {
+    console.error("Error fetching collaborator by OID:", error)
+    return null
+  }
+}
+
+const fetchCollabsBoards = async () => {
+  try {
+    await boardStore.fetchAllBoards()
+    const fetchedBoards = boardStore.getBoardsCollab
+
+    const boardsWithAccessRight = await Promise.all(
+      fetchedBoards.map(async (board) => {
+        const accessRight = await fetchCollaboratorByCollabOid(board.id)
+        return { ...board, accessRight } // เก็บ accessRight ไว้ใน board
+      })
+    )
+
+    boards.value = boardsWithAccessRight // อัปเดต boards.value พร้อมค่า accessRight
+  } catch (error) {
+    console.error("Error fetching boards:", error)
+  }
+}
 
 const confirmDelete = (board) => {
-  // console.log("Selected board to delete:", board) 
+  // console.log("Selected board to delete:", board)
   selectedBoardToDelete = board
   showDeleteConfirmation.value = true
 }
@@ -29,7 +73,7 @@ const leaveBoard = async (board) => {
   // console.log(currentUser)
   showDeleteConfirmation.value = false
   if (!board || !board.id) {
-    console.error("Board is undefined or has no id:", board) 
+    console.error("Board is undefined or has no id:", board)
     return
   }
   try {
@@ -67,15 +111,6 @@ const cancelDelete = () => {
 const navigateToTasks = (board) => {
   if (board && board.id) {
     router.push({ name: "home", params: { boardId: board.id } })
-  }
-}
-
-const fetchCollabsBoards = async () => {
-  try {
-    await boardStore.fetchAllBoards()
-    boards.value = boardStore.getBoardsCollab
-  } catch (error) {
-    console.error("Error fetching boards:", error)
   }
 }
 
@@ -123,10 +158,16 @@ onMounted(async () => {
             </td>
             <td class="px-4 py-2">
               <p class="itbkk-access-right">
-                {{ board.accessRight === "edit" ? "Edit" : "Read" }}
+                {{
+                  board.accessRight === "WRITE"
+                    ? "WRITE"
+                    : board.accessRight === "READ"
+                    ? "READ"
+                    : "N/A"
+                }}
               </p>
-              <!-- Conditionally display "Edit" or "Read" -->
             </td>
+
             <td
               class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly"
             >
@@ -171,7 +212,8 @@ onMounted(async () => {
         <button
           class="itbkk-leave-board bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-all duration-200 ease-in-out"
           @click.stop="leaveBoard(selectedBoardToDelete)"
-          > Leave
+        >
+          Leave
         </button>
       </div>
     </div>
