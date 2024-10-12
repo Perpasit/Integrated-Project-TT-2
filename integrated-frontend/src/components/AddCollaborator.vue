@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted , computed } from 'vue';
+import { ref, onMounted , computed ,watch} from 'vue';
 import { useCollabStore } from "../stores/collaboratorStore";
 import { useUserStore } from "../stores/userStore";
 import { useRoute, useRouter } from "vue-router";
@@ -14,8 +14,16 @@ const userStore = useUserStore();
 
 
 const isAddDisabled = computed(() => {
-  const userEmail = ref(userStore.getUserEmail)
-  return email.value === userEmail.value;
+  const userEmail = userStore.getUserEmail; // Access directly without ref
+  return email.value === userEmail;
+});
+
+watch(email, () => {
+  if (isAddDisabled.value) {
+    errorText.value = "Board owner cannot be collaborator of his/her own board";
+  } else {
+    errorText.value = ""; // Clear the error when the condition is no longer met
+  }
 });
 
 const collaborators = ref([]); // ประกาศ ref สำหรับเก็บข้อมูล collaborators
@@ -34,7 +42,7 @@ const fetchCollaborator = async () => {
       }));
 
       // ตรวจสอบผลลัพธ์ใน console
-      console.log('Fetched collaborators:', collaborators.value);
+      // console.log('Fetched collaborators:', collaborators.value);
     } else {
       console.error("Unexpected data format:", collabAll);
       collaborators.value = [];
@@ -50,27 +58,41 @@ const fetchCollaborator = async () => {
 };
 
 
+const errorText = ref("")
 
 const handleSubmit = async () => {
+
   try {
     // เพิ่ม collaborator ใหม่
-    await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
-    
-    // ดึงข้อมูล collaborators ใหม่
-    await fetchCollaborator();
-    
+    const data = await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
+    if (data === "The user is already the collaborator of this board.") { 
+      // === "The user is already the collaborator of this board"
+      errorText.value = data
+      // await fetchCollaborator();
+      return;
+    }
+    if (data.status === 404){
+      errorText.value = data.message
+      // await fetchCollaborator();
+      return;
+    }
+      email.value = "";
+      errorText.value = ""
+      accessRight.value = "READ";
+      navigateBack();
+    // await fetchCollaborator();
     // ตรวจสอบว่าข้อมูล collaborators ถูกอัปเดตหรือไม่
-    console.log('Collaborators after adding:', collaborators.value);
+    // console.log('Collaborators after adding:', collaborators.value);
     
     // ล้างค่า email และ accessRight หลังจากเพิ่มเสร็จ
-    email.value = "";
-    accessRight.value = "READ";
+    
 
     // นำทางกลับไปที่หน้า Collaborator Management (หรือไม่ขึ้นอยู่กับความต้องการ)
-    navigateBack();
+    // 
   
   } catch (error) {
     console.error("Error adding collaborator:", error);
+    console.log("cant add")
   }
 
 };
@@ -84,7 +106,7 @@ const navigateBack = () => {
 // เรียก fetchCollaborator เมื่อ component ถูก mount
 onMounted(async () => {
   await fetchCollaborator();
-  console.log(collaborators.value);
+  // console.log(collaborators.value);
 
 });
 </script>
@@ -115,7 +137,7 @@ onMounted(async () => {
             required
             class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
-          <p v-if="isAddDisabled" class="text-xs font-medium text-red-500 ">Board owner cannot be collaborator of his/her own board</p>
+          <p v-if="errorText" class="text-xs font-medium text-red-500">{{ errorText }}</p>
         </div>
 
         <div class="mb-4">
@@ -152,5 +174,7 @@ onMounted(async () => {
         </div>
       </form>
     </div>
+
+    
   </div>
 </template>

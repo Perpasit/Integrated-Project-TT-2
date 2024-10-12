@@ -78,8 +78,10 @@ export const useCollabStore = defineStore("collab", {
           `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`,
           collaboratorData
         )
-        this.collabs.push(response)
-        return response // Update state with the new collaborator
+        if (response.name != null || undefined) {
+          this.collabs.push(response); 
+        } 
+        return response
       } catch (error) {
         console.error("Error adding collaborator:", error)
       }

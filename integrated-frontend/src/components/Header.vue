@@ -38,7 +38,7 @@ const isSameOidOrHasWriteAccess = computed(() => {
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     const boardData = await boardStore.getBoardById(boardId)
-    console.log(boardData)
+    // console.log(boardData)
  
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`)
@@ -47,7 +47,7 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid
     userOid.value = userStore.getUserOid || null
 
-    console.log("Board OID:", boardOid.value, "User OID:", userOid.value)
+    // console.log("Board OID:", boardOid.value, "User OID:", userOid.value)
 
     const visibility = boardData.visibility
 
@@ -62,14 +62,14 @@ const fetchBoardAndUserOids = async (boardId) => {
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(
         userOid.value
       )
-      console.log(collaboratorData)
+      // console.log(collaboratorData)
       if (
         !collaboratorData ||
         (collaboratorData.accessRight !== "READ" &&
           collaboratorData.accessRight !== "WRITE")
       ) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
-        console.log(collaboratorData)
+        // console.log(collaboratorData)
         router.push({ name: "AccessDenied" })
       }
     }
@@ -138,8 +138,8 @@ const goToCollaborator = () => {
 onMounted(async () => {
   userStore.loadFromLocalStorage()
   const boardId = route.params.boardId
-  console.log("Board ID from route:", boardId)
-  console.log("User is authenticated:", userStore.getIsAuthenticated)
+  // console.log("Board ID from route:", boardId)
+  // console.log("User is authenticated:", userStore.getIsAuthenticated)
 
   try {
     await fetchBoardAndUserOids(boardId)
