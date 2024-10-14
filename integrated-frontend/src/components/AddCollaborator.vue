@@ -11,7 +11,43 @@ const accessRight = ref("READ");
 const boardId = ref(route.params.boardId);
 const collabStore = useCollabStore();
 const userStore = useUserStore();
+const boardOid = ref(null); 
 
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false;
+  }
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
+
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+    // const visibility = boardData.visibility;
+    // console.log("Board Visibility:", visibility);
+    // console.log(isSameOidOrHasWriteAccess.value)
+
+    if (!isSameOidOrHasWriteAccess.value) {
+      router.push({ name: "AccessDenied" });
+    }
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
+  }
+};
 
 const isAddDisabled = computed(() => {
   const userEmail = userStore.getUserEmail; // Access directly without ref
@@ -107,7 +143,7 @@ const navigateBack = () => {
 onMounted(async () => {
   await fetchCollaborator();
   // console.log(collaborators.value);
-
+  await fetchBoardAndUserOids()
 });
 </script>
 
