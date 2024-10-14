@@ -15,7 +15,9 @@ import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CollaboratorService {
@@ -103,7 +105,7 @@ public class CollaboratorService {
         }
     }
 
-    public List<CollaboratorDTO> getCollaboratorsByBoardId(String boardId, String oidFromToken) {
+    public Map<String, Object> getCollaboratorsByBoardId(String boardId, String oidFromToken) {
         validateBoardAccessForGet(boardId, oidFromToken);
 
         Board board = boardRepository.findById(boardId)
@@ -124,7 +126,10 @@ public class CollaboratorService {
             collaboratorDTOs.add(collaboratorDTO);
         }
 
-        return collaboratorDTOs;
+        // Return as a map (object) instead of a list
+        Map<String, Object> response = new HashMap<>();
+        response.put("collaborators", collaboratorDTOs);
+        return response;
     }
 
     public CollaboratorDTO getCollaboratorById(String boardId, String collabOid, String oidFromToken) {

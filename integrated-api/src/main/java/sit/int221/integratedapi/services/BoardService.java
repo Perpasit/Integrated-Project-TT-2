@@ -90,7 +90,7 @@ public class BoardService {
         }
     }
 
-//    public List<BoardDTO> getAllBoards(String oid) {
+    //    public List<BoardDTO> getAllBoards(String oid) {
 //        // Retrieve all boards where the task user's oid matches the given oid
 //        List<Board> boards = boardRepository.findByOwnerId(oid);
 //        List<BoardDTO> boardDTOs = new ArrayList<>();
@@ -118,37 +118,23 @@ public class BoardService {
 //        return boardDTOs;
 //    }
 
-    public BoardListDTO getAllPersonalAndCollaboratingBoards(String userOid) {
-        // ดึงบอร์ดส่วนตัว (บอร์ดที่ผู้ใช้เป็นเจ้าของ)
-        List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
-
-        // ดึง Collaborator records ที่เกี่ยวข้องกับ userOid
-        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
-
-        // สร้าง List ของ Board สำหรับบอร์ดที่ผู้ใช้เป็น Collaborator
-        List<Board> collaboratingBoards = new ArrayList<>();
-
-        for (Collaborator collaborator : collaborators) {
-            // ดึงข้อมูลบอร์ดโดยใช้ boardId จาก Collaborator
-            Board board = boardRepository.findById(collaborator.getBoard().getId())
-                    .orElseThrow(() -> new ItemNotFoundException("Board with id " + collaborator.getBoard().getId() + " not found"));
-            collaboratingBoards.add(board);
+    // ฟังก์ชันสำหรับแปลง Collaborator เป็น CollaboratorDTO
+    private CollaboratorDTO mapCollaboratorToDTO(Collaborator collaborator) {
+        TaskUser user = collaborator.getUser();
+        if (user != null) {
+            return new CollaboratorDTO(
+                    user.getOid(),
+                    user.getName(),
+                    user.getEmail(),
+                    collaborator.getAccessRight(),
+                    collaborator.getAddedOn().toString()
+            );
+        } else {
+            throw new ItemNotFoundException("User not found for collaborator with ID: " + collaborator.getId());
         }
-
-        // แปลงบอร์ดส่วนตัวเป็น BoardDTO
-        List<BoardDTO> personalBoardDTOs = personalBoards.stream()
-                .map(this::mapBoardToDTO)
-                .collect(Collectors.toList());
-
-        // แปลงบอร์ด Collaborator เป็น BoardDTO
-        List<BoardDTO> collabBoardDTOs = collaboratingBoards.stream()
-                .map(this::mapBoardToDTO)
-                .collect(Collectors.toList());
-
-        // คืนค่าในรูปแบบของ BoardListDTO
-        return new BoardListDTO(personalBoardDTOs, collabBoardDTOs);
     }
 
+    // ฟังก์ชันหลักสำหรับดึงบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
     // ฟังก์ชันสำหรับแปลง Board เป็น BoardDTO
     private BoardDTO mapBoardToDTO(Board board) {
         TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
@@ -160,6 +146,37 @@ public class BoardService {
         }
     }
 
+    // ฟังก์ชันหลักสำหรับดึงบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
+    public BoardListDTO getAllPersonalAndCollaboratingBoards(String userOid) {
+        // ดึงบอร์ดส่วนตัว
+        List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
+        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
+
+        // แปลงเป็น BoardDTO สำหรับ personalBoards
+        List<BoardDTO> personalBoardDTOs = personalBoards.stream()
+                .map(this::mapBoardToDTO)
+                .collect(Collectors.toList());
+
+        // แปลงบอร์ดที่เป็น collaborator เป็น BoardDTO
+        List<BoardDTO> collabBoardDTOs = collaborators.stream()
+                .map(collaborator -> {
+                    Board board = collaborator.getBoard();
+                    TaskUser taskUser = collaborator.getUser();
+                    OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+
+                    // คืนค่าเป็น BoardDTO โดยไม่ใช้ accessRight
+                    return new BoardDTO(
+                            board.getId(),
+                            board.getName(),
+                            board.getVisibility(),
+                            ownerDTO
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // คืนค่าในรูปแบบของ BoardListDTO
+        return new BoardListDTO(personalBoardDTOs, collabBoardDTOs);
+    }
 
 
 
@@ -215,7 +232,7 @@ public class BoardService {
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
 
         // Create and return BoardCDTO
-        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(),  board.getVisibility(),ownerDTO);
+        BoardCDTO createdBoardCDTO = new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
         return createdBoardCDTO;
     }
 
@@ -224,7 +241,6 @@ public class BoardService {
         // Check if a board already exists for the given taskusers_oid
         return boardRepository.existsByOwnerId(taskusersOid);
     }
-
 
 
     public BoardDTO getBoardById(String boardId, String oid) {
@@ -248,10 +264,6 @@ public class BoardService {
 
         return boardDTO;
     }
-
-
-
-
 
 
     @Transactional
@@ -290,8 +302,6 @@ public class BoardService {
         }
 
 
-
-
         board = boardRepository.save(board);
 
 
@@ -304,9 +314,6 @@ public class BoardService {
 
         return new BoardCDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
     }
-
-
-
 
 
     @Transactional
