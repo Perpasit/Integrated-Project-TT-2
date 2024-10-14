@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CollaboratorCDTO {
-    private String userEmail;
+    private String email;
     private String accessRight;
 }

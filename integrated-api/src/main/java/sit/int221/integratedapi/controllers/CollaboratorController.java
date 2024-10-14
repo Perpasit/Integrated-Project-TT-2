@@ -12,6 +12,7 @@ import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -36,7 +37,7 @@ public class CollaboratorController {
     private ListMapper listMapper;
 
     @GetMapping("/{boardId}/collabs")
-    public ResponseEntity<List<CollaboratorDTO>> getCollaboratorsByBoardId(
+    public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId) {
 
@@ -48,9 +49,12 @@ public class CollaboratorController {
 
         boardService.validateBoardAccessForGet(boardId, oidFromToken);
 
-        List<CollaboratorDTO> collaborators = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
-        return ResponseEntity.ok(collaborators);
+        // Get collaborators as an object (map)
+        Map<String, Object> collaboratorsResponse = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
+
+        return ResponseEntity.ok(collaboratorsResponse);
     }
+
 
 
     @GetMapping("/{boardId}/collabs/{collabOid}")
@@ -86,18 +90,18 @@ public class CollaboratorController {
 
         // Check if the user is the owner and is trying to add themselves
         if (collaboratorService.isBoardOwner(boardId, oidFromToken) &&
-                collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getUserEmail())) {
+                collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Board owner cannot be collaborator of his/her own board.");
         }
 
-        if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getUserEmail())) {
+        if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("The user is already the collaborator of this board.");
         }
 
         CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId,
-                collaboratorCDTO.getUserEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
+                collaboratorCDTO.getEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
