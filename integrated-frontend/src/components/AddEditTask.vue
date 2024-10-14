@@ -44,27 +44,12 @@ const fetchBoardAndUserOids = async (boardId) => {
 
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
+    // const visibility = boardData.visibility;
+    // console.log("Board Visibility:", visibility);
+    // console.log(isSameOidOrHasWriteAccess.value)
 
-    // console.log("Board ID:", boardId, "User OID:", userOid.value);
-    
-    const visibility = boardData.visibility;
-
-    await collabStore.fetchCollaborators(boardId);
-
-    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
-    // console.log("Collaborators:", collabStore.collabs);
-
-    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
-    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
-      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
-      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser( userOid.value);
-      console.log(collaboratorData.value)
-      console.log("test")
-      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
-        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
-        console.log(collaboratorData)
-        router.push({ name: "AccessDenied" });
-      }
+    if (!isSameOidOrHasWriteAccess.value) {
+      router.push({ name: "AccessDenied" });
     }
 
   } catch (error) {
