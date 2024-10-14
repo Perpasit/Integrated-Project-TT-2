@@ -45,8 +45,8 @@ export const useCollabStore = defineStore("collab", {
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
           )
         }
-        this.collabs = data || [];
-        return data
+        this.collabs = data.collaborators || [];
+        return data.collaborators
       } catch (error) {
         console.error("Error fetching collaborators:", error)
       }

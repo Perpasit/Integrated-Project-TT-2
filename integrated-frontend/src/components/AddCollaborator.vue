@@ -2,6 +2,7 @@
 import { ref, onMounted , computed ,watch} from 'vue';
 import { useCollabStore } from "../stores/collaboratorStore";
 import { useUserStore } from "../stores/userStore";
+import { useBoardStore } from "../stores/boardStore";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -11,8 +12,9 @@ const accessRight = ref("READ");
 const boardId = ref(route.params.boardId);
 const collabStore = useCollabStore();
 const userStore = useUserStore();
+const boardStore = useBoardStore();
 const boardOid = ref(null); 
-
+const userOid = ref();
 const hasWriteAccess = computed(() => {
   const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
   return collaboratorData?.accessRight === "WRITE";
@@ -29,10 +31,11 @@ const isSameOidOrHasWriteAccess = computed(() => {
 const fetchBoardAndUserOids = async (boardId) => {
   try {
     const boardData = await boardStore.getBoardById(boardId);
+    // console.log(boardData)
     if (!boardData) {
       throw new Error(`Board with id ${boardId} not found.`);
     }
-
+    console.log(userStore.getUserOid)
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
     // const visibility = boardData.visibility;
@@ -141,9 +144,10 @@ const navigateBack = () => {
 
 // เรียก fetchCollaborator เมื่อ component ถูก mount
 onMounted(async () => {
+  const boardId = route.params.boardId;
   await fetchCollaborator();
   // console.log(collaborators.value);
-  await fetchBoardAndUserOids()
+  await fetchBoardAndUserOids(boardId)
 });
 </script>
 

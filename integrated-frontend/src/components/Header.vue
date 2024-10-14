@@ -62,6 +62,7 @@ const fetchBoardAndUserOids = async (boardId) => {
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(
         userOid.value
       )
+
       // console.log(collaboratorData)
       if (
         !collaboratorData ||
