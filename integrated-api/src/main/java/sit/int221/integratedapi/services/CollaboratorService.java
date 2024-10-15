@@ -9,6 +9,7 @@ import sit.int221.integratedapi.dtos.CollaboratorDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
 import sit.int221.integratedapi.entities.User;
+import sit.int221.integratedapi.exceptions.ConflictException;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
@@ -87,23 +88,40 @@ public class CollaboratorService {
     }
 
     public void validateWriteAccess(String boardId, String oidFromToken) {
-        // ค้นหาบอร์ดที่ต้องการเข้าถึง
+        // Find the board by its ID
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-        // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
+        // Only allow the owner of the board to modify it
         if (!board.getOwnerId().equals(oidFromToken)) {
+            throw new ForbiddenException("Only the board owner has permission to modify this board");
+        }
+    }
+
+    public void validateDeleteAccess(String boardId, String oidFromToken) {
+        // Retrieve the board using the provided boardId
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
+
+        // Check if the user (oidFromToken) is the owner of the board
+        if (!board.getOwnerId().equals(oidFromToken)) {
+            // If the user is not the owner, check if they have WRITE access as a collaborator
             User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
+            // Find if the user is a collaborator with WRITE access
             Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
-                throw new ForbiddenException("You do not have permission to modify this board");
+                // If not the owner or a collaborator with WRITE access, throw a ForbiddenException
+                throw new ForbiddenException("You do not have permission to modify or delete this board");
             }
         }
     }
+
+
+
 
     public Map<String, Object> getCollaboratorsByBoardId(String boardId, String oidFromToken) {
         // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
@@ -187,7 +205,7 @@ public class CollaboratorService {
         // Check if the user is already a collaborator on this board
         boolean exists = collaboratorRepository.existsByBoardIdAndEmail(board.getId(), user.getEmail());
         if (exists) {
-            throw new IllegalArgumentException("User is already a collaborator for this board");
+            throw new ConflictException("User is already a collaborator for this board");
         }
 
         // Validate access right and catch if the value provided does not exist in the enum
@@ -251,35 +269,70 @@ public class CollaboratorService {
 
     @Transactional
     public CollaboratorDTO removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
-        // ดึงบอร์ดและผู้ใช้งานจาก repository
+        // Check if the board exists
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        User user = userRepository.findById(collabOid)
-                .orElseThrow(() -> new ItemNotFoundException("User with id " + collabOid + " not found"));
-
-        // ตรวจสอบว่าผู้ใช้ปัจจุบันเป็นเจ้าของบอร์ดหรือไม่ หรือเป็นผู้ที่ต้องการลบตนเอง
-        if (!oidFromToken.equals(collabOid)) {
-            // ถ้าไม่ใช่เจ้าของบอร์ดและไม่ตรงกับ collabOid ให้ตรวจสอบสิทธิ์
-            validateWriteAccess(boardId, oidFromToken);
+        // Retrieve the user (collaborator being removed) by their OID
+        User user = userRepository.findByOid(collabOid);
+        if (user == null) {
+            // If the collaborator does not exist, throw 404 for non-existing collaborator case
+            throw new ItemNotFoundException("Collaborator with id " + collabOid + " does not exist.");
         }
 
-        // ดึง collaborator และตรวจสอบว่ามีอยู่จริง
-        Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
-        if (collaborator == null) {
-            throw new ItemNotFoundException("Collaborator not found");
+        // Check if the current user is either the board owner or a collaborator with sufficient access
+        boolean isOwner = board.getOwnerId().equals(oidFromToken);
+        Collaborator currentCollaborator = collaboratorRepository.findByUserOidAndBoard(oidFromToken, board);
+        Collaborator collaboratorToRemove = collaboratorRepository.findByUserOidAndBoard(collabOid, board);
+
+        // Case: non-collaborator cannot remove collaborator (including unauthenticated user)
+        if (currentCollaborator == null && !isOwner) {
+            throw new ForbiddenException("You do not have permission to remove collaborators from this board.");
         }
 
-        // ลบ collaborator และสร้าง DTO เพื่อนำกลับไปใช้
-        CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaborator, CollaboratorDTO.class);
+        // Case: collaborator does not exist on the board
+        if (collaboratorToRemove == null) {
+            // Owner cannot remove non-existing collaborator
+            if (isOwner) {
+                throw new ItemNotFoundException("Collaborator does not exist on this board.");
+            }
+            // Non-collaborator cannot leave if not part of the board
+            throw new ForbiddenException("Collaborator does not exist or cannot leave this board.");
+        }
+
+        // Case: collaborator trying to remove themselves (READ or WRITE can remove themselves)
+        if (oidFromToken.equals(collabOid)) {
+            collaboratorRepository.delete(collaboratorToRemove);
+        } else {
+            // Case: READ or WRITE collaborators cannot remove other collaborators
+            if (currentCollaborator != null && (currentCollaborator.getAccessRight() == Collaborator.AccessRight.READ ||
+                    currentCollaborator.getAccessRight() == Collaborator.AccessRight.WRITE)) {
+                throw new ForbiddenException("Collaborators cannot remove other collaborators.");
+            }
+
+            // Case: board owner can remove any collaborator
+            if (isOwner) {
+                collaboratorRepository.delete(collaboratorToRemove);
+            } else {
+                throw new ForbiddenException("Only the board owner can remove other collaborators.");
+            }
+        }
+
+        // Map the collaborator entity to DTO before returning
+        CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaboratorToRemove, CollaboratorDTO.class);
         collaboratorDTO.setOid(user.getOid());
         collaboratorDTO.setName(user.getName());
         collaboratorDTO.setEmail(user.getEmail());
 
-        collaboratorRepository.delete(collaborator);
-
         return collaboratorDTO;
     }
+
+
+
+
+
+
+
 
 
 }

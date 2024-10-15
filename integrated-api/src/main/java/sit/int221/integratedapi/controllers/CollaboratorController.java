@@ -11,6 +11,7 @@ import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.repositories.login.UserRepository;
+import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 import java.util.List;
@@ -40,6 +41,9 @@ public class CollaboratorController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CollaboratorRepository collaboratorRepository;
 
     @GetMapping("/{boardId}/collabs")
     public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
@@ -88,96 +92,150 @@ public class CollaboratorController {
 
     @PostMapping("/{boardId}/collabs")
     public ResponseEntity<?> addCollaborator(
-            @RequestHeader(value = "Authorization",required = false) String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @RequestBody(required = false) CollaboratorCDTO collaboratorCDTO) {
 
+        // Step 1: Check if authorization token is provided
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Authorization token is required.");
         }
 
+        // Step 2: Extract the oid from the token
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
+        // Step 3: Validate write access to the board
         collaboratorService.validateWriteAccess(boardId, oidFromToken);
+
+        // Step 4: Check if accessRight is provided and valid
         if (collaboratorCDTO.getAccessRight() == null || collaboratorCDTO.getAccessRight().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Access right must be provided and cannot be null or empty");
+                    .body("Access right must be provided and cannot be null or empty.");
         }
+
         Collaborator.AccessRight accessRightEnum;
         try {
-            accessRightEnum = Collaborator.AccessRight.valueOf(collaboratorCDTO.getAccessRight()); // Try to convert string to enum
+            accessRightEnum = Collaborator.AccessRight.valueOf(collaboratorCDTO.getAccessRight());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid access right provided. Valid values are READ or WRITE."); // Custom message
+                    .body("Invalid access right provided. Valid values are READ or WRITE.");
         }
-        // ค้นหา User โดยใช้อีเมล
+
+        // Step 5: Validate the email of the collaborator
         User user = userRepository.findByEmail(collaboratorCDTO.getEmail());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("User not found with email: " + collaboratorCDTO.getEmail());
         }
 
-        // Check if the board owner is trying to add themselves as a collaborator
+        // Step 6: Check if the board owner is trying to add themselves as a collaborator
         if (collaboratorService.isBoardOwner(boardId, oidFromToken) &&
                 collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Board owner cannot be a collaborator of his/her own board.");
         }
 
-
-
-        // Check if the user is already a collaborator
+        // Step 7: Check if the user is already a collaborator
         if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("The user is already a collaborator of this board.");
         }
 
-        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId,
-                collaboratorCDTO.getEmail(), accessRightEnum.name(), oidFromToken);
+        // Step 8: Add the collaborator
+        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(
+                boardId, collaboratorCDTO.getEmail(), accessRightEnum.name(), oidFromToken);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
 
-
-
-
-
-
-
-
     @PatchMapping("/{boardId}/collabs/{collabOid}")
-    public ResponseEntity<CollaboratorDTO> updateCollaboratorAccessRight(
-            @RequestHeader(value = "Authorization") String token,
+    public ResponseEntity<?> updateCollaboratorAccessRight(
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable String collabOid,
-            @RequestBody CollaboratorCDTO collaboratorCDTO) {
+            @RequestBody(required = false) CollaboratorCDTO collaboratorCDTO) {
 
+        // Step 1: Check if authorization token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authorization token is required.");
+        }
+
+        // Step 2: Extract the oid from the token
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
+        // Step 3: Validate write access to the board
+        collaboratorService.validateWriteAccess(boardId, oidFromToken);
+
+        // Step 4: Check if accessRight is provided and valid
+        if (collaboratorCDTO.getAccessRight() == null || collaboratorCDTO.getAccessRight().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Access right must be provided and cannot be null or empty.");
+        }
+
+        Collaborator.AccessRight accessRightEnum;
+        try {
+            accessRightEnum = Collaborator.AccessRight.valueOf(collaboratorCDTO.getAccessRight());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid access right provided. Valid values are READ or WRITE.");
+        }
+
+        // Step 5: Check if the collaborator exists
+        User collaboratorUser = userRepository.findByOid(collabOid);
+        if (collaboratorUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Collaborator with id " + collabOid + " not found.");
+        }
+
+        // Step 6: Check if the collaborator already has the requested access right
+        Collaborator existingCollaborator = collaboratorRepository.findByUserOidAndBoardId(collabOid, boardId);
+        if (existingCollaborator == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Collaborator not found for this board.");
+        }
+        if (existingCollaborator.getAccessRight() == accessRightEnum) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Collaborator already has the specified access right.");
+        }
+
+        // Step 7: Update the collaborator's access right
         CollaboratorDTO updatedCollaborator = collaboratorService.updateCollaboratorAccessRight(
-                boardId, collabOid, collaboratorCDTO.getAccessRight(), oidFromToken);
+                boardId, collabOid, accessRightEnum.name(), oidFromToken);
 
         return ResponseEntity.ok(updatedCollaborator);
     }
 
+
+
     @DeleteMapping("/{boardId}/collabs/{collabOid}")
-    public ResponseEntity<CollaboratorDTO> removeCollaborator(
-            @RequestHeader(value = "Authorization") String token,
+    public ResponseEntity<?> removeCollaborator(
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable String collabOid) {
 
+        // Check if token is null or empty and return 401 Unauthorized
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authorization token is required.");
+        }
+
+        // Extract the oid from the token
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
 
+
+        // Attempt to remove the collaborator and handle any exceptions
         CollaboratorDTO removedCollaborator = collaboratorService.removeCollaboratorFromBoard(boardId, collabOid, oidFromToken);
 
-
+        // Return 200 OK with the removed collaborator details
         return ResponseEntity.ok(removedCollaborator);
     }
+
 
 
 
