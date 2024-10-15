@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.*;
 import sit.int221.integratedapi.exceptions.*;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
@@ -35,11 +36,11 @@ public class StatusService {
 
     private final CollaboratorRepository collaboratorRepository;
 
-    private final TaskUserRepository taskUserRepository;
+    private final UserRepository userRepository;
 
 
     @Autowired
-    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper, BoardRepository boardRepository, CollaboratorRepository collaboratorRepository, TaskUserRepository taskUserRepository) {
+    public StatusService(StatusRepository statusRepository, TaskRepository taskRepository, GlobalSettingService globalSettingService, ListMapper listMapper, ModelMapper modelMapper, BoardRepository boardRepository, CollaboratorRepository collaboratorRepository, UserRepository userRepository) {
         this.statusRepository = statusRepository;
         this.taskRepository = taskRepository;
         this.globalSettingService = globalSettingService;
@@ -47,7 +48,7 @@ public class StatusService {
         this.modelMapper = modelMapper;
         this.boardRepository = boardRepository;
         this.collaboratorRepository = collaboratorRepository;
-        this.taskUserRepository = taskUserRepository;
+        this.userRepository = userRepository;
     }
 
     public Status findStatusByIdAndBoardId(Integer statusId, String boardId) {
@@ -123,12 +124,12 @@ public class StatusService {
         }
 
         if (!board.getOwnerId().equals(oidFromToken)) {
-            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
-            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null ||
                     (collaborator.getAccessRight() != Collaborator.AccessRight.READ &&
                             collaborator.getAccessRight() != Collaborator.AccessRight.WRITE)) {
@@ -153,12 +154,14 @@ public class StatusService {
 
         // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
         if (!board.getOwnerId().equals(oidFromToken)) {
-            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            // ดึงข้อมูล user โดยใช้ oidFromToken
+            User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
-            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            // ใช้ userOid ในการค้นหา collaborator แทนที่จะใช้ User entity
+            Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
                 throw new ForbiddenException("You do not have permission to modify this board");
             }

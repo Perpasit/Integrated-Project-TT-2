@@ -5,28 +5,24 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
-import sit.int221.integratedapi.entities.Status;
-import sit.int221.integratedapi.entities.TaskUser;
+import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.exceptions.ValidationErrorException;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
-import sit.int221.integratedapi.repositories.primary.StatusRepository;
-import sit.int221.integratedapi.repositories.primary.TaskUserRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.utils.NanoIdGenerator;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,7 +42,7 @@ public class BoardService {
     private ModelMapper modelMapper;
 
     @Autowired
-    private TaskUserRepository taskUserRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private CollaboratorRepository collaboratorRepository;
@@ -67,12 +63,12 @@ public class BoardService {
         }
 
         if (!board.getOwnerId().equals(oidFromToken)) {
-            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
-            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null ||
                     (collaborator.getAccessRight() != Collaborator.AccessRight.READ &&
                             collaborator.getAccessRight() != Collaborator.AccessRight.WRITE)) {
@@ -90,93 +86,69 @@ public class BoardService {
         }
     }
 
-    //    public List<BoardDTO> getAllBoards(String oid) {
-//        // Retrieve all boards where the task user's oid matches the given oid
-//        List<Board> boards = boardRepository.findByOwnerId(oid);
-//        List<BoardDTO> boardDTOs = new ArrayList<>();
-//
-//        for (Board board : boards) {
-//            // Fetch TaskUser by oid directly (null check will be used instead of Optional)
-//            TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
-//
-//            if (taskUser != null) {
-//                OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
-//
-//                // Create and populate BoardDTO
-//                BoardDTO boardDTO = new BoardDTO();
-//                boardDTO.setId(board.getId());
-//                boardDTO.setName(board.getName());
-//                boardDTO.setOwner(ownerDTO);
-//
-//                // Map the visibility field
-//                boardDTO.setVisibility(board.getVisibility());
-//
-//                boardDTOs.add(boardDTO);
-//            }
+
+//    private BoardDTO mapBoardToDTO(Board board) {
+//        // ดึงข้อมูล user จากฐานข้อมูล user ผ่าน repository ของ user
+//        User taskUser = userRepository.findByOid(board.getOwnerId());
+//        if (taskUser != null) {
+//            OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
+//            return new BoardDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
+//        } else {
+//            throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
 //        }
-//
-//        return boardDTOs;
 //    }
-
-    // ฟังก์ชันสำหรับแปลง Collaborator เป็น CollaboratorDTO
-    private CollaboratorDTO mapCollaboratorToDTO(Collaborator collaborator) {
-        TaskUser user = collaborator.getUser();
-        if (user != null) {
-            return new CollaboratorDTO(
-                    user.getOid(),
-                    user.getName(),
-                    user.getEmail(),
-                    collaborator.getAccessRight(),
-                    collaborator.getAddedOn().toString()
-            );
-        } else {
-            throw new ItemNotFoundException("User not found for collaborator with ID: " + collaborator.getId());
-        }
-    }
-
-    // ฟังก์ชันหลักสำหรับดึงบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
-    // ฟังก์ชันสำหรับแปลง Board เป็น BoardDTO
-    private BoardDTO mapBoardToDTO(Board board) {
-        TaskUser taskUser = taskUserRepository.findByOid(board.getOwnerId());
-        if (taskUser != null) {
-            OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
-            return new BoardDTO(board.getId(), board.getName(), board.getVisibility(), ownerDTO);
-        } else {
-            throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
-        }
-    }
 
     // ฟังก์ชันหลักสำหรับดึงบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
     public BoardListDTO getAllPersonalAndCollaboratingBoards(String userOid) {
-        // ดึงบอร์ดส่วนตัว
+        // ดึงบอร์ดส่วนตัวจากฐานข้อมูลบอร์ดโดยใช้ userOid
         List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
-        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
+        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid); // ดึงข้อมูล collaborator จากฐานข้อมูล
 
-        // แปลงเป็น BoardDTO สำหรับ personalBoards
-        List<BoardDTO> personalBoardDTOs = personalBoards.stream()
-                .map(this::mapBoardToDTO)
-                .collect(Collectors.toList());
-
-        // แปลงบอร์ดที่เป็น collaborator เป็น BoardDTO
-        List<BoardDTO> collabBoardDTOs = collaborators.stream()
-                .map(collaborator -> {
-                    Board board = collaborator.getBoard();
-                    TaskUser taskUser = collaborator.getUser();
-                    OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
-
-                    // คืนค่าเป็น BoardDTO โดยไม่ใช้ accessRight
-                    return new BoardDTO(
-                            board.getId(),
-                            board.getName(),
-                            board.getVisibility(),
-                            ownerDTO
-                    );
+        // แปลงบอร์ดส่วนตัวเป็น PersonalBoardDTO
+        List<PersonalBoardDTO> personalBoardDTOs = personalBoards.stream()
+                .map(board -> {
+                    User ownerUser = userRepository.findByOid(board.getOwnerId()); // ดึงชื่อเจ้าของบอร์ดจาก User
+                    if (ownerUser != null) {
+                        OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
+                        return new PersonalBoardDTO(board.getId(), board.getName(), board.getVisibility().name(), ownerDTO);
+                    } else {
+                        throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
+                    }
                 })
                 .collect(Collectors.toList());
 
-        // คืนค่าในรูปแบบของ BoardListDTO
+        // ดึงข้อมูลบอร์ดที่เป็น collaborator และ map ข้อมูลโดยเชื่อมโยงกับ accessRight
+        // ดึงข้อมูลบอร์ดที่เป็น collaborator และ map ข้อมูลโดยเชื่อมโยงกับ accessRight
+        List<CollaboratorBoardDTO> collabBoardDTOs = collaborators.stream()
+                .map(collaborator -> {
+                    Board board = collaborator.getBoard(); // ดึงบอร์ดที่ผู้ใช้เป็น collaborator
+                    User ownerUser = userRepository.findByOid(board.getOwnerId()); // ดึงข้อมูลเจ้าของบอร์ด
+
+                    if (ownerUser != null) {
+                        OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
+
+                        // คืนค่าเป็น CollaboratorBoardDTO โดยรวม accessRight ด้วย
+                        return new CollaboratorBoardDTO(
+                                board.getId(),
+                                board.getName(),
+                                board.getVisibility(),
+                                ownerDTO,
+                                collaborator.getAccessRight().name() // ตั้งค่า accessRight
+                        );
+                    } else {
+                        throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
+                    }
+                })
+                .collect(Collectors.toList());
+
+
+        // คืนค่ารวมของบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
         return new BoardListDTO(personalBoardDTOs, collabBoardDTOs);
     }
+
+
+
+
 
 
 
@@ -226,7 +198,7 @@ public class BoardService {
         }
 
         String ownerId = board.getOwnerId(); // Store ownerId in a final variable
-        TaskUser taskUser = taskUserRepository.findById(ownerId)
+        User taskUser = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
@@ -255,7 +227,7 @@ public class BoardService {
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
         // Find the owner of the board
-        TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
+        User taskUser = userRepository.findById(board.getOwnerId())
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
         // Create OwnerDTO
@@ -306,7 +278,7 @@ public class BoardService {
 
 
         String ownerId = board.getOwnerId();
-        TaskUser taskUser = taskUserRepository.findById(ownerId)
+        User taskUser = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + ownerId));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());
@@ -331,7 +303,7 @@ public class BoardService {
         BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
 
 
-        TaskUser taskUser = taskUserRepository.findById(board.getOwnerId())
+        User taskUser = userRepository.findById(board.getOwnerId())
                 .orElseThrow(() -> new ItemNotFoundException("User not found with id: " + board.getOwnerId()));
 
         OwnerDTO ownerDTO = new OwnerDTO(taskUser.getOid(), taskUser.getName());

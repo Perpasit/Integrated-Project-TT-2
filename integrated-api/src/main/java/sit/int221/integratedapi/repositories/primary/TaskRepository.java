@@ -27,4 +27,6 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
     List<Task> findByBoardId(String boardId, Sort sort); // เปลี่ยนจาก Integer เป็น String
 
     List<Task> findFirstByBoardIdAndStatusNameIn(String boardId, List<String> statusNames, Sort sort);
+
+
 }

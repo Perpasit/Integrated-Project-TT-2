@@ -6,9 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
+import sit.int221.integratedapi.entities.Collaborator;
+import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
-import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 import java.util.List;
@@ -36,6 +38,9 @@ public class CollaboratorController {
     @Autowired
     private ListMapper listMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/{boardId}/collabs")
     public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
             @RequestHeader(value = "Authorization", required = false) String token,
@@ -47,13 +52,15 @@ public class CollaboratorController {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
 
+        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
         boardService.validateBoardAccessForGet(boardId, oidFromToken);
 
-        // Get collaborators as an object (map)
+        // ดึงข้อมูล collaborators และแปลงเป็น response object
         Map<String, Object> collaboratorsResponse = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
 
         return ResponseEntity.ok(collaboratorsResponse);
     }
+
 
 
 
@@ -81,30 +88,62 @@ public class CollaboratorController {
 
     @PostMapping("/{boardId}/collabs")
     public ResponseEntity<?> addCollaborator(
-            @RequestHeader(value = "Authorization") String token,
+            @RequestHeader(value = "Authorization",required = false) String token,
             @PathVariable String boardId,
-            @Valid @RequestBody CollaboratorCDTO collaboratorCDTO) {
+            @RequestBody(required = false) CollaboratorCDTO collaboratorCDTO) {
+
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authorization token is required.");
+        }
 
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
                 claims -> claims.get("oid", String.class));
 
-        // Check if the user is the owner and is trying to add themselves
-        if (collaboratorService.isBoardOwner(boardId, oidFromToken) &&
-                collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getEmail())) {
+        collaboratorService.validateWriteAccess(boardId, oidFromToken);
+        if (collaboratorCDTO.getAccessRight() == null || collaboratorCDTO.getAccessRight().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Board owner cannot be collaborator of his/her own board.");
+                    .body("Access right must be provided and cannot be null or empty");
+        }
+        Collaborator.AccessRight accessRightEnum;
+        try {
+            accessRightEnum = Collaborator.AccessRight.valueOf(collaboratorCDTO.getAccessRight()); // Try to convert string to enum
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid access right provided. Valid values are READ or WRITE."); // Custom message
+        }
+        // ค้นหา User โดยใช้อีเมล
+        User user = userRepository.findByEmail(collaboratorCDTO.getEmail());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User not found with email: " + collaboratorCDTO.getEmail());
         }
 
+        // Check if the board owner is trying to add themselves as a collaborator
+        if (collaboratorService.isBoardOwner(boardId, oidFromToken) &&
+                collaboratorService.isEmailOfBoardOwner(boardId, collaboratorCDTO.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Board owner cannot be a collaborator of his/her own board.");
+        }
+
+
+
+        // Check if the user is already a collaborator
         if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("The user is already the collaborator of this board.");
+                    .body("The user is already a collaborator of this board.");
         }
 
         CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(boardId,
-                collaboratorCDTO.getEmail(), collaboratorCDTO.getAccessRight(), oidFromToken);
+                collaboratorCDTO.getEmail(), accessRightEnum.name(), oidFromToken);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
     }
+
+
+
+
+
 
 
 

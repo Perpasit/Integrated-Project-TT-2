@@ -9,6 +9,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoardListDTO {
-    private List<BoardDTO> personalBoards;
-    private List<BoardDTO> collabBoards;
+    private List<PersonalBoardDTO> personalBoards;
+    private List<CollaboratorBoardDTO> collabBoards;
 }

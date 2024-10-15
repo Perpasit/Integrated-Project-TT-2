@@ -16,6 +16,7 @@ import sit.int221.integratedapi.dtos.TaskRDTO;
 import sit.int221.integratedapi.dtos.TaskUDTO;
 import sit.int221.integratedapi.entities.*;
 import sit.int221.integratedapi.exceptions.*;
+import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
@@ -40,7 +41,7 @@ public class TaskService {
     @Autowired
     private BoardRepository boardRepository;
     @Autowired
-    private TaskUserRepository taskUserRepository;
+    private UserRepository userRepository;
     @Autowired
     private CollaboratorRepository collaboratorRepository;
 
@@ -68,12 +69,12 @@ public class TaskService {
         }
 
         if (!board.getOwnerId().equals(oidFromToken)) {
-            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
-            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null ||
                     (collaborator.getAccessRight() != Collaborator.AccessRight.READ &&
                             collaborator.getAccessRight() != Collaborator.AccessRight.WRITE)) {
@@ -98,12 +99,12 @@ public class TaskService {
 
         // ตรวจสอบว่า oidFromToken เป็นเจ้าของบอร์ดหรือเป็น collaborator ที่มีสิทธิ์ WRITE
         if (!board.getOwnerId().equals(oidFromToken)) {
-            TaskUser user = taskUserRepository.findByOid(oidFromToken);
+            User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
                 throw new ItemNotFoundException("User with id " + oidFromToken + " not found");
             }
 
-            Collaborator collaborator = collaboratorRepository.findByUserAndBoard(user, board);
+            Collaborator collaborator = collaboratorRepository.findByUserOidAndBoard(user.getOid(), board);
             if (collaborator == null || collaborator.getAccessRight() != Collaborator.AccessRight.WRITE) {
                 throw new ForbiddenException("You do not have permission to modify this board");
             }
@@ -382,7 +383,7 @@ public class TaskService {
         Board board = boardOptional.get();
 
         // Fetch the TaskUser associated with the board's taskusersOid
-        Optional<TaskUser> taskUserOptional = Optional.ofNullable(taskUserRepository.findByOid(board.getOwnerId()));
+        Optional<User> taskUserOptional = Optional.ofNullable(userRepository.findByOid(board.getOwnerId()));
 
         // If the taskUser is found, check if it matches the OID
         return taskUserOptional.isPresent() && taskUserOptional.get().getOid().equals(oidFromToken);
