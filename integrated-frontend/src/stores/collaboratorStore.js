@@ -70,7 +70,7 @@ export const useCollabStore = defineStore("collab", {
     async addCollaborator(boardId, email, accessRight = "READ") {
       try {
         const collaboratorData = {
-          userEmail: email,
+          email: email,
           accessRight: accessRight
         }
 

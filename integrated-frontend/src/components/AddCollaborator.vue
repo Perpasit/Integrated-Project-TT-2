@@ -19,7 +19,12 @@ const hasWriteAccess = computed(() => {
   const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
   return collaboratorData?.accessRight === "WRITE";
 });
-
+const isSameOid = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+  }
+  return boardOid.value === userOid.value
+})
 const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
     return false;
@@ -42,9 +47,10 @@ const fetchBoardAndUserOids = async (boardId) => {
     // console.log("Board Visibility:", visibility);
     // console.log(isSameOidOrHasWriteAccess.value)
 
-    if (!isSameOidOrHasWriteAccess.value) {
+    if (!isSameOidOrHasWriteAccess.value || !isSameOid.value) {
       router.push({ name: "AccessDenied" });
     }
+
 
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
@@ -100,40 +106,33 @@ const fetchCollaborator = async () => {
 const errorText = ref("")
 
 const handleSubmit = async () => {
-
   try {
     // เพิ่ม collaborator ใหม่
     const data = await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
-    if (data === "The user is already the collaborator of this board.") { 
-      // === "The user is already the collaborator of this board"
-      errorText.value = data
-      // await fetchCollaborator();
+    
+    // ตรวจสอบว่าผู้ใช้นี้เป็น collaborator อยู่แล้วหรือไม่
+    if (data === "The user is already a collaborator of this board.") {
+      errorText.value = data;
       return;
     }
-    if (data.status === 404){
-      errorText.value = data.message
-      // await fetchCollaborator();
+    
+    // ตรวจสอบว่าผู้ใช้นี้ไม่พบอีเมลหรือไม่
+    if (typeof data === 'string' && data.includes("User not found with email")) {
+      errorText.value = data;
       return;
     }
-      email.value = "";
-      errorText.value = ""
-      accessRight.value = "READ";
-      navigateBack();
-    // await fetchCollaborator();
-    // ตรวจสอบว่าข้อมูล collaborators ถูกอัปเดตหรือไม่
-    // console.log('Collaborators after adding:', collaborators.value);
-    
-    // ล้างค่า email และ accessRight หลังจากเพิ่มเสร็จ
-    
 
-    // นำทางกลับไปที่หน้า Collaborator Management (หรือไม่ขึ้นอยู่กับความต้องการ)
-    // 
-  
+    // ถ้าไม่มีปัญหาใด ๆ ให้รีเซ็ตฟิลด์ข้อมูล
+    email.value = "";
+    errorText.value = "";
+    accessRight.value = "READ";
+    navigateBack(); // กลับไปหน้าก่อนหน้า
+
   } catch (error) {
+    // จัดการข้อผิดพลาดที่เกิดขึ้น
     console.error("Error adding collaborator:", error);
-    console.log("cant add")
+    console.log("cant add");
   }
-
 };
 
 

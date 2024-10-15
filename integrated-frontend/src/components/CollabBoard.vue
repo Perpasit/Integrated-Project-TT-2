@@ -158,13 +158,14 @@ onMounted(async () => {
             </td>
             <td class="px-4 py-2">
               <p class="itbkk-access-right">
-                {{
+                <!-- {{
                   board.accessRight === "WRITE"
                     ? "WRITE"
                     : board.accessRight === "READ"
                     ? "READ"
                     : "N/A"
-                }}
+                }} -->
+                    {{ board.accessRight }}
               </p>
             </td>
 
