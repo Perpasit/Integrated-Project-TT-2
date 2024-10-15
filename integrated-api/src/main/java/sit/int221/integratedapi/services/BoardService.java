@@ -58,10 +58,17 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
+        // If the board is public, allow access
         if (board.getVisibility() == Board.Visibility.PUBLIC) {
             return;
         }
 
+        // If the token is missing or oid is null, deny access
+        if (oidFromToken == null) {
+            throw new ForbiddenException("Access denied. You must be logged in to view this board.");
+        }
+
+        // If the board is private, check if the user has access
         if (!board.getOwnerId().equals(oidFromToken)) {
             User user = userRepository.findByOid(oidFromToken);
             if (user == null) {
@@ -76,6 +83,7 @@ public class BoardService {
             }
         }
     }
+
 
     public void validateBoardOwnershipForModification(String boardId, String oidFromToken) {
         Board board = boardRepository.findById(boardId)
