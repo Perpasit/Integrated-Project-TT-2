@@ -7,18 +7,6 @@ CREATE TABLE global_settings (
     maximumTaskLimit INT NOT NULL DEFAULT 10,
     limitMaximumTask BOOLEAN NOT NULL DEFAULT TRUE
 );
-CREATE TABLE users (
-    oid CHAR(36) PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(50) NOT NULL UNIQUE,
-    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_oid CHECK (oid REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
-    CONSTRAINT chk_name_length CHECK (TRIM(name) != '' AND LENGTH(TRIM(name)) <= 100),
-    CONSTRAINT chk_username_length CHECK (TRIM(username) != '' AND LENGTH(TRIM(username)) <= 50),
-    CONSTRAINT chk_email_length CHECK (TRIM(email) != '' AND LENGTH(TRIM(email)) <= 50)
-);
 CREATE TABLE boards (
     id CHAR(10) PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
@@ -27,8 +15,7 @@ CREATE TABLE boards (
     created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT chk_board_id CHECK (id REGEXP '^[A-Za-z0-9_-]{10}$'),
-    CONSTRAINT chk_board_name CHECK (TRIM(name) != ''),
-    FOREIGN KEY (owner_id) REFERENCES users(oid) ON DELETE CASCADE
+    CONSTRAINT chk_board_name CHECK (TRIM(name) != '')
 ) ENGINE = InnoDB;
 CREATE TABLE statuses (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,12 +50,12 @@ CREATE TABLE tasks (
 );
 CREATE TABLE collaborators (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
+    user_oid CHAR(36) NOT NULL,
+    email VARCHAR(100) NOT NULL,  
     board_id CHAR(10) NOT NULL,
     access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
     added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(oid) ON DELETE CASCADE,
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_collaborator_per_board (user_id, board_id)
+    UNIQUE KEY unique_collaborator_per_board (board_id, user_oid)  -- ปรับ UNIQUE key ให้รวม user_oid ด้วย
 );
