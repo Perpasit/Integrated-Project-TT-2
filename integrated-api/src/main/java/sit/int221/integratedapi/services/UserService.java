@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.UserDTO;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.repositories.login.UserRepository;
@@ -18,12 +19,17 @@ import java.util.Optional;
 @Service
 @Qualifier("loginDataSource")
 public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public List<User> getAllTaskUsers() {
+        return userRepository.findAll();
+    }
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final Argon2 argon2;
 
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     public UserService() {
@@ -81,7 +87,7 @@ public class UserService {
     }
 
     public User getUserByOid(String oid) {
-        Optional<User> userOptional = userRepository.findByOid(oid);
+        Optional<User> userOptional = Optional.ofNullable(userRepository.findByOid(oid));
         if (userOptional.isPresent()) {
             return userOptional.get();
         } else {
@@ -108,5 +114,19 @@ public class UserService {
         return isPasswordValid;
     }
 
-    // Other methods (createUser, updateUser, deleteUser) can be uncommented as needed
+
+
+    @Transactional
+    public void saveOrUpdateTaskUser(User taskUser) {
+        // Find existing user by OID
+        User existingUser = userRepository.findByOid(taskUser.getOid());
+        if (existingUser != null) {
+            // Update existing user
+            existingUser.setUsername(taskUser.getUsername());
+            userRepository.save(existingUser);
+        } else {
+            // Insert new user
+            userRepository.save(taskUser);
+        }
+    }
 }

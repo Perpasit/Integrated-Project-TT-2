@@ -19,6 +19,12 @@ public class Collaborator {
     @Column(name = "id")
     private Integer id;
 
+    @Column(name = "user_oid", nullable = false)
+    private String userOid;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
     @Column(name = "access_right", nullable = false)
     @Enumerated(EnumType.STRING)
     private AccessRight accessRight = AccessRight.READ;
@@ -29,9 +35,7 @@ public class Collaborator {
     @Column(name = "updated_on", nullable = false)
     private ZonedDateTime updateOn;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private TaskUser user;
+
 
     @ManyToOne
     @JoinColumn(name = "board_id", nullable = false)

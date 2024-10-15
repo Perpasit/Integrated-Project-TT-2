@@ -4,25 +4,25 @@
       "name": "spring.datasource.login",
       "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties",
       "sourceType": "sit.int221.integratedapi.DataSourceConfig",
-      "sourceMethod": "public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties loginDataSourceProperties() "
+      "sourceMethod": "loginDataSourceProperties()"
     },
     {
       "name": "spring.datasource.login.xa",
       "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa",
       "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties",
-      "sourceMethod": "public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties.Xa getXa() "
+      "sourceMethod": "getXa()"
     },
     {
       "name": "spring.datasource.primary",
       "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties",
       "sourceType": "sit.int221.integratedapi.DataSourceConfig",
-      "sourceMethod": "public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties primaryDataSourceProperties() "
+      "sourceMethod": "primaryDataSourceProperties()"
     },
     {
       "name": "spring.datasource.primary.xa",
       "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa",
       "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties",
-      "sourceMethod": "public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties.Xa getXa() "
+      "sourceMethod": "getXa()"
     }
   ],
   "properties": [

@@ -236,6 +236,7 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+
     @ExceptionHandler(HttpMessageNotReadableException .class)
     public ResponseEntity<CustomErrorResponse> handleHttpMessageNotReadableException (HttpMessageNotReadableException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(

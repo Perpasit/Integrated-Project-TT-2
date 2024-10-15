@@ -18,11 +18,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.integratedapi.dtos.JwtRequestUser;
-import sit.int221.integratedapi.entities.TaskUser;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
-import sit.int221.integratedapi.services.TaskUserService;
+import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.UserService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.JwtUserDetailsService;
@@ -49,8 +48,7 @@ public class UserController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private TaskUserService taskUserService;
+
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@Valid @RequestBody JwtRequestUser jwtRequestUser) {
@@ -74,17 +72,7 @@ public class UserController {
 
             // Generate refresh_token (valid for 24 hours)
             String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails);
-
-            // Create or update TaskUser (existing logic)
-            TaskUser taskUser = new TaskUser();
-            taskUser.setOid(user.getOid());
-            taskUser.setUsername(jwtRequestUser.getUserName());
-            taskUser.setName(user.getName());
-            taskUser.setEmail(user.getEmail());
-            taskUser.setCreatedOn(ZonedDateTime.now());
-            taskUser.setUpdatedOn(ZonedDateTime.now());
-            taskUserService.saveOrUpdateTaskUser(taskUser);
-
+            
             // Prepare response
             Map<String, String> response = new HashMap<>();
             response.put("access_token", accessToken);
