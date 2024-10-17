@@ -119,7 +119,7 @@ const handleSubmit = async () => {
     
     // ตรวจสอบว่าผู้ใช้นี้ไม่พบอีเมลหรือไม่
     if (typeof data === 'string' && data.includes("User not found with email")) {
-      errorText.value = data;
+      errorText.value = "The user does not exists";
       return;
     }
 
