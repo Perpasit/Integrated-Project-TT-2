@@ -60,11 +60,12 @@ const fetchBoardAndUserOids = async (boardId) => {
 
 const isAddDisabled = computed(() => {
   const userEmail = userStore.getUserEmail; // Access directly without ref
-  return email.value === userEmail;
+  // Disable if email is the same as the user's or if email does not contain '@'
+  return email.value === userEmail || !email.value.includes('@');
 });
 
 watch(email, () => {
-  if (isAddDisabled.value) {
+  if (isAddDisabled.value && email.value.includes('@')) {
     errorText.value = "Board owner cannot be collaborator of his/her own board";
   } else {
     errorText.value = ""; // Clear the error when the condition is no longer met
