@@ -14,6 +14,7 @@ public class CollaboratorDTO {
     private String name;
     private String email;
     private Collaborator.AccessRight accessRight;
+    private Collaborator.Status status;
     private String addedOn;
 }
 
