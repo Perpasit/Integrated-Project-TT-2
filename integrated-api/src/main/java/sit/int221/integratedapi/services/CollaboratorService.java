@@ -38,6 +38,9 @@ public class CollaboratorService {
     @Autowired
     private ListMapper listMapper;
 
+    @Autowired
+    private  EmailService emailService;
+
 
     public boolean isUserAlreadyCollaborator(String boardId, String email) {
         return collaboratorRepository.existsByBoardIdAndEmail(boardId, email);
@@ -216,15 +219,19 @@ public class CollaboratorService {
             throw new IllegalArgumentException("Invalid access right provided. Valid values are READ or WRITE.");
         }
 
-        // Create a new collaborator and set userOid, board, and email
+        // Create a new collaborator with status set to pending
         Collaborator newCollaborator = new Collaborator();
         newCollaborator.setUserOid(user.getOid());
         newCollaborator.setBoard(board);
         newCollaborator.setEmail(user.getEmail());
         newCollaborator.setAccessRight(accessRightEnum);
+        newCollaborator.setStatus(Collaborator.Status.PENDING);  // Set status to PENDING
 
         // Save the new collaborator in the database
         newCollaborator = collaboratorRepository.save(newCollaborator);
+
+        // Send email for confirmation
+        sendConfirmationEmail(user, board, newCollaborator.getId());
 
         // Map the new collaborator to a DTO and return it
         CollaboratorDTO collaboratorDTO = new CollaboratorDTO();
@@ -232,12 +239,39 @@ public class CollaboratorService {
         collaboratorDTO.setName(user.getName());
         collaboratorDTO.setEmail(user.getEmail());
         collaboratorDTO.setAccessRight(newCollaborator.getAccessRight());
+        collaboratorDTO.setStatus(newCollaborator.getStatus());  // Set status in DTO
         collaboratorDTO.setAddedOn(newCollaborator.getAddedOn().toString());
 
         return collaboratorDTO;
     }
 
+    private void sendConfirmationEmail(User user, Board board, Integer collaboratorId) {
+        String confirmationLink = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" + collaboratorId;
+        String subject = "Confirm Your Invitation to Collaborate";
 
+        emailService.sendEmail(
+                user.getEmail(),
+                subject,
+                user.getName(),
+                board.getName(),
+                confirmationLink
+        );
+    }
+
+
+
+    @Transactional
+    public void confirmCollaborator(Integer collaboratorId) {
+        Collaborator collaborator = collaboratorRepository.findById(collaboratorId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
+
+        if (collaborator.getStatus() != Collaborator.Status.PENDING) {
+            throw new ConflictException("Collaborator is not in a pending state");
+        }
+
+        collaborator.setStatus(Collaborator.Status.ACCEPTED); // เปลี่ยนสถานะเป็น ACCEPTED
+        collaboratorRepository.save(collaborator);
+    }
 
 
     @Transactional

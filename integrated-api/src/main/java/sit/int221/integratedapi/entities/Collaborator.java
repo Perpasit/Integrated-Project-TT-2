@@ -29,6 +29,10 @@ public class Collaborator {
     @Enumerated(EnumType.STRING)
     private AccessRight accessRight = AccessRight.READ;
 
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.PENDING;
+
     @Column(name = "added_on", nullable = false)
     private ZonedDateTime addedOn;
 
@@ -43,6 +47,10 @@ public class Collaborator {
 
     public enum AccessRight {
         READ, WRITE
+    }
+
+    public enum Status {
+        PENDING, ACCEPTED
     }
 
     @PrePersist
