@@ -29,17 +29,11 @@ public class Collaborator {
     @Enumerated(EnumType.STRING)
     private AccessRight accessRight = AccessRight.READ;
 
-    @Column(name = "status", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.PENDING;
-
     @Column(name = "added_on", nullable = false)
     private ZonedDateTime addedOn;
 
     @Column(name = "updated_on", nullable = false)
     private ZonedDateTime updateOn;
-
-
 
     @ManyToOne
     @JoinColumn(name = "board_id", nullable = false)
@@ -47,10 +41,6 @@ public class Collaborator {
 
     public enum AccessRight {
         READ, WRITE
-    }
-
-    public enum Status {
-        PENDING, ACCEPTED
     }
 
     @PrePersist

@@ -9,11 +9,14 @@ import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Collaborator;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
+import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
+
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +93,28 @@ public class CollaboratorController {
         return ResponseEntity.ok(collaborator);
     }
 
+
+    @GetMapping("/{boardId}/collabs/invitations")
+    public ResponseEntity<?> getUserInvitations(@PathVariable("boardId") String boardId, Principal principal) {
+        // Check if the user is signed in
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please sign in to view this page.");
+        }
+
+        // Fetch all pending invitations for the signed-in user for the specified board
+        List<InvitationDTO> invitations = collaboratorService.getPendingInvitationsForUser(boardId, principal.getName());
+
+        if (invitations.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No pending invitations found for this board.");
+        }
+
+        return ResponseEntity.ok(invitations);
+    }
+
+
+
+
     @PostMapping("/{boardId}/collabs")
     public ResponseEntity<?> addCollaborator(
             @RequestHeader(value = "Authorization", required = false) String token,
@@ -137,18 +162,30 @@ public class CollaboratorController {
                     .body("Board owner cannot be a collaborator of his/her own board.");
         }
 
-        // Step 7: Check if the user is already a collaborator
-        if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getEmail())) {
+        // Step 7: Check if the user is already a collaborator or has a pending invitation
+        if (collaboratorService.isUserAlreadyCollaborator(boardId, collaboratorCDTO.getEmail()) ||
+                collaboratorService.hasPendingInvitation(boardId, collaboratorCDTO.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("The user is already a collaborator of this board.");
+                    .body("The user is already a collaborator or has a pending invitation for this board.");
         }
 
-        // Step 8: Add the collaborator
-        CollaboratorDTO newCollaborator = collaboratorService.addCollaboratorByEmail(
-                boardId, collaboratorCDTO.getEmail(), accessRightEnum.name(), oidFromToken);
+        // Step 8: Add the invitation (not directly adding the collaborator)
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(newCollaborator);
+// Ensure you pass the inviter's name and the invitee's name correctly
+        InvitationDTO newInvitation = collaboratorService.addCollaboratorByEmail(
+                boardId,
+                collaboratorCDTO.getEmail(),
+                accessRightEnum.name(),
+                oidFromToken, // Pass the inviter's OID
+                user.getName() // Use the user's name as the invitee's name
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(newInvitation);
+
     }
+
+
+
 
     @PatchMapping("/{boardId}/collabs/{collabOid}")
     public ResponseEntity<?> updateCollaboratorAccessRight(
