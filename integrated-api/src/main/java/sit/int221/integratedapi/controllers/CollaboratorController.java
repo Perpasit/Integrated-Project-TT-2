@@ -95,22 +95,26 @@ public class CollaboratorController {
 
 
     @GetMapping("/{boardId}/collabs/invitations")
-    public ResponseEntity<?> getUserInvitations(@PathVariable("boardId") String boardId, Principal principal) {
-        // Check if the user is signed in
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please sign in to view this page.");
+    public ResponseEntity<?> getUserInvitations(
+            @PathVariable("boardId") String boardId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        // Check if the token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
         }
 
-        // Fetch all pending invitations for the signed-in user for the specified board
-        List<InvitationDTO> invitations = collaboratorService.getPendingInvitationsForUser(boardId, principal.getName());
+        // Extract OID from the token
+        String userOid = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
 
-        if (invitations.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("No pending invitations found for this board.");
-        }
+        // Fetch the pending invitation for the signed-in user for the specified board
+        InvitationDTO invitation = collaboratorService.getPendingInvitationForUser(boardId, userOid);
 
-        return ResponseEntity.ok(invitations);
+        return ResponseEntity.ok(invitation);
     }
+
+
+
 
 
 
@@ -170,14 +174,12 @@ public class CollaboratorController {
         }
 
         // Step 8: Add the invitation (not directly adding the collaborator)
-
-// Ensure you pass the inviter's name and the invitee's name correctly
         InvitationDTO newInvitation = collaboratorService.addCollaboratorByEmail(
                 boardId,
                 collaboratorCDTO.getEmail(),
                 accessRightEnum.name(),
-                oidFromToken, // Pass the inviter's OID
-                user.getName() // Use the user's name as the invitee's name
+                oidFromToken,
+                user.getName()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newInvitation);
