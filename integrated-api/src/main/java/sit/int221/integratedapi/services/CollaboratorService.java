@@ -6,8 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.CollaboratorDTO;
+import sit.int221.integratedapi.dtos.InvitationDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
+import sit.int221.integratedapi.entities.Invitation;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.ConflictException;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
@@ -16,8 +18,10 @@ import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
+import sit.int221.integratedapi.repositories.primary.InvitationRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,15 +40,19 @@ public class CollaboratorService {
     private UserRepository userRepository;
 
     @Autowired
+    private InvitationRepository invitationRepository;
+
+    @Autowired
     private ListMapper listMapper;
 
     @Autowired
     private  EmailService emailService;
 
 
-    public boolean isUserAlreadyCollaborator(String boardId, String email) {
-        return collaboratorRepository.existsByBoardIdAndEmail(boardId, email);
+    public boolean isUserAlreadyCollaborator(String boardId, String userOid) {
+        return collaboratorRepository.existsByBoardIdAndUserOid(boardId, userOid);
     }
+
 
     public boolean isBoardOwner(String boardId, String userId) {
         Board board = boardRepository.findById(boardId)
@@ -95,11 +103,18 @@ public class CollaboratorService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board with id " + boardId + " does not exist!"));
 
-        // Only allow the owner of the board to modify it
+        // Logging for debugging
+        System.out.println("Owner ID: " + board.getOwnerId());
+        System.out.println("OID from Token: " + oidFromToken);
+
+        // Check if the user is the board owner
         if (!board.getOwnerId().equals(oidFromToken)) {
             throw new ForbiddenException("Only the board owner has permission to modify this board");
         }
     }
+
+
+
 
     public void validateDeleteAccess(String boardId, String oidFromToken) {
         // Retrieve the board using the provided boardId
@@ -121,6 +136,11 @@ public class CollaboratorService {
                 throw new ForbiddenException("You do not have permission to modify or delete this board");
             }
         }
+    }
+
+
+    public boolean hasPendingInvitation(String boardId, String email) {
+        return invitationRepository.existsByBoardIdAndInviteeEmailAndStatus(boardId, email, Invitation.Status.PENDING);
     }
 
 
@@ -191,27 +211,28 @@ public class CollaboratorService {
     }
 
     @Transactional
-    public CollaboratorDTO addCollaboratorByEmail(String boardId, String email, String accessRight, String oidFromToken) {
-        // Validate if the current user has write access to the board
-        validateWriteAccess(boardId, oidFromToken);
-
-        // Find user by email
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new ItemNotFoundException("User not found with email: " + email);
+    public InvitationDTO addCollaboratorByEmail(String boardId, String email, String accessRight, String oidFromToken, String inviteeName) {
+        // Retrieve the inviter's name based on the OID from the token
+        User inviter = userRepository.findByOid(oidFromToken);
+        if (inviter == null) {
+            throw new ItemNotFoundException("Inviter not found with OID: " + oidFromToken);
         }
+
+        String inviterName = inviter.getName(); // Get the name from the User entity
+
+        validateWriteAccess(boardId, oidFromToken);
 
         // Find board by ID
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        // Check if the user is already a collaborator on this board
-        boolean exists = collaboratorRepository.existsByBoardIdAndEmail(board.getId(), user.getEmail());
-        if (exists) {
-            throw new ConflictException("User is already a collaborator for this board");
+        boolean isCollaborator = collaboratorRepository.existsByBoardIdAndUserOid(board.getId(), board.getOwnerId());
+        boolean hasPendingInvitation = hasPendingInvitation(boardId, email);
+
+        if (isCollaborator || hasPendingInvitation) {
+            throw new ConflictException("User is already a collaborator or has a pending invitation for this board");
         }
 
-        // Validate access right and catch if the value provided does not exist in the enum
         Collaborator.AccessRight accessRightEnum;
         try {
             accessRightEnum = Collaborator.AccessRight.valueOf(accessRight);
@@ -219,40 +240,43 @@ public class CollaboratorService {
             throw new IllegalArgumentException("Invalid access right provided. Valid values are READ or WRITE.");
         }
 
-        // Create a new collaborator with status set to pending
-        Collaborator newCollaborator = new Collaborator();
-        newCollaborator.setUserOid(user.getOid());
-        newCollaborator.setBoard(board);
-        newCollaborator.setEmail(user.getEmail());
-        newCollaborator.setAccessRight(accessRightEnum);
-        newCollaborator.setStatus(Collaborator.Status.PENDING);  // Set status to PENDING
+        // Create a new invitation with pending status
+        Invitation invitation = new Invitation();
+        invitation.setInviterName(inviterName); // Set the inviter's name here
+        invitation.setInviteeName(inviteeName); // Set the invitee's name here
+        invitation.setInviteeEmail(email);
+        invitation.setBoard(board);
+        invitation.setAccessRight(accessRightEnum);
+        invitation.setStatus(Invitation.Status.PENDING);
 
-        // Save the new collaborator in the database
-        newCollaborator = collaboratorRepository.save(newCollaborator);
+        // Save the invitation in the database
+        invitation = invitationRepository.save(invitation);
 
-        // Send email for confirmation
-        sendConfirmationEmail(user, board, newCollaborator.getId());
+        // Send email confirmation for the invitation
+        sendConfirmationEmail(email, board, invitation.getId(), inviteeName); // Pass the invitee name here
 
-        // Map the new collaborator to a DTO and return it
-        CollaboratorDTO collaboratorDTO = new CollaboratorDTO();
-        collaboratorDTO.setOid(user.getOid());
-        collaboratorDTO.setName(user.getName());
-        collaboratorDTO.setEmail(user.getEmail());
-        collaboratorDTO.setAccessRight(newCollaborator.getAccessRight());
-        collaboratorDTO.setStatus(newCollaborator.getStatus());  // Set status in DTO
-        collaboratorDTO.setAddedOn(newCollaborator.getAddedOn().toString());
+        // Convert the invitation to InvitationDTO and return it
+        InvitationDTO invitationDTO = new InvitationDTO();
+        invitationDTO.setInviterName(invitation.getInviterName());
+        invitationDTO.setInviteeName(invitation.getInviteeName());
+        invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
+        invitationDTO.setBoardName(board.getName());
+        invitationDTO.setAccessRight(invitation.getAccessRight().name());
+        invitationDTO.setStatus(invitation.getStatus().name());
+        invitationDTO.setCreatedOn(invitation.getCreatedOn().toString());
 
-        return collaboratorDTO;
+        return invitationDTO;
     }
 
-    private void sendConfirmationEmail(User user, Board board, Integer collaboratorId) {
-        String confirmationLink = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" + collaboratorId;
+
+    private void sendConfirmationEmail(String email, Board board, Integer invitationId, String inviteeName) {
+        String confirmationLink = "https://www.yoursite.com/confirm?invitationId=" + invitationId;
         String subject = "Confirm Your Invitation to Collaborate";
 
         emailService.sendEmail(
-                user.getEmail(),
+                email,
                 subject,
-                user.getName(),
+                inviteeName, // Use the invitee's name here
                 board.getName(),
                 confirmationLink
         );
@@ -260,16 +284,50 @@ public class CollaboratorService {
 
 
 
-    @Transactional
-    public void confirmCollaborator(Integer collaboratorId) {
-        Collaborator collaborator = collaboratorRepository.findById(collaboratorId)
-                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
+    public List<InvitationDTO> getPendingInvitationsForUser(String boardId, String inviteeEmail) {
+        // Find all pending invitations for the specified board and invitee email
+        List<Invitation> invitations = invitationRepository.findByBoardIdAndInviteeEmailAndStatus(boardId, inviteeEmail, Invitation.Status.PENDING);
 
-        if (collaborator.getStatus() != Collaborator.Status.PENDING) {
-            throw new ConflictException("Collaborator is not in a pending state");
+        // Map invitations to InvitationDTOs
+        List<InvitationDTO> invitationDTOs = new ArrayList<>();
+        for (Invitation invitation : invitations) {
+            InvitationDTO invitationDTO = new InvitationDTO();
+            invitationDTO.setInviterName(invitation.getInviterName());
+            invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
+            invitationDTO.setBoardName(invitation.getBoard().getName());
+            invitationDTO.setAccessRight(invitation.getAccessRight().name());
+            invitationDTO.setStatus(invitation.getStatus().name());
+            invitationDTO.setCreatedOn(invitation.getCreatedOn().toString());
+            invitationDTOs.add(invitationDTO);
         }
 
-        collaborator.setStatus(Collaborator.Status.ACCEPTED); // เปลี่ยนสถานะเป็น ACCEPTED
+        return invitationDTOs;
+    }
+
+
+
+
+
+    @Transactional
+    public void confirmCollaborator(Integer invitationId) {
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
+
+        if (invitation.getStatus() != Invitation.Status.PENDING) {
+            throw new ConflictException("Invitation is not in a pending state");
+        }
+
+        invitation.setStatus(Invitation.Status.ACCEPTED);
+        invitationRepository.save(invitation);
+
+        // สร้าง collaborator ใหม่จากคำเชิญที่ตอบรับ
+        Collaborator collaborator = new Collaborator();
+        collaborator.setUserOid(invitation.getInviteeEmail()); 
+        collaborator.setBoard(invitation.getBoard());
+        collaborator.setEmail(invitation.getInviteeEmail());
+        collaborator.setAccessRight(invitation.getAccessRight());
+        collaborator.setAddedOn(ZonedDateTime.now());
+
         collaboratorRepository.save(collaborator);
     }
 

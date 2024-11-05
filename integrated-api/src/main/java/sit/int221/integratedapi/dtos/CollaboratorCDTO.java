@@ -11,5 +11,4 @@ import sit.int221.integratedapi.entities.Collaborator;
 public class CollaboratorCDTO {
     private String email;
     private String accessRight;
-    private Collaborator.Status status;
 }
