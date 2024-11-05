@@ -286,25 +286,37 @@ public class CollaboratorService {
 
 
 
-    public List<InvitationDTO> getPendingInvitationsForUser(String boardId, String inviteeEmail) {
-        // Find all pending invitations for the specified board and invitee email
-        List<Invitation> invitations = invitationRepository.findByBoardIdAndInviteeEmailAndStatus(boardId, inviteeEmail, Invitation.Status.PENDING);
-
-        // Map invitations to InvitationDTOs
-        List<InvitationDTO> invitationDTOs = new ArrayList<>();
-        for (Invitation invitation : invitations) {
-            InvitationDTO invitationDTO = new InvitationDTO();
-            invitationDTO.setInviterName(invitation.getInviterName());
-            invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
-            invitationDTO.setBoardName(invitation.getBoard().getName());
-            invitationDTO.setAccessRight(invitation.getAccessRight().name());
-            invitationDTO.setStatus(invitation.getStatus().name());
-            invitationDTO.setCreatedOn(invitation.getCreatedOn().toString());
-            invitationDTOs.add(invitationDTO);
+    public InvitationDTO getPendingInvitationForUser(String boardId, String oid) {
+        // Fetch the user's name using the OID
+        User user = userRepository.findByOid(oid);
+        if (user == null) {
+            throw new ItemNotFoundException("User not found with OID: " + oid);
         }
 
-        return invitationDTOs;
+        String inviteeName = user.getName(); // Get the invitee's name from the user object
+
+        // Fetch a single invitation where the invitee_name matches the user's name and board_id matches
+        Invitation invitation = invitationRepository.findByBoardIdAndInviteeNameAndStatus(boardId, inviteeName, Invitation.Status.PENDING);
+
+        if (invitation == null) {
+            throw new ItemNotFoundException("No pending invitation found for user: " + inviteeName + " on board: " + boardId);
+        }
+
+        // Map the invitation to InvitationDTO
+        InvitationDTO invitationDTO = new InvitationDTO();
+        invitationDTO.setInviterName(invitation.getInviterName());
+        invitationDTO.setInviteeName(invitation.getInviteeName());
+        invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
+        invitationDTO.setBoardName(invitation.getBoard().getName());
+        invitationDTO.setAccessRight(invitation.getAccessRight().name());
+        invitationDTO.setStatus(invitation.getStatus().name());
+        invitationDTO.setCreatedOn(invitation.getCreatedOn().toString());
+
+        return invitationDTO;
     }
+
+
+
 
 
 
