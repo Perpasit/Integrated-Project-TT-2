@@ -16,7 +16,7 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendEmail(String to, String subject, String collaboratorName, String boardName, String confirmationLink) {
+    public void sendEmail(String to, String subject, String collaboratorName, String boardName, String confirmationLink, String accessRight) {
         MimeMessage message = mailSender.createMimeMessage();
 
         try {
@@ -24,20 +24,18 @@ public class EmailService {
             helper.setTo(to);
             helper.setSubject(subject);
 
-
             String htmlContent = "<html>" +
                     "<body>" +
                     "<p>Hi <strong>" + collaboratorName + "</strong>,</p>" +
                     "<p>You have been invited to collaborate on the board: <strong>" + boardName + "</strong>.</p>" +
+                    "<p>Your access rights for this board are: <strong>" + accessRight + "</strong>.</p>" + // Include access rights
                     "<p>Please click the link below to confirm your invitation:</p>" +
                     "<p><a href='" + confirmationLink + "'>Confirm Invitation</a></p>" +
                     "<p>If you did not expect this invitation, please ignore this email.</p>" +
                     "</body>" +
                     "</html>";
 
-
             helper.setText(htmlContent, true);
-
             helper.setFrom(new InternetAddress("noreply@intproj23.sit.kmutt.ac.th", "ITBKK-TT2", "UTF-8"));
             helper.setReplyTo("noreply@intproj23.sit.kmutt.ac.th");
 
@@ -46,4 +44,5 @@ public class EmailService {
             throw new RuntimeException("Failed to send email", e);
         }
     }
+
 }
