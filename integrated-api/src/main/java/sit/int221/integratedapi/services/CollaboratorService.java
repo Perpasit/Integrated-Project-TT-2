@@ -253,7 +253,7 @@ public class CollaboratorService {
         invitation = invitationRepository.save(invitation);
 
         // Send email confirmation for the invitation
-        sendConfirmationEmail(email, board, invitation.getId(), inviteeName, accessRight); // Pass the invitee name here
+        emailService.sendConfirmationEmail(email, board, invitation.getId(), inviteeName, accessRight); // Pass the invitee name here
 
         // Convert the invitation to InvitationDTO and return it
         InvitationDTO invitationDTO = new InvitationDTO();
@@ -269,19 +269,7 @@ public class CollaboratorService {
     }
 
 
-    private void sendConfirmationEmail(String email, Board board, Integer invitationId, String inviteeName, String accessRight) {
-        String confirmationLink = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" + invitationId;
-        String subject = "Confirm Your Invitation to Collaborate";
 
-        emailService.sendEmail(
-                email,
-                subject,
-                inviteeName, // Use the invitee's name here
-                board.getName(),
-                confirmationLink,
-                accessRight // Pass the access rights here
-        );
-    }
 
 
 

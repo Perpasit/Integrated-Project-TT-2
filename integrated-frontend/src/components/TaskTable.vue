@@ -36,7 +36,7 @@ const searchKeyword = ref("");
 const displayStatusLimit = ref(5);
 const showAllStatuses = ref(false);
 
-const boardId = route.params.boardId;
+let boardId = route.params.boardId;
 const userOid = ref("");
 const boardOid = ref(null);
 const hasWriteAccess = computed(() => {
@@ -258,7 +258,7 @@ const toggleStatusFilter = (statusName) => {
 onMounted(async () => {
   
 
-  const boardId = route.params.boardId;
+  let boardId = route.params.boardId;
 
   if (!boardId) {
     console.error("Board ID is missing");

@@ -11,7 +11,7 @@ const router = useRouter()
 const userStore = useUserStore()
 const boardStore = useBoardStore()
 const collabStore = useCollabStore()
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null)
 
@@ -139,7 +139,7 @@ const goToCollaborator = () => {
 }
 onMounted(async () => {
   userStore.loadFromLocalStorage()
-  const boardId = route.params.boardId
+  let boardId = route.params.boardId
   // console.log("Board ID from route:", boardId)
   // console.log("User is authenticated:", userStore.getIsAuthenticated)
 

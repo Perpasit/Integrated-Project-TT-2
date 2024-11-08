@@ -17,7 +17,7 @@ const userStore = useUserStore()
 const collabStore = useCollabStore();
 const successModalTimeout = ref(null)
 
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
 const hasWriteAccess = computed(() => {
@@ -232,7 +232,7 @@ const fetchStatus = async () => {
   await statusStore.fetchAllStatuses(boardId)
 }
 onMounted(async () => {
-  const boardId = route.params.boardId
+  let boardId = route.params.boardId
   await fetchBoardAndUserOids(boardId);
   try {
     const boardData = await boardStore.getBoardById(boardId);

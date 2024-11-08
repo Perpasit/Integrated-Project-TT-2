@@ -20,7 +20,7 @@ const collaboratorToUpdate = ref(null); // Track collaborator for access change
 const newAccessRight = ref(''); // Hold new access right to confirm
 const boardName = ref("");
 
-const boardId = route.params.boardId;
+let boardId = route.params.boardId;
 
 const fetchCollaborator = async () => {
   try {
@@ -158,7 +158,7 @@ const closeDeleteModal = () => {
 };
 
 onMounted(async () => {
-  const boardId = route.params.boardId;
+  let boardId = route.params.boardId;
   await fetchCollaborator();
   await fetchBoardAndUserOids(boardId);
 });
