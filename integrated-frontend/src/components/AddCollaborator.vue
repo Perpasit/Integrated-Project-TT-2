@@ -9,7 +9,7 @@ const route = useRoute();
 const router = useRouter();
 const email = ref("");
 const accessRight = ref("READ");
-const boardId = ref(route.params.boardId);
+let boardId = ref(route.params.boardId);
 const collabStore = useCollabStore();
 const userStore = useUserStore();
 const boardStore = useBoardStore();
@@ -144,7 +144,7 @@ const navigateBack = () => {
 
 // เรียก fetchCollaborator เมื่อ component ถูก mount
 onMounted(async () => {
-  const boardId = route.params.boardId;
+  let boardId = route.params.boardId;
   await fetchCollaborator();
   // console.log(collaborators.value);
   await fetchBoardAndUserOids(boardId)

@@ -3,14 +3,19 @@ package sit.int221.integratedapi.services;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import sit.int221.integratedapi.entities.Board;
 
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -30,7 +35,7 @@ public class EmailService {
                     "<p>You have been invited to collaborate on the board: <strong>" + boardName + "</strong>.</p>" +
                     "<p>Your access rights for this board are: <strong>" + accessRight + "</strong>.</p>" + // Include access rights
                     "<p>Please click the link below to confirm your invitation:</p>" +
-                    "<p><a href='" + confirmationLink + "'>Confirm Invitation</a></p>" +
+                    "<p><a href='" + confirmationLink + "'>Click here to confirm</a></p>" +
                     "<p>If you did not expect this invitation, please ignore this email.</p>" +
                     "</body>" +
                     "</html>";
@@ -43,6 +48,14 @@ public class EmailService {
         } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             throw new RuntimeException("Failed to send email", e);
         }
+    }
+
+    public void sendConfirmationEmail(String email, Board board, Integer invitationId, String inviteeName, String accessRight) {
+        // Adjust the confirmation link to include the invitationId as a query parameter
+        String confirmationLink = baseUrl + "/board/" + board.getId() + "/collab/invitations";
+        String subject = "Confirm Your Invitation to Collaborate";
+
+        sendEmail(email, subject, inviteeName, board.getName(), confirmationLink, accessRight);
     }
 
 }

@@ -26,7 +26,7 @@ const parseAndFormatDate = (dateString) => {
   }
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 
 const goBack = () => {
   router.push({ name: "home" })

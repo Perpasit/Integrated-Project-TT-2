@@ -20,7 +20,7 @@ const userStore = useUserStore()
 const collabStore = useCollabStore();
 const globalSettingStore = useGlobalSettingStore()
 
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
 const hasWriteAccess = computed(() => {
@@ -290,7 +290,7 @@ const fetchTaskAndStatus = async (boardId) => {
 }
 
 onMounted(async () => {
-  const boardId = route.params.boardId;
+  let boardId = route.params.boardId;
 
 
   try {

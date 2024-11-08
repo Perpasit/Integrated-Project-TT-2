@@ -21,7 +21,7 @@ const parseAndFormatDate = (dateString) => {
   }
   return date.toLocaleString("en-GB", { timeZone: localTimeZone })
 }
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 onMounted(async () => {
   try {
     const id = route.params.statusId

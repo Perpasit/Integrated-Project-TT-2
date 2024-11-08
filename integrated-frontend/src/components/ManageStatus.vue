@@ -37,7 +37,7 @@ watch(statuses, (newStatuses) => {
   }
 })
 
-const boardId = route.params.boardId
+let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null); 
 const hasWriteAccess = computed(() => {
@@ -271,7 +271,7 @@ const handleDeleteClick = (status) => {
 
 
 onMounted(async () => {
-    const boardId = route.params.boardId;
+    let boardId = route.params.boardId;
     const userStoreData = JSON.parse(localStorage.getItem('userStore'));
     try {
       let data;
