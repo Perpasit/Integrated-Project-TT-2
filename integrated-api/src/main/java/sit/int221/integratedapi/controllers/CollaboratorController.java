@@ -7,12 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Collaborator;
+import sit.int221.integratedapi.entities.Invitation;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
+import sit.int221.integratedapi.repositories.primary.InvitationRepository;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
@@ -47,6 +49,9 @@ public class CollaboratorController {
 
     @Autowired
     private CollaboratorRepository collaboratorRepository;
+
+    @Autowired
+    private InvitationRepository invitationRepository;
 
     @GetMapping("/{boardId}/collabs")
     public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
@@ -174,7 +179,7 @@ public class CollaboratorController {
         }
 
         // Step 8: Add the invitation (not directly adding the collaborator)
-        InvitationDTO newInvitation = collaboratorService.addCollaboratorByEmail(
+        InvitationCDTO newInvitation = collaboratorService.addCollaboratorByEmail(
                 boardId,
                 collaboratorCDTO.getEmail(),
                 accessRightEnum.name(),
@@ -185,6 +190,47 @@ public class CollaboratorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newInvitation);
 
     }
+
+
+    @PostMapping("/{boardId}/collabs/invitations/{invitationId}/confirm")
+    public ResponseEntity<?> confirmInvitation(@PathVariable("boardId") String boardId,
+                                               @PathVariable("invitationId") Integer invitationId,
+                                               @RequestParam("accept") boolean acceptInvitation,
+                                               @RequestHeader(value = "Authorization", required = false) String token) {
+
+        // Step 1: Check if the authorization token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
+        }
+
+        // Step 2: Extract the oid from the token
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        if (oidFromToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token.");
+        }
+
+        // Step 3: Fetch the invitation from the database
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
+
+        // Step 4: Validate that the invitation is for the correct board
+        if (!invitation.getBoard().getId().equals(boardId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invitation does not belong to the specified board.");
+        }
+
+        // Step 5: Confirm or decline the invitation
+        collaboratorService.confirmCollaborator(invitationId, acceptInvitation);
+
+        if (acceptInvitation) {
+            return ResponseEntity.ok("Invitation accepted successfully.");
+        } else {
+            return ResponseEntity.ok("Invitation declined successfully.");
+        }
+    }
+
+
+
 
 
 
