@@ -1,18 +1,26 @@
 package sit.int221.integratedapi.controllers;
 
+import jakarta.validation.Path;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Task;
+import sit.int221.integratedapi.entities.TaskAttachment;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
+import sit.int221.integratedapi.services.FileUploadService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
+
 import java.util.ArrayList;
 import java.util.List;
+
+
+
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -23,10 +31,13 @@ public class TaskController {
 
     private final JwtTokenUtil jwtTokenUtil;
 
-    public TaskController(TaskService taskService, ListMapper listMapper,JwtTokenUtil jwtTokenUtil) {
+    private final FileUploadService fileUploadService;
+
+    public TaskController(TaskService taskService, ListMapper listMapper,JwtTokenUtil jwtTokenUtil,FileUploadService fileUploadService) {
         this.taskService = taskService;
         this.listMapper = listMapper;
         this.jwtTokenUtil = jwtTokenUtil;
+        this.fileUploadService = fileUploadService;
     }
 
     private boolean isValidSortBy(String sortBy) {
@@ -112,6 +123,70 @@ public class TaskController {
         return taskService.createNewTask(taskCDTO, boardId);
     }
 
+    @PatchMapping("/{boardId}/tasks/{taskId}/attachments")
+    public ResponseEntity<?> addAttachments(@RequestHeader(value = "Authorization", required = false) String token,
+                                            @PathVariable String boardId,
+                                            @PathVariable Integer taskId,
+                                            @RequestParam("files") MultipartFile[] files) {
+
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        if (oidFromToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token.");
+        }
+
+        // Validate write access to the board
+        taskService.validateWriteAccess(boardId, oidFromToken);
+
+        // Validate task existence
+        Task existingTask = taskService.findTaskById(taskId);
+        if (existingTask == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+        }
+
+        if (files.length == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No files selected.");
+        }
+
+        List<TaskAttachmentDTO> attachmentDTOs = new ArrayList<>();
+
+        // Define the max file size (20 MB)
+        final long MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+        for (MultipartFile file : files) {
+            // Check if the file size exceeds the allowed size
+            if (file.getSize() > MAX_FILE_SIZE) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File size exceeds the maximum allowed size of 20 MB.");
+            }
+
+            // Save file to the server (or cloud storage)
+            String filePath = fileUploadService.saveFile(file);
+
+            // Create a TaskAttachment entity
+            TaskAttachment attachment = new TaskAttachment();
+            attachment.setFileName(file.getOriginalFilename());
+            attachment.setFilePath(filePath);
+            attachment.setFileType(file.getContentType());
+            attachment.setTask(existingTask);  // Associate with the task
+
+            // Save the attachment
+            taskService.saveAttachment(existingTask.getId(), attachment.getFileName(), attachment.getFilePath(), attachment.getFileType());
+
+            // Convert TaskAttachment to TaskAttachmentDTO
+            TaskAttachmentDTO attachmentDTO = new TaskAttachmentDTO(
+                    attachment.getFileName(),
+                    attachment.getFilePath(),
+                    attachment.getFileType()
+            );
+
+            attachmentDTOs.add(attachmentDTO);
+        }
+
+        // Return response with the created attachments
+        return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTOs);
+    }
+
+
+
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<Object> updateTask(
             @RequestHeader(value = "Authorization", required = false) String token,
@@ -132,6 +207,7 @@ public class TaskController {
         }
         return taskService.updateTask(boardId, taskId, updatedTaskDTO);
     }
+
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<TaskDDTO> deleteTask(@RequestHeader(value = "Authorization", required = false) String token,

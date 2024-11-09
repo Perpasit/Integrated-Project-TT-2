@@ -45,6 +45,9 @@ public class TaskService {
     @Autowired
     private CollaboratorRepository collaboratorRepository;
 
+    @Autowired
+    private TaskAttachmentRepository taskAttachmentRepository;
+
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
@@ -415,6 +418,25 @@ public class TaskService {
 
         return taskRDTOs;
     }
+
+
+    @Transactional
+    public TaskAttachment saveAttachment(Integer taskId, String fileName, String filePath, String fileType) {
+        // Find the task by ID
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist"));
+
+        // Create a new TaskAttachment entity
+        TaskAttachment taskAttachment = new TaskAttachment();
+        taskAttachment.setFileName(fileName);
+        taskAttachment.setFilePath(filePath);
+        taskAttachment.setFileType(fileType);
+        taskAttachment.setTask(task); // Associate the attachment with the task
+
+        // Save the TaskAttachment entity to the database
+        return taskAttachmentRepository.save(taskAttachment);
+    }
+
 
 
 
