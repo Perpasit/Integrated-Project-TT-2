@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationDTO {
+    private Integer invitationId;
     private String inviterName;
     private String inviteeName;
     private String inviteeEmail;

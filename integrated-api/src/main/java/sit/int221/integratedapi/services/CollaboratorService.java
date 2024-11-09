@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.CollaboratorDTO;
+import sit.int221.integratedapi.dtos.InvitationCDTO;
 import sit.int221.integratedapi.dtos.InvitationDTO;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
@@ -211,7 +212,7 @@ public class CollaboratorService {
     }
 
     @Transactional
-    public InvitationDTO addCollaboratorByEmail(String boardId, String email, String accessRight, String oidFromToken, String inviteeName) {
+    public InvitationCDTO addCollaboratorByEmail(String boardId, String email, String accessRight, String oidFromToken, String inviteeName) {
         // Retrieve the inviter's name based on the OID from the token
         User inviter = userRepository.findByOid(oidFromToken);
         if (inviter == null) {
@@ -256,16 +257,16 @@ public class CollaboratorService {
         emailService.sendConfirmationEmail(email, board, invitation.getId(), inviteeName, accessRight); // Pass the invitee name here
 
         // Convert the invitation to InvitationDTO and return it
-        InvitationDTO invitationDTO = new InvitationDTO();
-        invitationDTO.setInviterName(invitation.getInviterName());
-        invitationDTO.setInviteeName(invitation.getInviteeName());
-        invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
-        invitationDTO.setBoardName(board.getName());
-        invitationDTO.setAccessRight(invitation.getAccessRight().name());
-        invitationDTO.setStatus(invitation.getStatus().name());
-        invitationDTO.setCreatedOn(invitation.getCreatedOn().toString());
+        InvitationCDTO invitationCDTO = new InvitationCDTO();
+        invitationCDTO.setInviterName(invitation.getInviterName());
+        invitationCDTO.setInviteeName(invitation.getInviteeName());
+        invitationCDTO.setInviteeEmail(invitation.getInviteeEmail());
+        invitationCDTO.setBoardName(board.getName());
+        invitationCDTO.setAccessRight(invitation.getAccessRight().name());
+        invitationCDTO.setStatus(invitation.getStatus().name());
+        invitationCDTO.setCreatedOn(invitation.getCreatedOn().toString());
 
-        return invitationDTO;
+        return invitationCDTO;
     }
 
 
@@ -292,6 +293,7 @@ public class CollaboratorService {
 
         // Map the invitation to InvitationDTO
         InvitationDTO invitationDTO = new InvitationDTO();
+        invitationDTO.setInvitationId(invitation.getId()); // Set the invitationId here
         invitationDTO.setInviterName(invitation.getInviterName());
         invitationDTO.setInviteeName(invitation.getInviteeName());
         invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
@@ -306,12 +308,8 @@ public class CollaboratorService {
 
 
 
-
-
-
-
     @Transactional
-    public void confirmCollaborator(Integer invitationId) {
+    public void confirmCollaborator(Integer invitationId, boolean acceptInvitation) {
         Invitation invitation = invitationRepository.findById(invitationId)
                 .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
 
@@ -319,19 +317,28 @@ public class CollaboratorService {
             throw new ConflictException("Invitation is not in a pending state");
         }
 
-        invitation.setStatus(Invitation.Status.ACCEPTED);
-        invitationRepository.save(invitation);
+        // Handle accepting the invitation
+        if (acceptInvitation) {
+            invitation.setStatus(Invitation.Status.ACCEPTED);
 
-        // สร้าง collaborator ใหม่จากคำเชิญที่ตอบรับ
-        Collaborator collaborator = new Collaborator();
-        collaborator.setUserOid(invitation.getInviteeEmail());
-        collaborator.setBoard(invitation.getBoard());
-        collaborator.setEmail(invitation.getInviteeEmail());
-        collaborator.setAccessRight(invitation.getAccessRight());
-        collaborator.setAddedOn(ZonedDateTime.now());
+            // Create a new collaborator from the accepted invitation
+            Collaborator collaborator = new Collaborator();
+            collaborator.setUserOid(invitation.getInviteeEmail());
+            collaborator.setBoard(invitation.getBoard());
+            collaborator.setEmail(invitation.getInviteeEmail());
+            collaborator.setAccessRight(invitation.getAccessRight());
+            collaborator.setAddedOn(ZonedDateTime.now());
 
-        collaboratorRepository.save(collaborator);
+            collaboratorRepository.save(collaborator); // Save the new collaborator to the database
+        }
+        // Handle declining the invitation
+        else {
+            invitation.setStatus(Invitation.Status.DECLINED);
+        }
+
+        invitationRepository.save(invitation); // Save the updated invitation
     }
+
 
 
     @Transactional
