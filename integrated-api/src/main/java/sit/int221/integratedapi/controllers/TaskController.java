@@ -18,8 +18,7 @@ import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.ArrayList;
 import java.util.List;
-
-
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -184,6 +183,44 @@ public class TaskController {
         // Return response with the created attachments
         return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTOs);
     }
+
+    @GetMapping("/{boardId}/tasks/{taskId}/attachments")
+    public ResponseEntity<?> getAttachments( @RequestHeader(value = "Authorization", required = false) String token
+                                            ,@PathVariable String boardId,
+                                            @PathVariable Integer taskId) {
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
+        // taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
+        taskService.validateBoardAccessForGet(boardId, oidFromToken);
+        // Validate task existence
+        Task existingTask = taskService.findTaskById(taskId);
+        if (existingTask == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+        }
+
+        // Fetch attachments associated with the task
+        List<TaskAttachment> attachments = taskService.getAttachmentsByTaskId(taskId);
+        if (attachments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No attachments found.");
+        }
+
+        // Convert TaskAttachment entities to TaskAttachmentDTOs for response
+        List<TaskAttachmentDTO> attachmentDTOs = attachments.stream()
+                .map(attachment -> new TaskAttachmentDTO(
+                        attachment.getFileName(),
+                        attachment.getFilePath(),
+                        attachment.getFileType()
+                ))
+                .collect(Collectors.toList());
+
+        // Return response with the attachment details
+        return ResponseEntity.status(HttpStatus.OK).body(attachmentDTOs);
+    }
+
 
 
 
