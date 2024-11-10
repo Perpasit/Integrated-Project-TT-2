@@ -17,7 +17,9 @@ import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -185,17 +187,19 @@ public class TaskController {
     }
 
     @GetMapping("/{boardId}/tasks/{taskId}/attachments")
-    public ResponseEntity<?> getAttachments( @RequestHeader(value = "Authorization", required = false) String token
-                                            ,@PathVariable String boardId,
-                                            @PathVariable Integer taskId) {
+    public ResponseEntity<?> getAttachments(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer taskId) {
+
+        // ตรวจสอบความถูกต้องของ token และการเข้าถึง board
         String oidFromToken = null;
         if (token != null && !token.isEmpty()) {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         } else {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
-        // taskService.validateBoardOwnershipForModification(boardId,oidFromToken);
-        taskService.validateBoardAccessForGet(boardId, oidFromToken);
+
         // Validate task existence
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
@@ -208,18 +212,21 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No attachments found.");
         }
 
-        // Convert TaskAttachment entities to TaskAttachmentDTOs for response
-        List<TaskAttachmentDTO> attachmentDTOs = attachments.stream()
-                .map(attachment -> new TaskAttachmentDTO(
-                        attachment.getFileName(),
-                        attachment.getFilePath(),
-                        attachment.getFileType()
-                ))
-                .collect(Collectors.toList());
+        // สร้างรูปแบบข้อมูลที่คุณต้องการส่งกลับ
+        Map<String, Object> response = new HashMap<>();
+        response.put("attachments", attachments.stream().map(attachment -> {
+            Map<String, Object> attachmentData = new HashMap<>();
+            attachmentData.put("fileName", attachment.getFileName());
+            attachmentData.put("filePath", attachment.getFilePath());
+            attachmentData.put("fileType", attachment.getFileType());
+            return attachmentData;
+        }).collect(Collectors.toList()));
 
-        // Return response with the attachment details
-        return ResponseEntity.status(HttpStatus.OK).body(attachmentDTOs);
+        return ResponseEntity.ok(response);  // ส่งกลับเป็น Object ที่มี key "attachments"
     }
+
+
+
 
 
 
