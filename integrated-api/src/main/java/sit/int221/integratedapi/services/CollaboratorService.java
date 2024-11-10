@@ -1,13 +1,12 @@
 package sit.int221.integratedapi.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sit.int221.integratedapi.dtos.CollaboratorDTO;
-import sit.int221.integratedapi.dtos.InvitationCDTO;
-import sit.int221.integratedapi.dtos.InvitationDTO;
+import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
 import sit.int221.integratedapi.entities.Invitation;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CollaboratorService {
@@ -147,43 +147,96 @@ public class CollaboratorService {
 
 
 
-    public Map<String, Object> getCollaboratorsByBoardId(String boardId, String oidFromToken) {
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
-        validateBoardAccessForGet(boardId, oidFromToken);
+//    public Map<String, Object> getCollaboratorsByBoardId(String boardId, String oidFromToken) {
+//        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
+//        validateBoardAccessForGet(boardId, oidFromToken);
+//
+//        // ดึงข้อมูลบอร์ดจากฐานข้อมูล Board
+//        Board board = boardRepository.findById(boardId)
+//                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+//
+//        // ดึง collaborators ที่เชื่อมโยงกับบอร์ดนี้จากฐานข้อมูล Collaborator
+//        List<Collaborator> collaborators = collaboratorRepository.findByBoard(board);
+//
+//        // แปลง collaborators เป็น DTO
+//        List<CollaboratorDTO> collaboratorDTOs = new ArrayList<>();
+//        for (Collaborator collaborator : collaborators) {
+//            // ดึงข้อมูล user โดยใช้ userOid จาก Collaborator
+//            User user = userRepository.findByOid(collaborator.getUserOid());
+//            if (user == null) {
+//                throw new ItemNotFoundException("User not found for OID: " + collaborator.getUserOid());
+//            }
+//
+//            // สร้าง CollaboratorDTO และใส่ข้อมูลที่ได้จาก User และ Collaborator
+//            CollaboratorDTO collaboratorDTO = new CollaboratorDTO();
+//            collaboratorDTO.setOid(user.getOid());;
+//            collaboratorDTO.setName(user.getName());
+//            collaboratorDTO.setEmail(user.getEmail());
+//            collaboratorDTO.setAccessRight(collaborator.getAccessRight());
+//            collaboratorDTO.setAddedOn(collaborator.getAddedOn().toString());  // แปลง ZonedDateTime เป็น String
+//
+//            collaboratorDTOs.add(collaboratorDTO);
+//        }
+//
+//        // สร้างแผนที่สำหรับ response
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("collaborators", collaboratorDTOs);
+//
+//        return response;
+//    }
 
-        // ดึงข้อมูลบอร์ดจากฐานข้อมูล Board
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        // ดึง collaborators ที่เชื่อมโยงกับบอร์ดนี้จากฐานข้อมูล Collaborator
-        List<Collaborator> collaborators = collaboratorRepository.findByBoard(board);
-
-        // แปลง collaborators เป็น DTO
-        List<CollaboratorDTO> collaboratorDTOs = new ArrayList<>();
-        for (Collaborator collaborator : collaborators) {
-            // ดึงข้อมูล user โดยใช้ userOid จาก Collaborator
-            User user = userRepository.findByOid(collaborator.getUserOid());
-            if (user == null) {
-                throw new ItemNotFoundException("User not found for OID: " + collaborator.getUserOid());
-            }
-
-            // สร้าง CollaboratorDTO และใส่ข้อมูลที่ได้จาก User และ Collaborator
-            CollaboratorDTO collaboratorDTO = new CollaboratorDTO();
-            collaboratorDTO.setOid(user.getOid());;
-            collaboratorDTO.setName(user.getName());
-            collaboratorDTO.setEmail(user.getEmail());
-            collaboratorDTO.setAccessRight(collaborator.getAccessRight());
-            collaboratorDTO.setAddedOn(collaborator.getAddedOn().toString());  // แปลง ZonedDateTime เป็น String
-
-            collaboratorDTOs.add(collaboratorDTO);
+    public CollaboratorListDTO getCollaboratorsAndPendingByBoardId(String userOid) {
+        // Fetch the user's email using the OID
+        User user = userRepository.findByOid(userOid);
+        if (user == null) {
+            throw new ItemNotFoundException("User not found with OID: " + userOid);
         }
+        String inviteeEmail = user.getEmail(); // Get the invitee's email from the user object
 
-        // สร้างแผนที่สำหรับ response
-        Map<String, Object> response = new HashMap<>();
-        response.put("collaborators", collaboratorDTOs);
+        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
 
-        return response;
+        // Map collaborator boards to CollaboratorBoardDTO
+        List<CollaboratorBoardDTO> collabBoardDTOs = collaborators.stream()
+                .map(collaborator -> {
+                    Board board = collaborator.getBoard();
+                    User ownerUser = userRepository.findByOid(board.getOwnerId());
+
+                    if (ownerUser != null) {
+                        OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
+                        return new CollaboratorBoardDTO(
+                                board.getId(),
+                                board.getName(),
+                                board.getVisibility(),
+                                ownerDTO,
+                                collaborator.getAccessRight().name()
+                        );
+                    } else {
+                        throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
+                    }
+                })
+                .collect(Collectors.toList());
+
+        // Fetch pending invitations directly using invitation repository with inviteeEmail and PENDING status
+        List<InvitationBoardDTO> invitationBoards = invitationRepository.findByInviteeEmailAndStatus(inviteeEmail, Invitation.Status.PENDING)
+                .stream()
+                .map(invitation -> {
+                    Board board = invitation.getBoard();
+                    return new InvitationBoardDTO(
+                            invitation.getId(),
+                            invitation.getInviterName(),
+                            invitation.getInviteeEmail(),
+                            board.getName(),
+                            invitation.getAccessRight().name(),
+                            invitation.getStatus().name()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // Return the compiled DTO
+        return new CollaboratorListDTO(collabBoardDTOs, invitationBoards);
     }
+
 
 
 
