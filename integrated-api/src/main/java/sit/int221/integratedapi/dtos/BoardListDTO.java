@@ -11,4 +11,5 @@ import java.util.List;
 public class BoardListDTO {
     private List<PersonalBoardDTO> personalBoards;
     private List<CollaboratorBoardDTO> collabBoards;
+    private List<InvitationBoardDTO> invitationBoards;
 }
