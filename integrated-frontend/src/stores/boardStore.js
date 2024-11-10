@@ -14,6 +14,7 @@ export const useBoardStore = defineStore("board", {
   getters: {
     getBoardsPersonal: (state) => state.boards.personalBoards,
     getBoardsCollab: (state) => state.boards.collabBoards,
+    getBoardsInvitation: (state) => state.boards.invitationBoards,
     getBoardByBoardId: (state) => (boardId) => {
       const allBoards = [...state.boards.personalBoards, ...state.boards.collabBoards];
       return allBoards.find((board) => board.id === boardId);

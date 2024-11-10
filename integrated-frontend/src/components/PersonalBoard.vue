@@ -83,6 +83,7 @@ const fetchPersonalBoards = async () => {
     try {
       await boardStore.fetchAllBoards()
       boards.value = boardStore.getBoardsPersonal
+      console.log(boards.value)
     } catch (error) {
       console.error("Error fetching boards:", error)
     }
