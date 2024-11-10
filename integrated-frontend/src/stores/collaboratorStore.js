@@ -38,19 +38,63 @@ export const useCollabStore = defineStore("collab", {
       try {
         let data;
         if (userStore.getIsAuthenticated) {
-        data = await getItems(
-          `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
-        )}else{
+          data = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
+          );
+        } else {
           data = await getItemsNoUser(
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
-          )
+          );
         }
         this.collabs = data.collaborators || [];
-        return data.collaborators
+        
+
+        
+        return this.collabs;
       } catch (error) {
-        console.error("Error fetching collaborators:", error)
+        console.error("Error fetching collaborators:", error);
       }
     },
+    
+    async fetchInvitations(boardId) {
+      const userStore = useUserStore();
+      try {
+        let data;
+        if (userStore.getIsAuthenticated) {
+          data = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
+          );
+        } else {
+          data = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
+          );
+        }
+        return data.invitations || [];
+      } catch (error) {
+        console.error("Error fetching invitations:", error);
+        return [];
+      }
+    },
+    async fetchInvitationsCheck(boardId) {
+      const userStore = useUserStore();
+      try {
+        let data;
+        if (userStore.getIsAuthenticated) {
+          data = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
+          );
+        } else {
+          data = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
+          );
+        }
+        return data.invitations || [];
+      } catch (error) {
+        console.error("Error fetching invitations:", error);
+        return [];
+      }
+    },
+    
 
     // async fetchCollaboratorById(boardId, collabOid) {
     //   try {

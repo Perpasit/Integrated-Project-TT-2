@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed,watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useCollabStore } from '../stores/collaboratorStore';
 import { useBoardStore } from '../stores/boardStore';
 import { useUserStore } from "../stores/userStore";
@@ -9,9 +9,10 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 const collabStore = useCollabStore();
-const boardStore = useBoardStore()
+const boardStore = useBoardStore();
 const userStore = useUserStore();
-const collaborators = computed(() => collabStore.getCollaborators)
+
+const collaborators = ref([]);
 const isDeleteModalVisible = ref(false);
 const showSuccessModal = ref(false);
 const showAccessModal = ref(false); // Modal for access right change
@@ -24,11 +25,16 @@ let boardId = route.params.boardId;
 
 const fetchCollaborator = async () => {
   try {
-    const collabAll = await collabStore.fetchCollaborators(boardId);
-    collaborators.value = collabAll.map(collab => ({
+    // Fetch collaborators
+    const collabs = await collabStore.fetchCollaborators(boardId);
+    // Fetch invitations
+    const invitations = await collabStore.fetchInvitations(boardId);
+    console.log(invitations)
+    // Combine collaborators and invitations
+    collaborators.value = [...collabs, ...invitations].map(collab => ({
       ...collab,
       accessRight: collab.accessRight
-    })) || [];
+    }));
   } catch (error) {
     console.error("Failed to fetch collaborators:", error);
     collaborators.value = [];
@@ -39,7 +45,7 @@ const userOid = ref("");
 const boardOid = ref(null);
 const isSameOid = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false; // Return false ถ้าไม่มีค่า boardOid หรือ userOid เพื่อให้หน้าโหลดขึ้นมาได้
+    return false;
   }
   return boardOid.value === userOid.value;
 });
@@ -73,27 +79,16 @@ const fetchBoardAndUserOids = async (boardId) => {
     boardOid.value = boardData.owner.oid; 
     userOid.value = userStore.getUserOid || null; 
 
-  
-    
     const visibility = boardData.visibility;
 
-    await collabStore.fetchCollaborators(boardId);
+    await fetchCollaborator();
 
-    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
-    // console.log("Collaborators:", collabStore.collabs);
-
-    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
-      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
       const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(boardId, userOid.value);
-
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
-        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
-        // console.log(collaboratorData)
         router.push({ name: "AccessDenied" });
       }
     }
-
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
     router.push({ name: "AccessDenied" }); 
@@ -104,9 +99,10 @@ watch(
   () => route.params.boardId,
   async (newBoardId) => {
     boardId = newBoardId;
-    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+    await fetchBoardAndUserOids(newBoardId);
   }
 );
+
 const confirmAccessRightChange = (collaborator) => {
   collaboratorToUpdate.value = collaborator;
   newAccessRight.value = collaborator.accessRight;
@@ -117,23 +113,20 @@ const updateAccessRight = async () => {
   if (collaboratorToUpdate.value) {
     try {
       await collabStore.updateCollaborator(boardId, collaboratorToUpdate.value.oid, newAccessRight.value);
-      console.log(`Access right updated to ${newAccessRight.value} for ${collaboratorToUpdate.value.name}`);
-      showAccessModal.value = false; // Close modal after success
-      collaboratorToUpdate.value = null; // Clear collaborator
-      await fetchCollaborator(); // Refresh list
+      showAccessModal.value = false;
+      collaboratorToUpdate.value = null;
+      await fetchCollaborator();
     } catch (error) {
       console.error("Failed to update access right:", error);
     }
   }
 };
 
-// const openAddCollaboratorModal = () => {
-//   router.push({ name: "AddCollabManage", params: { boardId } });
-// };
 const closeAccessModal = () => {
   showAccessModal.value = false;
   fetchCollaborator();
 }
+
 const confirmDelete = (collaborator) => {
   collaboratorToDelete.value = collaborator;
   isDeleteModalVisible.value = true;
@@ -163,6 +156,7 @@ onMounted(async () => {
   await fetchBoardAndUserOids(boardId);
 });
 </script>
+
 
 <template>
 <div class="container mx-auto px-4 pt-2">

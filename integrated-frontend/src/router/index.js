@@ -14,6 +14,7 @@ import AddEditBoard from "../components/AddEditBoard.vue"
 import AccessDenied from "../components/AccessDenied.vue"
 import CollaboratorManagement from "../components/CollaboratorManagement.vue"
 import AddCollaborator from "../components/AddCollaborator.vue"
+import Invitation from "../components/Invitation.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -62,6 +63,11 @@ const router = createRouter({
           path: "/board/:boardId/collab/add",
           name: "AddCollabManage",
           component: AddCollaborator
+        },
+        {
+          path: "/board/:boardId/collab/invitations",
+          name: "Invitation",
+          component: Invitation
         },
       ]
     },
