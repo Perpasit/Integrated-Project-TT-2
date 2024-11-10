@@ -437,6 +437,10 @@ public class TaskService {
         return taskAttachmentRepository.save(taskAttachment);
     }
 
+    public List<TaskAttachment> getAttachmentsByTaskId(Integer taskId) {
+        return taskAttachmentRepository.findByTaskId(taskId);
+    }
+
 
 
 
