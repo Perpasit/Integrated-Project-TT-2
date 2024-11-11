@@ -14,10 +14,13 @@ public interface InvitationRepository extends JpaRepository<Invitation, Integer>
 
     boolean existsByBoardIdAndInviteeEmailAndStatus(String boardId, String inviteeEmail, Invitation.Status status);
 
-    List<Invitation> findByBoardIdAndInviteeEmailAndStatus(String boardId, String inviteeEmail, Invitation.Status status);
 
     Invitation findByBoardIdAndInviteeNameAndStatus(String boardId, String inviteeName, Invitation.Status status);
 
     List<Invitation> findByInviteeEmailAndStatus(String inviteeEmail, Invitation.Status status);
+
+    List<Invitation> findByBoardIdAndInviteeEmailAndStatus(String boardId, String inviteeEmail, Invitation.Status status);
+
+    List<Invitation> findByBoardIdAndStatus(String boardId, Invitation.Status status);
 }
 
