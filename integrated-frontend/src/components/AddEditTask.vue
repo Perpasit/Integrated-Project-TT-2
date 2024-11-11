@@ -26,69 +26,91 @@ const attachFileStore = useAttachFileStore()
 const isLoading = ref(false)
 const uploadStatus = ref(null)
 
+const attachmentsFileNames = ref([])
+const getAttachmentsFileName = async (boardId, taskId) => {
+  try {
+    // ดึงข้อมูล attachments จาก store
+    const response = await attachFileStore.getAttachments(boardId, taskId)
+
+    // ตรวจสอบว่า response มีข้อมูล attachments หรือไม่
+    if (response && response.attachments && response.attachments.length > 0) {
+      // ดึง fileName จากแต่ละ attachment
+      const fileNames = response.attachments.map(
+        (attachment) => attachment.fileName
+      )
+
+      // เก็บข้อมูลชื่อไฟล์ใน ref
+      attachmentsFileNames.value = fileNames
+      console.log(fileNames) // แสดง fileName ใน console
+    } else {
+      console.log("No attachments found")
+    }
+  } catch (error) {
+    console.error("Error fetching attachments:", error)
+  }
+}
+
 const uploadStatusClass = computed(() => {
   if (uploadStatus.value === "Files uploaded successfully!") {
-    return "success";
+    return "success"
   } else if (uploadStatus.value) {
-    return "error";
+    return "error"
   }
-});
-
+})
 
 // Function to handle file selection
 const handleFileChange = (event) => {
-  const files = event.target.files;
-  attachFileStore.setSelectedFiles(files); // Set files to the store
-};
+  const files = event.target.files
+  attachFileStore.setSelectedFiles(files) // Set files to the store
+}
 const generateUniqueFileName = (fileName) => {
-  const timestamp = Date.now();
-  const extension = fileName.split('.').pop();
-  const baseName = fileName.replace(`.${extension}`, '');
-  return `${baseName}-${timestamp}.${extension}`;
-};
+  const timestamp = Date.now()
+  const extension = fileName.split(".").pop()
+  const baseName = fileName.replace(`.${extension}`, "")
+  return `${baseName}-${timestamp}.${extension}`
+}
 
 const uploadFiles = async () => {
-  if (isLoading.value) return; // Prevent multiple uploads
+  if (isLoading.value) return // Prevent multiple uploads
 
-  isLoading.value = true;
+  isLoading.value = true
 
-  const boardId = route.params.boardId; // Get boardId from URL params
-  const taskId = route.params.id; // Get taskId from URL params
+  const boardId = route.params.boardId // Get boardId from URL params
+  const taskId = route.params.id // Get taskId from URL params
 
   if (!taskId) {
-    uploadStatus.value = "Task ID is missing.";
-    isLoading.value = false;
-    return;
+    uploadStatus.value = "Task ID is missing."
+    isLoading.value = false
+    return
   }
 
   // Creating new files with unique names
-  const filesToUpload = Array.from(attachFileStore.selectedFiles).map(file => {
-    const uniqueFileName = generateUniqueFileName(file.name);
-    // Create a new file with the same content but a unique name
-    return new File([file], uniqueFileName, { type: file.type });
-  });
+  const filesToUpload = Array.from(attachFileStore.selectedFiles).map(
+    (file) => {
+      const uniqueFileName = generateUniqueFileName(file.name)
+      // Create a new file with the same content but a unique name
+      return new File([file], uniqueFileName, { type: file.type })
+    }
+  )
 
   // Update the store with the newly named files
-  attachFileStore.setSelectedFiles(filesToUpload);
+  attachFileStore.setSelectedFiles(filesToUpload)
 
-  console.log('boardId:', boardId, 'taskId:', taskId); // Debugging output
+  console.log("boardId:", boardId, "taskId:", taskId) // Debugging output
 
   // Call the store action to upload files
   try {
-    const response = await attachFileStore.uploadFiles(boardId, taskId);
+    const response = await attachFileStore.uploadFiles(boardId, taskId)
     if (response.status === 201) {
-      uploadStatus.value = "Files uploaded successfully!";
+      uploadStatus.value = "Files uploaded successfully!"
     }
-
   } catch (error) {
-    uploadStatus.value = "An error occurred during upload.";
-    console.error("Upload error:", error);
+    uploadStatus.value = "An error occurred during upload."
+    console.error("Upload error:", error)
   } finally {
-    isLoading.value = false; // Reset loading status
+    isLoading.value = false // Reset loading status
   }
-};
-
-
+}
 
 let boardId = route.params.boardId
 const userOid = ref("")
@@ -380,6 +402,13 @@ onMounted(async () => {
   } else {
     console.warn("You do not have permission to access this board.")
   }
+
+  const taskId = route.params.id
+  // // After fetching, you can access the attachments in the store:
+  // const kut = await attachFileStore.getAttachments(boardId,taskId)
+  // console.log(kut)
+
+  getAttachmentsFileName(boardId, taskId)
 })
 </script>
 
@@ -427,15 +456,30 @@ onMounted(async () => {
               <div v-if="mode === 'edit'">
                 <h2>Attach Files</h2>
 
+                <div>
+                  <!-- Display uploaded files (fileName only) -->
+                  <div v-if="attachmentsFileNames.length > 0">
+                    <h3>Uploaded Files: {{ attachmentsFileNames.length }}</h3>
+                    <ul>
+                      <li v-for="(file, index) in attachmentsFileNames" :key="index">
+                        {{ file }}
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-else>
+                    <p>No files uploaded. (-)</p> <!-- Show '-' when no uploaded files -->
+                  </div>
+                </div>
+
                 <!-- File input to select multiple files -->
                 <input type="file" @change="handleFileChange" multiple />
 
-                <!-- Display selected files with a dark background and close button -->
+                <!-- Display selected files with styling and remove button -->
                 <div v-if="attachFileStore.selectedFiles.length">
-                  <h3>Selected Files:</h3>
+                  <h3>Selected Files: {{ attachFileStore.selectedFiles.length }}</h3>
                   <div class="space-y-2">
-                    <div v-for="(file, index) in attachFileStore.selectedFiles" :key="index"
-                      class="flex justify-between items-center bg-gray-200 text-black p-2 ">
+                    <div v-for="(file, index) in attachFileStore.selectedFiles" :key="file.name"
+                      class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg">
                       <span class="text-sm">{{ file.name }}</span>
                       <button type="button" class="text-red-500" @click="attachFileStore.removeFile(index)">
                         X
@@ -443,9 +487,13 @@ onMounted(async () => {
                     </div>
                   </div>
                 </div>
+                <div v-else>
+                  <p>No files selected. (-)</p> <!-- Show '-' when no selected files -->
+                </div>
 
                 <!-- Upload button -->
-                <button @click="uploadFiles" :disabled="isLoading">
+                <button @click="uploadFiles" :disabled="isLoading"
+                  class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                   Upload Files
                 </button>
 
@@ -457,7 +505,6 @@ onMounted(async () => {
                   {{ uploadStatus }}
                 </div>
               </div>
-
 
 
             </div>
