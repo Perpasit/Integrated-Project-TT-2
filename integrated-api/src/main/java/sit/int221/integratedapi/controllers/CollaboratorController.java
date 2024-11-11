@@ -53,8 +53,28 @@ public class CollaboratorController {
     @Autowired
     private InvitationRepository invitationRepository;
 
+//    @GetMapping("/{boardId}/collabs")
+//    public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
+//            @RequestHeader(value = "Authorization", required = false) String token,
+//            @PathVariable String boardId) {
+//
+//        String oidFromToken = null;
+//
+//        if (token != null && !token.isEmpty()) {
+//            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+//        }
+//
+//        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
+//        boardService.validateBoardAccessForGet(boardId, oidFromToken);
+//
+//        // ดึงข้อมูล collaborators และแปลงเป็น response object
+//        Map<String, Object> collaboratorsResponse = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
+//
+//        return ResponseEntity.ok(collaboratorsResponse);
+//    }
+
     @GetMapping("/{boardId}/collabs")
-    public ResponseEntity<Map<String, Object>> getCollaboratorsByBoardId(
+    public ResponseEntity<CollaboratorListDTO> getCollaboratorsAndPendingByBoardId(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId) {
 
@@ -64,11 +84,11 @@ public class CollaboratorController {
             oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
+        // Validate board access for the user
         boardService.validateBoardAccessForGet(boardId, oidFromToken);
 
-        // ดึงข้อมูล collaborators และแปลงเป็น response object
-        Map<String, Object> collaboratorsResponse = collaboratorService.getCollaboratorsByBoardId(boardId, oidFromToken);
+        // Retrieve collaborators and pending invitations
+        CollaboratorListDTO collaboratorsResponse = collaboratorService.getCollaboratorsAndPendingByBoardId(oidFromToken);
 
         return ResponseEntity.ok(collaboratorsResponse);
     }

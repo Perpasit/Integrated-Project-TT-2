@@ -183,11 +183,11 @@ public class BoardService {
                     System.out.println("Found pending invitation: " + pendingInvitationDTO);
                     return new InvitationBoardDTO(
                             pendingInvitationDTO.getInvitationId(),
-                            pendingInvitationDTO.getBoardName(),
                             pendingInvitationDTO.getInviterName(),
+                            pendingInvitationDTO.getInviteeEmail(),
+                            pendingInvitationDTO.getBoardName(),
                             pendingInvitationDTO.getAccessRight(),
-                            pendingInvitationDTO.getStatus(),
-                            pendingInvitationDTO.getInviteeEmail()
+                            pendingInvitationDTO.getStatus()
                     );
                 })
                 .collect(Collectors.toList());
