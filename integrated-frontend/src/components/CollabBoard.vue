@@ -52,10 +52,10 @@ const fetchCollabsBoards = async () => {
     const fetchedBoards = [
       ...collabBoard,
       ...InviteBoard.map((invite) => ({
-        name: invite.inviterName,
-        owner: { name: invite.inviteeEmail },
-        accessRight: invite.boardName,
-        status: invite.accessRight,
+        name: invite.boardName,
+        owner: { name: invite.inviterName },
+        accessRight: invite.accessRight,
+        status: invite.status,
       })),
     ];
     console.log(InviteBoard);
