@@ -187,8 +187,7 @@ public class CollaboratorService {
 
 
     public CollaboratorListDTO getCollaboratorsByBoardId(String boardId) {
-
-        /// Fetch collaborators for the specified boardId
+        // Fetch collaborators for the specified boardId
         List<Collaborator> collaborators = collaboratorRepository.findByBoardId(boardId);
 
         // Map collaborators to CollaboratorDTO
@@ -207,10 +206,9 @@ public class CollaboratorService {
                 })
                 .collect(Collectors.toList());
 
-        // Fetch pending invitations for the specific board
-        List<InvitationDTO> pendingInvitations = invitationRepository.findByBoardIdAndStatus(
-                        boardId, Invitation.Status.PENDING
-                ).stream()
+        // Fetch pending invitations directly for the board with PENDING status
+        List<InvitationDTO> invitationList = invitationRepository.findByBoardIdAndStatus(boardId, Invitation.Status.PENDING)
+                .stream()
                 .map(invitation -> new InvitationDTO(
                         invitation.getId(),
                         invitation.getInviterName(),
@@ -224,18 +222,6 @@ public class CollaboratorService {
                 ))
                 .collect(Collectors.toList());
 
-        // Map pending invitations to InvitationBoardDTO
-        List<InvitationBoardDTO> invitationList = pendingInvitations.stream()
-                .map(pendingInvitationDTO -> new InvitationBoardDTO(
-                        pendingInvitationDTO.getInvitationId(),
-                        pendingInvitationDTO.getInviterName(),
-                        pendingInvitationDTO.getInviteeEmail(),
-                        pendingInvitationDTO.getBoardId(),
-                        pendingInvitationDTO.getBoardName(),
-                        pendingInvitationDTO.getAccessRight(),
-                        pendingInvitationDTO.getStatus()
-                ))
-                .collect(Collectors.toList());
 
         // Return CollaboratorListDTO with collaborators and pending invitations
         return new CollaboratorListDTO(collaboratorList, invitationList);
@@ -429,6 +415,8 @@ public class CollaboratorService {
         return collaboratorDTO;
     }
 
+
+
     @Transactional
     public CollaboratorDTO removeCollaboratorFromBoard(String boardId, String collabOid, String oidFromToken) {
         // Check if the board exists
@@ -480,6 +468,10 @@ public class CollaboratorService {
             }
         }
 
+        // Remove any pending invitation for this user in this board
+        String inviteeEmail = user.getEmail(); // Fetch email associated with collabOid
+        invitationRepository.deleteByBoardIdAndInviteeEmail(boardId, inviteeEmail);
+
         // Map the collaborator entity to DTO before returning
         CollaboratorDTO collaboratorDTO = listMapper.mapObject(collaboratorToRemove, CollaboratorDTO.class);
         collaboratorDTO.setOid(user.getOid());
@@ -488,11 +480,6 @@ public class CollaboratorService {
 
         return collaboratorDTO;
     }
-
-
-
-
-
 
 
 
