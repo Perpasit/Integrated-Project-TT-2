@@ -88,7 +88,7 @@ public class CollaboratorController {
         boardService.validateBoardAccessForGet(boardId, oidFromToken);
 
         // Retrieve collaborators and pending invitations
-        CollaboratorListDTO collaboratorsResponse = collaboratorService.getCollaboratorsAndPendingByBoardId(oidFromToken);
+        CollaboratorListDTO collaboratorsResponse = collaboratorService.getCollaboratorsAndPendingByBoardId(boardId,oidFromToken);
 
         return ResponseEntity.ok(collaboratorsResponse);
     }
