@@ -11,6 +11,7 @@ const collabStore = useCollabStore();
 const userStore = useUserStore();
 const boardId = route.params.boardId;
 const inviteName = ref(null);
+const inviteStatus = ref(null);
 const inviteData = ref(null);
 const currUser = ref(null);
 const activeInvitation = ref(false);
@@ -21,11 +22,13 @@ const fetchInvitation = async (boardId) => {
   const user = userStore.getUserInfo;
 
   inviteName.value = data.inviteeName;
+  inviteStatus.value = data.status
   currUser.value = user.name;
   activeInvitation.value = currUser.value === inviteName.value;
 
   console.log(currUser.value);
   console.log(inviteName.value);
+  console.log(inviteStatus.value);
   console.log(activeInvitation.value);
   console.log(data);
 };
@@ -59,7 +62,7 @@ onMounted(async () => {
       </p>
       <h1 class="text-xl font-semibold text-gray-800 mb-4">INVITATION</h1>
 
-      <p v-if="activeInvitation" class="text-gray-600 mb-6">
+      <p v-if="activeInvitation && inviteStatus === 'PENDING'" class="text-gray-600 mb-6">
         <strong>{{ inviteData.inviterName }}</strong> has invited
         <strong>{{ inviteData.inviteeName }}</strong> to join the board
         <strong>{{ inviteData.boardName }}</strong> with

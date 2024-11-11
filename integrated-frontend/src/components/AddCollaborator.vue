@@ -77,8 +77,13 @@ const collaborators = ref([]); // ประกาศ ref สำหรับเ�
 // ฟังก์ชันดึงข้อมูล collaborators
 const fetchCollaborator = async () => {
   try {
+
+
     const data = await collabStore.fetchCollaborators(boardId.value);
-    const collabAll = data.collaboratorList
+
+    const invitationData = data.invitationList.map(d=>({name:d.inviteeName,email:d.inviteeEmail,accessRight:d.accessRight,status:d.status}))
+    const collabAll =  [...data.collaboratorList ,...invitationData]
+
     console.log(collabAll)
     if (Array.isArray(collabAll)) {
       // ล้างค่า collaborators และบังคับให้ Vue ตรวจจับการเปลี่ยนแปลง
@@ -111,13 +116,11 @@ const handleSubmit = async () => {
   try {
     // เพิ่ม collaborator ใหม่
     const data = await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
-    
     // ตรวจสอบว่าผู้ใช้นี้เป็น collaborator อยู่แล้วหรือไม่
-    if (data === "The user is already a collaborator of this board.") {
-      errorText.value = data;
+    if (data.status === 500 || data === 'The user is already a collaborator or has a pending invitation for this board.') {
+      errorText.value = 'The user is already a collaborator or has a pending invitation for this board.';
       return;
     }
-    
     // ตรวจสอบว่าผู้ใช้นี้ไม่พบอีเมลหรือไม่
     if (typeof data === 'string' && data.includes("User not found with email")) {
       errorText.value = "The user does not exists";
