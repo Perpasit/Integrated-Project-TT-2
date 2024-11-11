@@ -133,10 +133,26 @@ export const useCollabStore = defineStore("collab", {
               accessRight: newAccessRight
             }
           );
-          const index = this.collabs.findIndex((c) => c.user_id === userId); // Ensure you're checking against user_id
-          if (index !== -1) {
-            this.collabs[index] = response.data;
-          }
+          // const index = this.collabs.findIndex((c) => c.user_id === userId); // Ensure you're checking against user_id
+          // if (index !== -1) {
+          //   this.collabs[index] = response.data;
+          // }
+        } catch (error) {
+          console.error("Error updating collaborator:", error);
+        }
+      },
+      async updatePendingCollaborator(boardId, InvitationId, newAccessRight) {
+        try {
+          const response = await patchItem(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations/${InvitationId}`, // Use userId here, not email
+            {
+              accessRight: newAccessRight
+            }
+          );
+          // const index = this.collabs.findIndex((c) => c.InvitationId === InvitationId); // Ensure you're checking against user_id
+          // if (index !== -1) {
+          //   this.collabs[index] = response.data;
+          // }
         } catch (error) {
           console.error("Error updating collaborator:", error);
         }
