@@ -364,7 +364,7 @@ public class CollaboratorService {
 
 
     @Transactional
-    public void confirmCollaborator(Integer invitationId, boolean acceptInvitation) {
+    public void confirmCollaborator(Integer invitationId, boolean acceptInvitation, String oidFromToken) {
         Invitation invitation = invitationRepository.findById(invitationId)
                 .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
 
@@ -378,7 +378,7 @@ public class CollaboratorService {
 
             // Create a new collaborator from the accepted invitation
             Collaborator collaborator = new Collaborator();
-            collaborator.setUserOid(invitation.getInviteeEmail());
+            collaborator.setUserOid(oidFromToken);
             collaborator.setBoard(invitation.getBoard());
             collaborator.setEmail(invitation.getInviteeEmail());
             collaborator.setAccessRight(invitation.getAccessRight());
