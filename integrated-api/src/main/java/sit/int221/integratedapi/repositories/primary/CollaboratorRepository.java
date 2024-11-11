@@ -10,7 +10,8 @@ import java.util.List;
 
 public interface CollaboratorRepository extends JpaRepository<Collaborator, Integer> {
 
-    List<Collaborator> findByBoard(Board board);
+    @Query("SELECT c FROM Collaborator c WHERE c.board.id = :boardId")
+    List<Collaborator> findByBoardId(@Param("boardId") String boardId);
 
     Collaborator findByUserOidAndBoard(String userOid, Board board);
 
@@ -22,4 +23,6 @@ public interface CollaboratorRepository extends JpaRepository<Collaborator, Inte
     Collaborator findByUserOidAndBoardId(@Param("userOid") String userOid, @Param("boardId") String boardId);
 
     boolean existsByBoardIdAndUserOid(String boardId, String userOid);
+
+
 }

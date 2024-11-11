@@ -11,6 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CollaboratorListDTO {
-    private List<CollaboratorBoardDTO> collabBoards;
-    private List<InvitationBoardDTO> invitationBoards;
+    private List<CollaboratorDTO> collaboratorList;
+    private List<InvitationBoardDTO> invitationList;
 }
