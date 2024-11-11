@@ -29,7 +29,7 @@ const fetchCollaborator = async () => {
     const data = await collabStore.fetchCollaborators(boardId);
     // Fetch invitations
     // const invitations = await collabStore.fetchInvitations(boardId);
-    const invitationData = data.invitationList.map(d=>({name:d.inviterName,email:d.inviteeEmail,accessRight:d.accessRight,status:d.status}))
+    const invitationData = data.invitationList.map(d=>({name:d.inviteeName,email:d.inviteeEmail,accessRight:d.accessRight,status:d.status}))
     const collabs =  [...data.collaboratorList ,...invitationData]
     console.log(data)
     console.log(collabs.collaboratorList)
@@ -39,7 +39,7 @@ const fetchCollaborator = async () => {
       ...collab,
       accessRight: collab.accessRight
     }));
-    
+
   } catch (error) {
     console.error("Failed to fetch collaborators:", error);
     collaborators.value = [];
