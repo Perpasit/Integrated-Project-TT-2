@@ -14,15 +14,28 @@ public class InvitationService {
     @Autowired
     private InvitationRepository invitationRepository;
 
+    @Autowired
+    private EmailService emailService;
+
 
     @Transactional
     public boolean updateAccessRight(String boardId, Long invitationId, String accessRight) {
         Optional<Invitation> invitationOpt = invitationRepository.findByBoardIdAndId(boardId, invitationId);
+
         if (invitationOpt.isPresent()) {
             Invitation invitation = invitationOpt.get();
             if ("READ".equals(accessRight) || "WRITE".equals(accessRight)) {
-                invitation.setAccessRight(Collaborator.AccessRight.valueOf(accessRight)); // Ensure AccessRight is an enum
+                invitation.setAccessRight(Collaborator.AccessRight.valueOf(accessRight));
                 invitationRepository.save(invitation);
+
+                emailService.sendAccessRightChangeEmail(
+                        invitation.getInviteeEmail(),
+                        invitation.getBoard(),
+                        invitation.getId(),
+                        invitation.getInviteeName(),
+                        accessRight
+                );
+
                 return true;
             }
         }
@@ -33,9 +46,16 @@ public class InvitationService {
     public boolean deleteInvitation(String boardId, Long invitationId) {
         Optional<Invitation> invitationOpt = invitationRepository.findByBoardIdAndId(boardId, invitationId);
         if (invitationOpt.isPresent()) {
-            invitationRepository.delete(invitationOpt.get());
+            Invitation invitation = invitationOpt.get();
+            String collaboratorEmail = invitation.getInviteeEmail();
+            String collaboratorName = invitation.getInviteeName();
+            String boardName = invitation.getBoard().getName();
+
+            invitationRepository.delete(invitation);
+            emailService.sendCancelInvitationsEmail(collaboratorEmail, collaboratorName, boardName);
             return true;
         }
         return false;
     }
+
 }

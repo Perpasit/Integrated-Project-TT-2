@@ -351,10 +351,25 @@ public class CollaboratorController {
 
     @PatchMapping("/{boardId}/collabs/invitations/{invitationId}")
     public ResponseEntity<String> updateAccessRight(
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Long invitationId,
             @RequestBody UpdateAccessRightRequest request) {
 
+        // Step 1: Check if authorization token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authorization token is required.");
+        }
+
+        // Step 2: Extract the oid from the token
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+
+        // Step 3: Validate write access to the board
+        collaboratorService.validateWriteAccess(boardId, oidFromToken);
+
+        // Step 4: Update access right
         boolean isUpdated = invitationService.updateAccessRight(boardId, invitationId, request.getAccessRight());
         if (isUpdated) {
             return ResponseEntity.ok("Access right updated successfully.");
@@ -365,9 +380,24 @@ public class CollaboratorController {
 
     @DeleteMapping("/{boardId}/collabs/invitations/{invitationId}")
     public ResponseEntity<String> deleteInvitation(
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Long invitationId) {
 
+        // Step 1: Check if authorization token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authorization token is required.");
+        }
+
+        // Step 2: Extract the oid from the token
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class));
+
+        // Step 3: Validate write access to the board
+        collaboratorService.validateWriteAccess(boardId, oidFromToken);
+
+        // Step 4: Delete the invitation
         boolean isDeleted = invitationService.deleteInvitation(boardId, invitationId);
         if (isDeleted) {
             return ResponseEntity.ok("Invitation deleted successfully.");
@@ -375,5 +405,6 @@ public class CollaboratorController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found.");
         }
     }
+
 
 }
