@@ -174,7 +174,10 @@ onMounted(async () => {
           >
             <td class="px-4 py-5 text-center rounded-l-lg">{{ index + 1 }}</td>
             <td class="px-4 py-2">
-              <p class="itbkk-title truncate">{{ board.name }}</p>
+              <p class="itbkk-title truncate">
+                {{ board.name }}
+                <span v-if="board.status === 'PENDING'" class="text-red-500 font-medium"> ( Pending Invite )</span>
+              </p>
             </td>
             <td class="px-4 py-2">
               <p class="itbkk-owner truncate">{{ board.owner.name }}</p>
@@ -201,7 +204,7 @@ onMounted(async () => {
                 class="itbkk-invite-button bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-all duration-200 ease-in-out"
                 @click="acceptInvite(board)"
               >
-                Accept request
+                Accept/Decline
               </button>
               <button
                 v-else

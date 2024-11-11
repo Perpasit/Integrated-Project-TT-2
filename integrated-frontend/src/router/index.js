@@ -64,6 +64,7 @@ const router = createRouter({
           name: "AddCollabManage",
           component: AddCollaborator
         },
+ 
 
       ]
     },

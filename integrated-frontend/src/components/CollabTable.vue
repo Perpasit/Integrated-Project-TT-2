@@ -25,16 +25,11 @@ let boardId = route.params.boardId;
 
 const fetchCollaborator = async () => {
   try {
-    // Fetch collaborators
     const data = await collabStore.fetchCollaborators(boardId);
-    // Fetch invitations
-    // const invitations = await collabStore.fetchInvitations(boardId);
+
     const invitationData = data.invitationList.map(d=>({name:d.inviteeName,email:d.inviteeEmail,accessRight:d.accessRight,status:d.status}))
     const collabs =  [...data.collaboratorList ,...invitationData]
-    console.log(data)
-    console.log(collabs.collaboratorList)
-    console.log(invitationData)
-    // Combine collaborators and invitations
+
     collaborators.value = [...collabs].map(collab => ({
       ...collab,
       accessRight: collab.accessRight
@@ -104,6 +99,7 @@ watch(
   () => route.params.boardId,
   async (newBoardId) => {
     boardId = newBoardId;
+    await fetchCollaborator(); 
     await fetchBoardAndUserOids(newBoardId);
   }
 );

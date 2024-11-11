@@ -60,15 +60,11 @@ export const useCollabStore = defineStore("collab", {
       const userStore = useUserStore();
       try {
         let data;
-        if (userStore.getIsAuthenticated) {
+
           data = await getItems(
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
           );
-        } else {
-          data = await getItemsNoUser(
-            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
-          );
-        }
+
         return data || [];
       } catch (error) {
         console.error("Error fetching invitations:", error);

@@ -77,8 +77,9 @@ const collaborators = ref([]); // ประกาศ ref สำหรับเ�
 // ฟังก์ชันดึงข้อมูล collaborators
 const fetchCollaborator = async () => {
   try {
-    const collabAll = await collabStore.fetchCollaborators(boardId.value);
-
+    const data = await collabStore.fetchCollaborators(boardId.value);
+    const collabAll = data.collaboratorList
+    console.log(collabAll)
     if (Array.isArray(collabAll)) {
       // ล้างค่า collaborators และบังคับให้ Vue ตรวจจับการเปลี่ยนแปลง
       collaborators.value = [];  // ล้างค่าเดิม
@@ -123,6 +124,7 @@ const handleSubmit = async () => {
       return;
     }
 
+   await fetchCollaborator();
     // ถ้าไม่มีปัญหาใด ๆ ให้รีเซ็ตฟิลด์ข้อมูล
     email.value = "";
     errorText.value = "";
@@ -139,6 +141,7 @@ const handleSubmit = async () => {
 
 // ฟังก์ชันนำทางกลับไปที่หน้า Collaborator Management
 const navigateBack = () => {
+  fetchCollaborator()
   router.push({ name: "CollabManage", params: { boardId: boardId.value } });
 };
 
