@@ -350,7 +350,7 @@ public class CollaboratorController {
     }
 
     @PatchMapping("/{boardId}/collabs/invitations/{invitationId}")
-    public ResponseEntity<String> updateAccessRight(
+    public ResponseEntity<?> updateAccessRight(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Long invitationId,
@@ -369,17 +369,19 @@ public class CollaboratorController {
         // Step 3: Validate write access to the board
         collaboratorService.validateWriteAccess(boardId, oidFromToken);
 
-        // Step 4: Update access right
-        boolean isUpdated = invitationService.updateAccessRight(boardId, invitationId, request.getAccessRight());
-        if (isUpdated) {
-            return ResponseEntity.ok("Access right updated successfully.");
+        // Step 4: Update access right and retrieve InvitationUDTO
+        InvitationUDTO updatedInvitation = invitationService.updateAccessRight(boardId, invitationId, request.getAccessRight());
+
+        if (updatedInvitation != null) {
+            return ResponseEntity.ok(updatedInvitation);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found.");
         }
     }
 
+
     @DeleteMapping("/{boardId}/collabs/invitations/{invitationId}")
-    public ResponseEntity<String> deleteInvitation(
+    public ResponseEntity<?> deleteInvitation(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Long invitationId) {
@@ -397,14 +399,13 @@ public class CollaboratorController {
         // Step 3: Validate write access to the board
         collaboratorService.validateWriteAccess(boardId, oidFromToken);
 
-        // Step 4: Delete the invitation
-        boolean isDeleted = invitationService.deleteInvitation(boardId, invitationId);
-        if (isDeleted) {
-            return ResponseEntity.ok("Invitation deleted successfully.");
+        // Step 4: Delete the invitation and retrieve InvitationDDTO
+        InvitationDDTO deletedInvitation = invitationService.deleteInvitation(boardId, invitationId);
+        if (deletedInvitation != null) {
+            return ResponseEntity.ok(deletedInvitation);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found.");
         }
     }
-
 
 }
