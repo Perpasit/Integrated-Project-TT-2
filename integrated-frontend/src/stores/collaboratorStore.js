@@ -46,7 +46,7 @@ export const useCollabStore = defineStore("collab", {
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs`
           );
         }
-        this.collabs = data.collaborators || [];
+        this.collabs = data || [];
         
 
         
@@ -160,7 +160,8 @@ export const useCollabStore = defineStore("collab", {
 
     getCollaboratorByBoardAndUser(userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
-      if (!Array.isArray(this.collabs)) {
+      if (!Array.isArray(this.collabs.collabBoards)) {
+        console.log(this.collabs.collabBoards)
         console.error("Collaborators data is not available or not an array.");
         return null;
       }
@@ -171,7 +172,7 @@ export const useCollabStore = defineStore("collab", {
       // });
     
       // ใช้ oid แทน userOid ในการค้นหา
-      return this.collabs.find(
+      return this.collabs.collabBoards.find(
         (collaborator) => collaborator.oid === userOid // ใช้ฟิลด์ oid สำหรับการตรวจสอบ userOid
       );
     },

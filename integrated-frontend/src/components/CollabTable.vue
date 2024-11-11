@@ -26,10 +26,13 @@ let boardId = route.params.boardId;
 const fetchCollaborator = async () => {
   try {
     // Fetch collaborators
-    const collabs = await collabStore.fetchCollaborators(boardId);
+    const data = await collabStore.fetchCollaborators(boardId);
     // Fetch invitations
-    const invitations = await collabStore.fetchInvitations(boardId);
-    console.log(invitations)
+    // const invitations = await collabStore.fetchInvitations(boardId);
+    const collabs = [...data.collabBoards , ...data.invitationBoards]
+    console.log(collabs)
+    console.log(collabs.collabBoards)
+    console.log(collabs.invitationBoards)
     // Combine collaborators and invitations
     collaborators.value = [...collabs].map(collab => ({
       ...collab,
