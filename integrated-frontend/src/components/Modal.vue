@@ -61,9 +61,7 @@ onMounted(async () => {
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div
-        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full"
-      >
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full">
         <div v-if="task || editedTask?.id" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6">
@@ -98,11 +96,10 @@ onMounted(async () => {
                   No Description Provided
                 </textarea>
               </div>
-            </div>
 
-            <!-- Attach Files Section -->
-            <div class="mt-4">
-                <label class="block text-sm font-bold mb-1">Attachments:</label>
+              <!-- Attach Files Section moved below Description -->
+              <div class="mt-4">
+                <label class="block text-sm font-bold mb-1">Attachments :</label>
                 <div v-if="editedTask.attachments && editedTask.attachments.length > 0">
                   <ul>
                     <li v-for="(file, index) in editedTask.attachments" :key="index">
@@ -114,7 +111,8 @@ onMounted(async () => {
                   <p>No files uploaded.</p>
                 </div>
               </div>
-              
+            </div>
+
             <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Assignees :</label>
@@ -147,13 +145,14 @@ onMounted(async () => {
                 <label class="itbkk-updated-on block text-sm font-bold mb-1">Updated On : {{ parseAndFormatDate(editedTask.updatedOn) }}</label>
               </div>
 
-              
             </div>
           </div>
         </div>
+
         <div v-else class="itbkk-message bg-white px-2 pt-5 pb-4 sm:p-6 sm:pb-6 text-red-500 text-xl">
           The task does not exist.
         </div>
+
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
             type="button"
@@ -167,4 +166,5 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
 

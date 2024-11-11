@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { useUserStore } from "../stores/userStore"; // assuming you're using Pinia for state management
 import { fetchWithAuthCheck } from "../utils/fetch"; // assuming this function is already in place
 
 export const useAttachFileStore = defineStore("attachFileStore", {
