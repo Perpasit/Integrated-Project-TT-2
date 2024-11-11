@@ -186,76 +186,63 @@ public class CollaboratorService {
 //    }
 
 
-    public CollaboratorListDTO getCollaboratorsAndPendingByBoardId(String boardId, String userOid) {
-        // Fetch the user's email using the OID
-        User user = userRepository.findByOid(userOid);
-        if (user == null) {
-            throw new ItemNotFoundException("User not found with OID: " + userOid);
-        }
-        String inviteeEmail = user.getEmail(); // Get the invitee's email from the user object
+    public CollaboratorListDTO getCollaboratorsByBoardId(String boardId) {
 
-        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
+        /// Fetch collaborators for the specified boardId
+        List<Collaborator> collaborators = collaboratorRepository.findByBoardId(boardId);
 
-        // Map collaborator boards to CollaboratorBoardDTO
-        List<CollaboratorBoardDTO> collabBoardDTOs = collaborators.stream()
+        // Map collaborators to CollaboratorDTO
+        List<CollaboratorDTO> collaboratorList = collaborators.stream()
                 .map(collaborator -> {
-                    Board board = collaborator.getBoard();
-                    User ownerUser = userRepository.findByOid(board.getOwnerId());
+                    // Fetch the name based on the user's OID
+                    String name = userRepository.findNameByOid(collaborator.getUserOid());
 
-                    if (ownerUser != null) {
-                        OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
-                        return new CollaboratorBoardDTO(
-                                board.getId(),
-                                board.getName(),
-                                board.getVisibility(),
-                                ownerDTO,
-                                collaborator.getAccessRight().name()
-                        );
-                    } else {
-                        throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
-                    }
+                    return new CollaboratorDTO(
+                            collaborator.getUserOid(),
+                            name,  // Set the name fetched by OID
+                            collaborator.getEmail(),
+                            collaborator.getAccessRight(),
+                            collaborator.getAddedOn().toString()
+                    );
                 })
                 .collect(Collectors.toList());
 
-        // Fetch pending invitations for the specific board and invitee email
+        // Fetch pending invitations for the specific board
         List<InvitationDTO> pendingInvitations = invitationRepository.findByBoardIdAndStatus(
                         boardId, Invitation.Status.PENDING
                 ).stream()
-                .map(invitation -> {
-                    Board board = invitation.getBoard();
-                    return new InvitationDTO(
-                            invitation.getId(),
-                            invitation.getInviterName(),
-                            invitation.getInviteeName(),
-                            invitation.getInviteeEmail(),
-                            board.getId(),
-                            board.getName(),
-                            invitation.getAccessRight().name(),
-                            invitation.getStatus().name(),
-                            invitation.getCreatedOn().toString()
-                    );
-                })
+                .map(invitation -> new InvitationDTO(
+                        invitation.getId(),
+                        invitation.getInviterName(),
+                        invitation.getInviteeName(),
+                        invitation.getInviteeEmail(),
+                        invitation.getBoard().getId(),
+                        invitation.getBoard().getName(),
+                        invitation.getAccessRight().name(),
+                        invitation.getStatus().name(),
+                        invitation.getCreatedOn().toString()
+                ))
                 .collect(Collectors.toList());
 
         // Map pending invitations to InvitationBoardDTO
-        List<InvitationBoardDTO> invitationBoards = pendingInvitations.stream()
-                .map(pendingInvitationDTO -> {
-                    System.out.println("Found pending invitation: " + pendingInvitationDTO);
-                    return new InvitationBoardDTO(
-                            pendingInvitationDTO.getInvitationId(),
-                            pendingInvitationDTO.getInviterName(),
-                            pendingInvitationDTO.getInviteeEmail(),
-                            pendingInvitationDTO.getBoardId(),
-                            pendingInvitationDTO.getBoardName(),
-                            pendingInvitationDTO.getAccessRight(),
-                            pendingInvitationDTO.getStatus()
-                    );
-                })
+        List<InvitationBoardDTO> invitationList = pendingInvitations.stream()
+                .map(pendingInvitationDTO -> new InvitationBoardDTO(
+                        pendingInvitationDTO.getInvitationId(),
+                        pendingInvitationDTO.getInviterName(),
+                        pendingInvitationDTO.getInviteeEmail(),
+                        pendingInvitationDTO.getBoardId(),
+                        pendingInvitationDTO.getBoardName(),
+                        pendingInvitationDTO.getAccessRight(),
+                        pendingInvitationDTO.getStatus()
+                ))
                 .collect(Collectors.toList());
 
-        // Return the compiled DTO
-        return new CollaboratorListDTO(collabBoardDTOs, invitationBoards);
+        // Return CollaboratorListDTO with collaborators and pending invitations
+        return new CollaboratorListDTO(collaboratorList, invitationList);
     }
+
+
+
 
 
 
