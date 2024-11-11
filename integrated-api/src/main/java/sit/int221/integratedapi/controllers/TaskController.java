@@ -17,9 +17,10 @@ import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -184,6 +185,49 @@ public class TaskController {
         // Return response with the created attachments
         return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTOs);
     }
+
+    @GetMapping("/{boardId}/tasks/{taskId}/attachments")
+    public ResponseEntity<?> getAttachments(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer taskId) {
+
+        // ตรวจสอบความถูกต้องของ token และการเข้าถึง board
+        String oidFromToken = null;
+        if (token != null && !token.isEmpty()) {
+            oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        } else {
+            throw new CustomAuthenticationException("You do not have permission to access this resource.");
+        }
+
+        // Validate task existence
+        Task existingTask = taskService.findTaskById(taskId);
+        if (existingTask == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+        }
+
+        // Fetch attachments associated with the task
+        List<TaskAttachment> attachments = taskService.getAttachmentsByTaskId(taskId);
+        if (attachments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No attachments found.");
+        }
+
+        // สร้างรูปแบบข้อมูลที่คุณต้องการส่งกลับ
+        Map<String, Object> response = new HashMap<>();
+        response.put("attachments", attachments.stream().map(attachment -> {
+            Map<String, Object> attachmentData = new HashMap<>();
+            attachmentData.put("fileName", attachment.getFileName());
+            attachmentData.put("filePath", attachment.getFilePath());
+            attachmentData.put("fileType", attachment.getFileType());
+            return attachmentData;
+        }).collect(Collectors.toList()));
+
+        return ResponseEntity.ok(response);  // ส่งกลับเป็น Object ที่มี key "attachments"
+    }
+
+
+
+
 
 
 

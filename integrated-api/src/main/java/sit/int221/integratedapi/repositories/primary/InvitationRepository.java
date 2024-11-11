@@ -18,6 +18,6 @@ public interface InvitationRepository extends JpaRepository<Invitation, Integer>
 
     Invitation findByBoardIdAndInviteeNameAndStatus(String boardId, String inviteeName, Invitation.Status status);
 
-
+    List<Invitation> findByInviteeEmailAndStatus(String inviteeEmail, Invitation.Status status);
 }
 

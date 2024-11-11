@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Board;
 import sit.int221.integratedapi.entities.Collaborator;
+import sit.int221.integratedapi.entities.Invitation;
 import sit.int221.integratedapi.entities.User;
 import sit.int221.integratedapi.exceptions.ForbiddenException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
@@ -18,6 +19,7 @@ import sit.int221.integratedapi.exceptions.ValidationErrorException;
 import sit.int221.integratedapi.repositories.login.UserRepository;
 import sit.int221.integratedapi.repositories.primary.BoardRepository;
 import sit.int221.integratedapi.repositories.primary.CollaboratorRepository;
+import sit.int221.integratedapi.repositories.primary.InvitationRepository;
 import sit.int221.integratedapi.utils.ListMapper;
 import sit.int221.integratedapi.exceptions.BoardOwnershipException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
@@ -25,6 +27,7 @@ import sit.int221.integratedapi.utils.NanoIdGenerator;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
@@ -49,6 +52,9 @@ public class BoardService {
 
     @Autowired
     private StatusService statusService;
+
+    @Autowired
+    private InvitationRepository invitationRepository;
 
     public boolean existsById(String boardId) {
         return boardRepository.existsById(boardId);
@@ -108,14 +114,21 @@ public class BoardService {
 
     // ฟังก์ชันหลักสำหรับดึงบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
     public BoardListDTO getAllPersonalAndCollaboratingBoards(String userOid) {
-        // ดึงบอร์ดส่วนตัวจากฐานข้อมูลบอร์ดโดยใช้ userOid
-        List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
-        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid); // ดึงข้อมูล collaborator จากฐานข้อมูล
+        // Fetch the user's email using the OID
+        User user = userRepository.findByOid(userOid);
+        if (user == null) {
+            throw new ItemNotFoundException("User not found with OID: " + userOid);
+        }
+        String inviteeEmail = user.getEmail(); // Get the invitee's email from the user object
 
-        // แปลงบอร์ดส่วนตัวเป็น PersonalBoardDTO
+        // Fetch personal boards by userOid
+        List<Board> personalBoards = boardRepository.findByOwnerId(userOid);
+        List<Collaborator> collaborators = collaboratorRepository.findByUserOid(userOid);
+
+        // Map personal boards to PersonalBoardDTO
         List<PersonalBoardDTO> personalBoardDTOs = personalBoards.stream()
                 .map(board -> {
-                    User ownerUser = userRepository.findByOid(board.getOwnerId()); // ดึงชื่อเจ้าของบอร์ดจาก User
+                    User ownerUser = userRepository.findByOid(board.getOwnerId());
                     if (ownerUser != null) {
                         OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
                         return new PersonalBoardDTO(board.getId(), board.getName(), board.getVisibility().name(), ownerDTO);
@@ -125,23 +138,20 @@ public class BoardService {
                 })
                 .collect(Collectors.toList());
 
-        // ดึงข้อมูลบอร์ดที่เป็น collaborator และ map ข้อมูลโดยเชื่อมโยงกับ accessRight
-        // ดึงข้อมูลบอร์ดที่เป็น collaborator และ map ข้อมูลโดยเชื่อมโยงกับ accessRight
+        // Map collaborator boards to CollaboratorBoardDTO
         List<CollaboratorBoardDTO> collabBoardDTOs = collaborators.stream()
                 .map(collaborator -> {
-                    Board board = collaborator.getBoard(); // ดึงบอร์ดที่ผู้ใช้เป็น collaborator
-                    User ownerUser = userRepository.findByOid(board.getOwnerId()); // ดึงข้อมูลเจ้าของบอร์ด
+                    Board board = collaborator.getBoard();
+                    User ownerUser = userRepository.findByOid(board.getOwnerId());
 
                     if (ownerUser != null) {
                         OwnerDTO ownerDTO = new OwnerDTO(ownerUser.getOid(), ownerUser.getName());
-
-                        // คืนค่าเป็น CollaboratorBoardDTO โดยรวม accessRight ด้วย
                         return new CollaboratorBoardDTO(
                                 board.getId(),
                                 board.getName(),
                                 board.getVisibility(),
                                 ownerDTO,
-                                collaborator.getAccessRight().name() // ตั้งค่า accessRight
+                                collaborator.getAccessRight().name()
                         );
                     } else {
                         throw new ItemNotFoundException("Owner not found for board with ID: " + board.getId());
@@ -149,10 +159,45 @@ public class BoardService {
                 })
                 .collect(Collectors.toList());
 
+        // Fetch pending invitations directly using invitation repository with inviteeEmail and PENDING status
+        List<InvitationDTO> pendingInvitations = invitationRepository.findByInviteeEmailAndStatus(inviteeEmail, Invitation.Status.PENDING)
+                .stream()
+                .map(invitation -> {
+                    Board board = invitation.getBoard();
+                    return new InvitationDTO(
+                            invitation.getId(),
+                            invitation.getInviterName(),
+                            invitation.getInviteeName(),
+                            invitation.getInviteeEmail(),
+                            board.getId(),
+                            board.getName(),
+                            invitation.getAccessRight().name(),
+                            invitation.getStatus().name(),
+                            invitation.getCreatedOn().toString()
+                    );
+                })
+                .collect(Collectors.toList());
 
-        // คืนค่ารวมของบอร์ดส่วนตัวและบอร์ดที่เป็น collaborator
-        return new BoardListDTO(personalBoardDTOs, collabBoardDTOs);
+        // Map pending invitations to InvitationBoardDTO
+        List<InvitationBoardDTO> invitationBoards = pendingInvitations.stream()
+                .map(pendingInvitationDTO -> {
+                    System.out.println("Found pending invitation: " + pendingInvitationDTO);
+                    return new InvitationBoardDTO(
+                            pendingInvitationDTO.getInvitationId(),
+                            pendingInvitationDTO.getInviterName(),
+                            pendingInvitationDTO.getInviteeEmail(),
+                            pendingInvitationDTO.getBoardId(),
+                            pendingInvitationDTO.getBoardName(),
+                            pendingInvitationDTO.getAccessRight(),
+                            pendingInvitationDTO.getStatus()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // Return combined BoardListDTO
+        return new BoardListDTO(personalBoardDTOs, collabBoardDTOs, invitationBoards);
     }
+
 
 
 
