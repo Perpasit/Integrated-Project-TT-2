@@ -224,6 +224,7 @@ public class CollaboratorService {
                     Board board = invitation.getBoard();
                     return new InvitationBoardDTO(
                             invitation.getId(),
+                            invitation.getBoard().getId(),
                             invitation.getInviterName(),
                             invitation.getInviteeEmail(),
                             board.getName(),
@@ -350,6 +351,7 @@ public class CollaboratorService {
         invitationDTO.setInviterName(invitation.getInviterName());
         invitationDTO.setInviteeName(invitation.getInviteeName());
         invitationDTO.setInviteeEmail(invitation.getInviteeEmail());
+        invitationDTO.setBoardId(invitation.getBoard().getId());
         invitationDTO.setBoardName(invitation.getBoard().getName());
         invitationDTO.setAccessRight(invitation.getAccessRight().name());
         invitationDTO.setStatus(invitation.getStatus().name());

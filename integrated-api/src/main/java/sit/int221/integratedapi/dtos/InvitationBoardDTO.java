@@ -12,6 +12,7 @@ public class InvitationBoardDTO {
     private Integer invitationId;
     private String inviterName;
     private String inviteeEmail;
+    private String boardId;
     private String boardName;
     private String accessRight;
     private String status;

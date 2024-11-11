@@ -13,6 +13,7 @@ public class InvitationDTO {
     private String inviterName;
     private String inviteeName;
     private String inviteeEmail;
+    private String boardId;
     private String boardName;
     private String accessRight;
     private String status;
