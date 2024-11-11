@@ -186,7 +186,7 @@ public class CollaboratorService {
 //    }
 
 
-    public CollaboratorListDTO getCollaboratorsAndPendingByBoardId(String userOid) {
+    public CollaboratorListDTO getCollaboratorsAndPendingByBoardId(String boardId, String userOid) {
         // Fetch the user's email using the OID
         User user = userRepository.findByOid(userOid);
         if (user == null) {
@@ -217,19 +217,38 @@ public class CollaboratorService {
                 })
                 .collect(Collectors.toList());
 
-        // Fetch pending invitations directly using invitation repository with inviteeEmail and PENDING status
-        List<InvitationBoardDTO> invitationBoards = invitationRepository.findByInviteeEmailAndStatus(inviteeEmail, Invitation.Status.PENDING)
-                .stream()
+        // Fetch pending invitations for the specific board and invitee email
+        List<InvitationDTO> pendingInvitations = invitationRepository.findByBoardIdAndStatus(
+                        boardId, Invitation.Status.PENDING
+                ).stream()
                 .map(invitation -> {
                     Board board = invitation.getBoard();
-                    return new InvitationBoardDTO(
+                    return new InvitationDTO(
                             invitation.getId(),
-                            invitation.getBoard().getId(),
                             invitation.getInviterName(),
+                            invitation.getInviteeName(),
                             invitation.getInviteeEmail(),
+                            board.getId(),
                             board.getName(),
                             invitation.getAccessRight().name(),
-                            invitation.getStatus().name()
+                            invitation.getStatus().name(),
+                            invitation.getCreatedOn().toString()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // Map pending invitations to InvitationBoardDTO
+        List<InvitationBoardDTO> invitationBoards = pendingInvitations.stream()
+                .map(pendingInvitationDTO -> {
+                    System.out.println("Found pending invitation: " + pendingInvitationDTO);
+                    return new InvitationBoardDTO(
+                            pendingInvitationDTO.getInvitationId(),
+                            pendingInvitationDTO.getInviterName(),
+                            pendingInvitationDTO.getInviteeEmail(),
+                            pendingInvitationDTO.getBoardId(),
+                            pendingInvitationDTO.getBoardName(),
+                            pendingInvitationDTO.getAccessRight(),
+                            pendingInvitationDTO.getStatus()
                     );
                 })
                 .collect(Collectors.toList());
