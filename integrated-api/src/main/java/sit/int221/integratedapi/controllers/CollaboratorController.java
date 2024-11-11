@@ -363,5 +363,17 @@ public class CollaboratorController {
         }
     }
 
+    @DeleteMapping("/{boardId}/collabs/invitations/{invitationId}")
+    public ResponseEntity<String> deleteInvitation(
+            @PathVariable String boardId,
+            @PathVariable Long invitationId) {
+
+        boolean isDeleted = invitationService.deleteInvitation(boardId, invitationId);
+        if (isDeleted) {
+            return ResponseEntity.ok("Invitation deleted successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found.");
+        }
+    }
 
 }
