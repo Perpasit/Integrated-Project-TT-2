@@ -300,7 +300,7 @@ public class CollaboratorService {
         invitation = invitationRepository.save(invitation);
 
         // Send email confirmation for the invitation
-        emailService.sendConfirmationEmail(email, board, invitation.getId(), inviteeName, accessRight); // Pass the invitee name here
+        emailService.sendConfirmationEmail(email, board, inviteeName, accessRight); // Pass the invitee name here
 
         // Convert the invitation to InvitationDTO and return it
         InvitationCDTO invitationCDTO = new InvitationCDTO();
