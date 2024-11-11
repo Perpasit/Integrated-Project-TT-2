@@ -454,7 +454,7 @@ onMounted(async () => {
               </div>
 
               <div v-if="mode === 'edit'">
-                <h2>Attach Files</h2>
+                <label class="block text-sm font-bold mb-1">Attachments :</label>
 
                 <div>
                   <!-- Display uploaded files (fileName only) -->
