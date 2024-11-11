@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sit.int221.integratedapi.entities.Invitation;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InvitationRepository extends JpaRepository<Invitation, Integer> {
@@ -29,5 +30,7 @@ public interface InvitationRepository extends JpaRepository<Invitation, Integer>
     @Transactional
     @Query("DELETE FROM Invitation i WHERE i.board.id = :boardId AND i.inviteeEmail = :inviteeEmail")
     void deleteByBoardIdAndInviteeEmail(@Param("boardId") String boardId, @Param("inviteeEmail") String inviteeEmail);
+
+    Optional<Invitation> findByBoardIdAndId(String boardId, Long invitationId);
 }
 

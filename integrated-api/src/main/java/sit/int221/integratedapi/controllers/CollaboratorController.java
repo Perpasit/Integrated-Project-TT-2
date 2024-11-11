@@ -36,6 +36,9 @@ public class CollaboratorController {
     private StatusService statusService;
 
     @Autowired
+    private InvitationService invitationService;
+
+    @Autowired
     private CollaboratorService collaboratorService;
 
     @Autowired
@@ -119,26 +122,6 @@ public class CollaboratorController {
     }
 
 
-    @GetMapping("/{boardId}/collabs/invitations")
-    public ResponseEntity<?> getUserInvitations(
-            @PathVariable("boardId") String boardId,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-
-        // Check if the token is provided
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
-        }
-
-        // Extract OID from the token
-        String userOid = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-
-        // Fetch the pending invitation for the signed-in user for the specified board
-        InvitationDTO invitation = collaboratorService.getPendingInvitationForUser(boardId, userOid);
-
-        return ResponseEntity.ok(invitation);
-    }
-
-
 
 
 
@@ -212,42 +195,6 @@ public class CollaboratorController {
     }
 
 
-    @PostMapping("/{boardId}/collabs/invitations/{invitationId}/confirm")
-    public ResponseEntity<?> confirmInvitation(@PathVariable("boardId") String boardId,
-                                               @PathVariable("invitationId") Integer invitationId,
-                                               @RequestParam("accept") boolean acceptInvitation,
-                                               @RequestHeader(value = "Authorization", required = false) String token) {
-
-        // Step 1: Check if the authorization token is provided
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
-        }
-
-        // Step 2: Extract the oid from the token
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
-
-        if (oidFromToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token.");
-        }
-
-        // Step 3: Fetch the invitation from the database
-        Invitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
-
-        // Step 4: Validate that the invitation is for the correct board
-        if (!invitation.getBoard().getId().equals(boardId)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invitation does not belong to the specified board.");
-        }
-
-        // Step 5: Confirm or decline the invitation
-        collaboratorService.confirmCollaborator(invitationId, acceptInvitation, oidFromToken);
-
-        if (acceptInvitation) {
-            return ResponseEntity.ok("Invitation accepted successfully.");
-        } else {
-            return ResponseEntity.ok("Invitation declined successfully.");
-        }
-    }
 
 
 
@@ -342,6 +289,79 @@ public class CollaboratorController {
     }
 
 
+
+    @GetMapping("/{boardId}/collabs/invitations")
+    public ResponseEntity<?> getUserInvitations(
+            @PathVariable("boardId") String boardId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        // Check if the token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
+        }
+
+        // Extract OID from the token
+        String userOid = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        // Fetch the pending invitation for the signed-in user for the specified board
+        InvitationDTO invitation = collaboratorService.getPendingInvitationForUser(boardId, userOid);
+
+        return ResponseEntity.ok(invitation);
+    }
+
+
+
+
+    @PostMapping("/{boardId}/collabs/invitations/{invitationId}/confirm")
+    public ResponseEntity<?> confirmInvitation(@PathVariable("boardId") String boardId,
+                                               @PathVariable("invitationId") Integer invitationId,
+                                               @RequestParam("accept") boolean acceptInvitation,
+                                               @RequestHeader(value = "Authorization", required = false) String token) {
+
+        // Step 1: Check if the authorization token is provided
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization token is required.");
+        }
+
+        // Step 2: Extract the oid from the token
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+
+        if (oidFromToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token.");
+        }
+
+        // Step 3: Fetch the invitation from the database
+        Invitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ItemNotFoundException("Invitation not found"));
+
+        // Step 4: Validate that the invitation is for the correct board
+        if (!invitation.getBoard().getId().equals(boardId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invitation does not belong to the specified board.");
+        }
+
+        // Step 5: Confirm or decline the invitation
+        collaboratorService.confirmCollaborator(invitationId, acceptInvitation, oidFromToken);
+
+        if (acceptInvitation) {
+            return ResponseEntity.ok("Invitation accepted successfully.");
+        } else {
+            return ResponseEntity.ok("Invitation declined successfully.");
+        }
+    }
+
+    @PatchMapping("/{boardId}/collabs/invitations/{invitationId}")
+    public ResponseEntity<String> updateAccessRight(
+            @PathVariable String boardId,
+            @PathVariable Long invitationId,
+            @RequestBody UpdateAccessRightRequest request) {
+
+        boolean isUpdated = invitationService.updateAccessRight(boardId, invitationId, request.getAccessRight());
+        if (isUpdated) {
+            return ResponseEntity.ok("Access right updated successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found.");
+        }
+    }
 
 
 }
