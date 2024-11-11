@@ -69,31 +69,28 @@ export const useCollabStore = defineStore("collab", {
             `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
           );
         }
-        return data.invitations || [];
+        return data || [];
       } catch (error) {
         console.error("Error fetching invitations:", error);
         return [];
       }
     },
-    async fetchInvitationsCheck(boardId) {
-      const userStore = useUserStore();
+    async acceptInvitation(boardId,invitationId,response) {
+      // /v3/boards/oA7U5BERy-/collabs/invitations/8/confirm?accept=true
       try {
         let data;
-        if (userStore.getIsAuthenticated) {
-          data = await getItems(
-            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
+        
+          data = await postItem(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations/${invitationId}/confirm?accept=${response}`
           );
-        } else {
-          data = await getItemsNoUser(
-            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations`
-          );
-        }
-        return data.invitations || [];
+      
+        
       } catch (error) {
         console.error("Error fetching invitations:", error);
         return [];
       }
     },
+
     
 
     // async fetchCollaboratorById(boardId, collabOid) {

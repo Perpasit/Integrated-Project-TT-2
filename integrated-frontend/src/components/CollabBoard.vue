@@ -56,8 +56,11 @@ const fetchCollabsBoards = async () => {
         owner: { name: invite.inviterName },
         accessRight: invite.accessRight,
         status: invite.status,
+        boardId: invite.boardId
       })),
     ];
+ 
+    console.log(collabBoard);
     console.log(InviteBoard);
 
     // const CollabBoard = boardStore.getBoardsCollab
@@ -130,12 +133,13 @@ const navigateToTasks = (board) => {
 };
 
 function acceptInvite(board) {
-  console.log(board)
-  // router.push({name:"Invitation", params: { boardId: board.id } })
+  // console.log(board)
+  router.push({name:"Invitation", params: { boardId: board.boardId } })
 }
 
 onMounted(async () => {
   await fetchCollabsBoards();
+
 });
 </script>
 

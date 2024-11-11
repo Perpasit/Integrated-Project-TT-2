@@ -64,14 +64,14 @@ const router = createRouter({
           name: "AddCollabManage",
           component: AddCollaborator
         },
-        {
-          path: "/board/:boardId/collab/invitations",
-          name: "Invitation",
-          component: Invitation
-        },
+
       ]
     },
-
+    {
+      path: "/board/:boardId/collab/invitations",
+      name: "Invitation",
+      component: Invitation
+    },
     {
       path: "/board/:boardId/task",
       name: "home",

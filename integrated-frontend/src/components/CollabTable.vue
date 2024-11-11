@@ -31,7 +31,7 @@ const fetchCollaborator = async () => {
     const invitations = await collabStore.fetchInvitations(boardId);
     console.log(invitations)
     // Combine collaborators and invitations
-    collaborators.value = [...collabs, ...invitations].map(collab => ({
+    collaborators.value = [...collabs].map(collab => ({
       ...collab,
       accessRight: collab.accessRight
     }));
