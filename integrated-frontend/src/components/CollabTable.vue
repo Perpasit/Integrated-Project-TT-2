@@ -29,15 +29,17 @@ const fetchCollaborator = async () => {
     const data = await collabStore.fetchCollaborators(boardId);
     // Fetch invitations
     // const invitations = await collabStore.fetchInvitations(boardId);
-    const collabs = [...data.collabBoards , ...data.invitationBoards]
-    console.log(collabs)
-    console.log(collabs.collabBoards)
-    console.log(collabs.invitationBoards)
+    const invitationData = data.invitationList.map(d=>({name:d.inviterName,email:d.inviteeEmail,accessRight:d.accessRight,status:d.status}))
+    const collabs =  [...data.collaboratorList ,...invitationData]
+    console.log(data)
+    console.log(collabs.collaboratorList)
+    console.log(invitationData)
     // Combine collaborators and invitations
     collaborators.value = [...collabs].map(collab => ({
       ...collab,
       accessRight: collab.accessRight
     }));
+    
   } catch (error) {
     console.error("Failed to fetch collaborators:", error);
     collaborators.value = [];
@@ -213,20 +215,27 @@ onMounted(async () => {
             </select>
           </div>
           </td>
-          <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
-            <button 
-              :class="{
-                'itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2': true,
-                'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':!isSameOid,
-              }"
-              @click="isSameOid ? confirmDelete(collaborator) : null" :disabled="!isSameOid" data-tip="You need to be board owner to perform this action.">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </td>
+         <td class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly">
+  <div v-if="collaborator.status === 'PENDING'" class="text-red-500 font-semibold">
+    Pending...
+  </div>
+  <button 
+    v-else
+    :class="{
+      'itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2': true,
+      'text-gray-700 cursor-not-allowed tooltip tooltip-secondary': !isSameOid,
+    }"
+    @click="isSameOid ? confirmDelete(collaborator) : null" 
+    :disabled="!isSameOid" 
+    data-tip="You need to be board owner to perform this action."
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="red">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  </button>
+</td>
+
         </tr>
       </tbody>
     </table>

@@ -8,6 +8,7 @@ import {
   getItemsNoUser
 } from "../utils/fetch"
 import { useUserStore } from './userStore';
+import { toRaw } from "vue";
 
 export const useCollabStore = defineStore("collab", {
   state: () => ({
@@ -47,7 +48,6 @@ export const useCollabStore = defineStore("collab", {
           );
         }
         this.collabs = data || [];
-        
 
         
         return this.collabs;
@@ -122,6 +122,7 @@ export const useCollabStore = defineStore("collab", {
         if (response.name != null || undefined) {
           this.collabs.push(response); 
         } 
+
         return response
       } catch (error) {
         console.error("Error adding collaborator:", error)
@@ -160,8 +161,7 @@ export const useCollabStore = defineStore("collab", {
 
     getCollaboratorByBoardAndUser(userOid) {
       // ตรวจสอบว่า collabs เป็น array ก่อนใช้งาน find
-      if (!Array.isArray(this.collabs.collabBoards)) {
-        console.log(this.collabs.collabBoards)
+      if (!Array.isArray(this.collabs.collaboratorList)) {
         console.error("Collaborators data is not available or not an array.");
         return null;
       }
@@ -172,7 +172,7 @@ export const useCollabStore = defineStore("collab", {
       // });
     
       // ใช้ oid แทน userOid ในการค้นหา
-      return this.collabs.collabBoards.find(
+      return this.collabs.collaboratorList.find(
         (collaborator) => collaborator.oid === userOid // ใช้ฟิลด์ oid สำหรับการตรวจสอบ userOid
       );
     },
