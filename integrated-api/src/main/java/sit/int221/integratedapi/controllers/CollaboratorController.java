@@ -240,7 +240,7 @@ public class CollaboratorController {
         }
 
         // Step 5: Confirm or decline the invitation
-        collaboratorService.confirmCollaborator(invitationId, acceptInvitation);
+        collaboratorService.confirmCollaborator(invitationId, acceptInvitation, oidFromToken);
 
         if (acceptInvitation) {
             return ResponseEntity.ok("Invitation accepted successfully.");
