@@ -169,6 +169,7 @@ public class BoardService {
                             invitation.getInviterName(),
                             invitation.getInviteeName(),
                             invitation.getInviteeEmail(),
+                            board.getId(),
                             board.getName(),
                             invitation.getAccessRight().name(),
                             invitation.getStatus().name(),
@@ -185,6 +186,7 @@ public class BoardService {
                             pendingInvitationDTO.getInvitationId(),
                             pendingInvitationDTO.getInviterName(),
                             pendingInvitationDTO.getInviteeEmail(),
+                            pendingInvitationDTO.getBoardId(),
                             pendingInvitationDTO.getBoardName(),
                             pendingInvitationDTO.getAccessRight(),
                             pendingInvitationDTO.getStatus()
