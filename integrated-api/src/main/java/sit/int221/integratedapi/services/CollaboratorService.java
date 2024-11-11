@@ -377,14 +377,14 @@ public class CollaboratorService {
             collaborator.setAddedOn(ZonedDateTime.now());
 
             collaboratorRepository.save(collaborator); // Save the new collaborator to the database
-        }
-        // Handle declining the invitation
-        else {
-            invitation.setStatus(Invitation.Status.DECLINED);
-        }
+            invitationRepository.save(invitation); // Save the updated invitation with ACCEPTED status
 
-        invitationRepository.save(invitation); // Save the updated invitation
+        } else {
+            // Handle declining the invitation by deleting it
+            invitationRepository.deleteById(invitationId); // Delete the invitation from the database
+        }
     }
+
 
 
 
