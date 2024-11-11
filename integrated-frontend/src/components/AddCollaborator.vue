@@ -144,8 +144,8 @@ const handleSubmit = async () => {
 
 // ฟังก์ชันนำทางกลับไปที่หน้า Collaborator Management
 const navigateBack = () => {
-  fetchCollaborator()
   router.push({ name: "CollabManage", params: { boardId: boardId.value } });
+  fetchCollaborator()
 };
 
 // เรียก fetchCollaborator เมื่อ component ถูก mount

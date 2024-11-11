@@ -33,7 +33,6 @@ const fetchCollaborator = async () => {
       accessRight: d.accessRight,
       invitationId: d.invitationId,
       status: d.status,
-
     }));
     const collabs = [...data.collaboratorList, ...invitationData];
 
@@ -165,7 +164,7 @@ const updateAccessRightPending = async () => {
   }
 };
 const handleUpdateAccessRight = () => {
-  if (collaboratorToUpdate.value.status === 'PENDING') {
+  if (collaboratorToUpdate.value.status === "PENDING") {
     updateAccessRightPending();
   } else {
     updateAccessRight();
@@ -182,12 +181,21 @@ const confirmDelete = (collaborator) => {
 };
 
 const deleteCollaborator = async () => {
-  if (collaboratorToDelete.value) {
-    try {
-      await collabStore.removeCollaborator(
+   
+        try {
+          if (collaboratorToDelete.value.status ==='PENDING'){
+      await collabStore.removePendingCollaborator(
         boardId,
-        collaboratorToDelete.value.oid
+        collaboratorToDelete.value.invitationId
       );
+          }else{
+            await collabStore.removeCollaborator(
+              boardId,
+              collaboratorToDelete.value.oid
+            );
+
+          }
+      
       isDeleteModalVisible.value = false;
       showSuccessModal.value = true;
       collaboratorToDelete.value = null;
@@ -195,7 +203,9 @@ const deleteCollaborator = async () => {
     } catch (error) {
       console.error("Failed to delete collaborator:", error);
     }
-  }
+
+  
+
 };
 
 const closeDeleteModal = () => {
@@ -289,11 +299,11 @@ onMounted(async () => {
               <button
                 v-if="collaborator.status === 'PENDING'"
                 :class="{
-                'w-full inline-flex text-red-500 justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium hover:scale-105 hover:bg-gray-50 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm':true,
+                  'w-full inline-flex text-red-500 justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium hover:scale-105 hover:bg-gray-50 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm': true,
                   'text-gray-700 cursor-not-allowed tooltip tooltip-secondary':
                     !isSameOid,
                 }"
-                @click="isSameOid ? confirmCancelPending(collaborator) : null"
+                @click="isSameOid ? confirmDelete(collaborator) : null"
                 :disabled="!isSameOid"
                 data-tip="You need to be board owner to perform this action."
               >

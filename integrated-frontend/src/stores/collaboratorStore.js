@@ -169,6 +169,17 @@ export const useCollabStore = defineStore("collab", {
           console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
         }
       },
+      async removePendingCollaborator(boardId, invitationId) {
+        try {
+          // console.log("Removing collaborator:", collabOid, "from board:", boardId); // เพิ่ม log ตรวจสอบ
+          await deleteItem(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/collabs/invitations/${invitationId}`
+          );
+          // console.log("Collaborator removed successfully");
+        } catch (error) {
+          console.error("Error removing collaborator:", error); // Log error หากมีปัญหา
+        }
+      },
 
 
     getCollaboratorByBoardAndUser(userOid) {

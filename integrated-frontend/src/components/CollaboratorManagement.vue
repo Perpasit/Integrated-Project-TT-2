@@ -1,6 +1,7 @@
 <script setup>
 import Header from './Header.vue';
 import CollabTablle from './CollabTable.vue';
+
 </script>
 
 <template>
