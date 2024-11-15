@@ -31,8 +31,14 @@ public class TaskAttachment {
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 
+    @Column(name = "thumbnail_path", length = 500)
+    private String thumbnailPath;
+
     @Column(name = "file_type", nullable = false, length = 255)
     private String fileType;
+
+    @Column(name = "file_size")
+    private Long fileSize;
 
     @Column(name = "added_on", nullable = false)
     private ZonedDateTime addedOn;

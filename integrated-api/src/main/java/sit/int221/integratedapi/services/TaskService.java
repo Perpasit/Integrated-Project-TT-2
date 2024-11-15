@@ -46,6 +46,9 @@ public class TaskService {
     @Autowired
     private TaskAttachmentRepository taskAttachmentRepository;
 
+    @Autowired
+    private FileUploadService fileUploadService;
+
     public Task getTaskById(Integer id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Task " + id + " does not exist !!!!"));
@@ -422,37 +425,37 @@ public class TaskService {
 
 
     @Transactional
-    public TaskAttachment saveAttachment(Integer taskId, String fileName, String filePath, String fileType) {
-        // Find the task by ID
+    public void saveAttachment(Integer taskId, String fileName, String filePath, String thumbnailPath, String fileType, Long fileSize) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist"));
 
-        // Create a new TaskAttachment entity
-        TaskAttachment taskAttachment = new TaskAttachment();
-        taskAttachment.setFileName(fileName);
-        taskAttachment.setFilePath(filePath);
-        taskAttachment.setFileType(fileType);
-        taskAttachment.setTask(task); // Associate the attachment with the task
+        TaskAttachment attachment = new TaskAttachment();
+        attachment.setFileName(fileName);
+        attachment.setFilePath(filePath);
+        attachment.setThumbnailPath(thumbnailPath);
+        attachment.setFileType(fileType);
+        attachment.setFileSize(fileSize);
+        attachment.setTask(task);
 
-        // Save the TaskAttachment entity to the database
-        return taskAttachmentRepository.save(taskAttachment);
+        taskAttachmentRepository.save(attachment);
     }
 
     public Map<String, List<TaskAttachmentRDTO>> getAttachmentsByTaskId(Integer taskId) {
-        // Fetch attachments from the repository
         List<TaskAttachment> attachments = taskAttachmentRepository.findByTaskId(taskId);
 
-        // Convert TaskAttachment to TaskAttachmentRDTO
         List<TaskAttachmentRDTO> attachmentRDTOs = attachments.stream().map(attachment -> {
             TaskAttachmentRDTO dto = new TaskAttachmentRDTO();
             dto.setId(attachment.getId());
             dto.setFileName(attachment.getFileName());
             dto.setFilePath(attachment.getFilePath());
             dto.setFileType(attachment.getFileType());
+            dto.setFileSize(attachment.getFileSize());
+            String directoryPath = attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/"));
+            dto.setThumbnailPath(fileUploadService.getThumbnailPath(directoryPath, attachment.getFileName()));
+
             return dto;
         }).collect(Collectors.toList());
 
-        // Wrap in a Map
         Map<String, List<TaskAttachmentRDTO>> response = new HashMap<>();
         response.put("attachments", attachmentRDTOs);
 
@@ -461,23 +464,30 @@ public class TaskService {
 
 
 
+
+
     @Transactional
     public TaskAttachmentRDTO deleteAttachmentById(Integer attachmentId) {
-        // ค้นหาไฟล์แนบที่ต้องการลบ
         TaskAttachment attachment = taskAttachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ItemNotFoundException("Attachment with id " + attachmentId + " does not exist"));
-
-        // สร้าง RDTO จากข้อมูลไฟล์แนบ
+        
         TaskAttachmentRDTO attachmentRDTO = new TaskAttachmentRDTO();
         attachmentRDTO.setId(attachment.getId());
         attachmentRDTO.setFileName(attachment.getFileName());
         attachmentRDTO.setFilePath(attachment.getFilePath());
+        String directoryPath = attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/"));
+        attachmentRDTO.setThumbnailPath(fileUploadService.getThumbnailPath(directoryPath, attachment.getFileName()));
         attachmentRDTO.setFileType(attachment.getFileType());
+        attachmentRDTO.setFileSize(attachment.getFileSize());
+
 
         taskAttachmentRepository.deleteById(attachmentId);
 
         return attachmentRDTO;
     }
+
+
+
 
 
 
