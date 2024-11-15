@@ -134,7 +134,7 @@ public class TaskController {
         }
 
         try {
-            taskService.validateWriteAccess(boardId, oidFromToken);
+            taskService.validateBoardOwnershipForModification(boardId, oidFromToken);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
