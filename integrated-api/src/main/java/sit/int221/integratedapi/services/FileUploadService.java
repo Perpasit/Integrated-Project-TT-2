@@ -16,26 +16,25 @@ import java.util.UUID;
 public class FileUploadService {
 
     @Value("${file.upload-dir}")
-    private String uploadDir;  // This will be injected from application.properties
+    private String uploadDir;
 
-    public String saveFile(MultipartFile file) {
-        // Ensure the directory exists
-        File dir = new File(uploadDir);
+    public String saveFile(MultipartFile file, String boardId, Integer taskId) throws IOException {
+        String directoryPath = uploadDir + "/" + boardId + "/tasks/" + taskId;
+        File dir = new File(directoryPath);
         if (!dir.exists()) {
-            dir.mkdirs();  // Create the directory if it doesn't exist
+            dir.mkdirs();
         }
 
-        // Define file path and save the file (local or cloud storage)
-        String filePath = uploadDir + "/" + file.getOriginalFilename();  // Use the upload directory path
-        try {
-            Path path = Paths.get(filePath);  // java.nio.file.Path for file handling
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file", e);
-        }
+        // Define file path and save the file
+        String filePath = directoryPath + "/" + file.getOriginalFilename();
+        Path path = Paths.get(filePath);
+        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
         return filePath;
     }
 }
+
+
 
 
 

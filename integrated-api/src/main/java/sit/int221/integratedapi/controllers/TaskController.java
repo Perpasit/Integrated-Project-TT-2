@@ -16,10 +16,8 @@ import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.TaskService;
 import sit.int221.integratedapi.utils.ListMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -125,66 +123,64 @@ public class TaskController {
     }
 
     @PatchMapping("/{boardId}/tasks/{taskId}/attachments")
-    public ResponseEntity<?> addAttachments(@RequestHeader(value = "Authorization", required = false) String token,
-                                            @PathVariable String boardId,
-                                            @PathVariable Integer taskId,
-                                            @RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<TaskAttachmentDTO> addAttachments(@RequestHeader(value = "Authorization", required = false) String token,
+                                                            @PathVariable String boardId,
+                                                            @PathVariable Integer taskId,
+                                                            @RequestParam("files") MultipartFile[] files) {
 
         String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
         if (oidFromToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Validate write access to the board
-        taskService.validateWriteAccess(boardId, oidFromToken);
+        try {
+            taskService.validateWriteAccess(boardId, oidFromToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
-        // Validate task existence
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         if (files.length == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No files selected.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-
-        List<TaskAttachmentDTO> attachmentDTOs = new ArrayList<>();
 
         // Define the max file size (20 MB)
         final long MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-        for (MultipartFile file : files) {
-            // Check if the file size exceeds the allowed size
-            if (file.getSize() > MAX_FILE_SIZE) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File size exceeds the maximum allowed size of 20 MB.");
-            }
+        MultipartFile file = files[0];
+        if (file.getSize() > MAX_FILE_SIZE) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
 
-            // Save file to the server (or cloud storage)
-            String filePath = fileUploadService.saveFile(file);
+        try {
+            String filePath = fileUploadService.saveFile(file, boardId, taskId);
 
-            // Create a TaskAttachment entity
             TaskAttachment attachment = new TaskAttachment();
             attachment.setFileName(file.getOriginalFilename());
             attachment.setFilePath(filePath);
             attachment.setFileType(file.getContentType());
-            attachment.setTask(existingTask);  // Associate with the task
+            attachment.setTask(existingTask);
 
-            // Save the attachment
             taskService.saveAttachment(existingTask.getId(), attachment.getFileName(), attachment.getFilePath(), attachment.getFileType());
 
-            // Convert TaskAttachment to TaskAttachmentDTO
             TaskAttachmentDTO attachmentDTO = new TaskAttachmentDTO(
                     attachment.getFileName(),
                     attachment.getFilePath(),
                     attachment.getFileType()
             );
 
-            attachmentDTOs.add(attachmentDTO);
-        }
+            return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTO);
 
-        // Return response with the created attachments
-        return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTOs);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
+
+
 
     @GetMapping("/{boardId}/tasks/{taskId}/attachments")
     public ResponseEntity<?> getAttachments(
