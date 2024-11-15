@@ -10,10 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
-import sit.int221.integratedapi.dtos.TaskCDTO;
-import sit.int221.integratedapi.dtos.TaskDDTO;
-import sit.int221.integratedapi.dtos.TaskRDTO;
-import sit.int221.integratedapi.dtos.TaskUDTO;
+import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.*;
 import sit.int221.integratedapi.exceptions.*;
 import sit.int221.integratedapi.repositories.login.UserRepository;
@@ -23,6 +20,7 @@ import sit.int221.integratedapi.utils.ListMapper;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Qualifier("primaryDataSource")
@@ -440,9 +438,47 @@ public class TaskService {
         return taskAttachmentRepository.save(taskAttachment);
     }
 
-    public List<TaskAttachment> getAttachmentsByTaskId(Integer taskId) {
-        return taskAttachmentRepository.findByTaskId(taskId);
+    public Map<String, List<TaskAttachmentRDTO>> getAttachmentsByTaskId(Integer taskId) {
+        // Fetch attachments from the repository
+        List<TaskAttachment> attachments = taskAttachmentRepository.findByTaskId(taskId);
+
+        // Convert TaskAttachment to TaskAttachmentRDTO
+        List<TaskAttachmentRDTO> attachmentRDTOs = attachments.stream().map(attachment -> {
+            TaskAttachmentRDTO dto = new TaskAttachmentRDTO();
+            dto.setId(attachment.getId());
+            dto.setFileName(attachment.getFileName());
+            dto.setFilePath(attachment.getFilePath());
+            dto.setFileType(attachment.getFileType());
+            return dto;
+        }).collect(Collectors.toList());
+
+        // Wrap in a Map
+        Map<String, List<TaskAttachmentRDTO>> response = new HashMap<>();
+        response.put("attachments", attachmentRDTOs);
+
+        return response;
     }
+
+
+
+    @Transactional
+    public TaskAttachmentRDTO deleteAttachmentById(Integer attachmentId) {
+        // ค้นหาไฟล์แนบที่ต้องการลบ
+        TaskAttachment attachment = taskAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ItemNotFoundException("Attachment with id " + attachmentId + " does not exist"));
+
+        // สร้าง RDTO จากข้อมูลไฟล์แนบ
+        TaskAttachmentRDTO attachmentRDTO = new TaskAttachmentRDTO();
+        attachmentRDTO.setId(attachment.getId());
+        attachmentRDTO.setFileName(attachment.getFileName());
+        attachmentRDTO.setFilePath(attachment.getFilePath());
+        attachmentRDTO.setFileType(attachment.getFileType());
+
+        taskAttachmentRepository.deleteById(attachmentId);
+
+        return attachmentRDTO;
+    }
+
 
 
 
