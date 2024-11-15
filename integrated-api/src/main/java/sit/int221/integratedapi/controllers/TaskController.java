@@ -229,6 +229,42 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}")
+    public ResponseEntity<TaskAttachmentRDTO> getAttachmentById(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer taskId,
+            @PathVariable Integer attachmentId) {
+
+        try {
+            // ตรวจสอบ Token
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+            if (oidFromToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            taskService.validateBoardAccessForGet(boardId, oidFromToken);
+
+            Task existingTask = taskService.findTaskById(taskId);
+            if (existingTask == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            TaskAttachmentRDTO attachmentRDTO = taskService.findAttachmentById(attachmentId);
+
+            return ResponseEntity.ok(attachmentRDTO);
+
+        } catch (ItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+
+
 
 
 
