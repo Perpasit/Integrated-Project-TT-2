@@ -11,6 +11,7 @@ import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.entities.TaskAttachment;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
+import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.services.FileUploadService;
 import sit.int221.integratedapi.services.JwtTokenUtil;
 import sit.int221.integratedapi.services.TaskService;
@@ -19,6 +20,8 @@ import sit.int221.integratedapi.utils.ListMapper;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+
 
 
 @RestController
@@ -196,33 +199,22 @@ public class TaskController {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
 
+        taskService.validateBoardAccessForGet(boardId, oidFromToken);
+
         // Validate task existence
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // Fetch attachments associated with the task
-        List<TaskAttachment> attachments = taskService.getAttachmentsByTaskId(taskId);
-        if (attachments.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No attachments found.");
+        // Fetch and return attachments in a Map format
+        Map<String, List<TaskAttachmentRDTO>> response = taskService.getAttachmentsByTaskId(taskId);
+        if (response.get("attachments").isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 
-        // สร้างรูปแบบข้อมูลที่คุณต้องการส่งกลับ
-        Map<String, Object> response = new HashMap<>();
-        response.put("attachments", attachments.stream().map(attachment -> {
-            Map<String, Object> attachmentData = new HashMap<>();
-            attachmentData.put("fileName", attachment.getFileName());
-            attachmentData.put("filePath", attachment.getFilePath());
-            attachmentData.put("fileType", attachment.getFileType());
-            return attachmentData;
-        }).collect(Collectors.toList()));
-
-        return ResponseEntity.ok(response);  // ส่งกลับเป็น Object ที่มี key "attachments"
+        return ResponseEntity.ok(response);
     }
-
-
-
 
 
 
@@ -263,6 +255,41 @@ public class TaskController {
         taskService.validateWriteAccess(boardId, oidFromToken);
         taskService.findTaskById(taskId);
         return taskService.removeTask(boardId, taskId);
+    }
+
+
+    @DeleteMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}")
+    public ResponseEntity<TaskAttachmentRDTO> deleteAttachment(@RequestHeader(value = "Authorization", required = false) String token,
+                                                               @PathVariable String boardId,
+                                                               @PathVariable Integer taskId,
+                                                               @PathVariable Integer attachmentId) {
+
+        try {
+            String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+            if (oidFromToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            taskService.validateWriteAccess(boardId, oidFromToken);
+
+            Task existingTask = taskService.findTaskById(taskId);
+            if (existingTask == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            TaskAttachmentRDTO deletedAttachmentRDTO = taskService.deleteAttachmentById(attachmentId);
+            fileUploadService.deleteFile(deletedAttachmentRDTO.getFilePath());
+
+            return ResponseEntity.ok(deletedAttachmentRDTO);
+
+        } catch (ItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

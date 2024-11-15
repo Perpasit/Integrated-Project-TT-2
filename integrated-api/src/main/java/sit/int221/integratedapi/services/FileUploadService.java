@@ -32,6 +32,16 @@ public class FileUploadService {
 
         return filePath;
     }
+
+    public void deleteFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        if (Files.exists(path)) {
+            Files.delete(path);
+        } else {
+            throw new IOException("File not found: " + filePath);
+        }
+    }
+
 }
 
 
