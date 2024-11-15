@@ -487,6 +487,23 @@ public class TaskService {
     }
 
 
+    @Transactional
+    public TaskAttachmentRDTO findAttachmentById(Integer attachmentId) {
+        TaskAttachment attachment = taskAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ItemNotFoundException("Attachment with id " + attachmentId + " does not exist"));
+
+        TaskAttachmentRDTO attachmentRDTO = new TaskAttachmentRDTO();
+        attachmentRDTO.setId(attachment.getId());
+        attachmentRDTO.setFileName(attachment.getFileName());
+        attachmentRDTO.setFilePath(attachment.getFilePath());
+        attachmentRDTO.setThumbnailPath(fileUploadService.getThumbnailPath(
+                attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/")),
+                attachment.getFileName()));
+        attachmentRDTO.setFileType(attachment.getFileType());
+        attachmentRDTO.setFileSize(attachment.getFileSize());
+
+        return attachmentRDTO;
+    }
 
 
 
