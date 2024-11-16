@@ -52,12 +52,12 @@ const handleSubmit = async () => {
         const boards = boardStore.getBoards;
 
         if (boards && boards.length > 0) {
-        const firstBoard = boards[0];
-        console.log(firstBoard.id)
-        router.push({ name: "home", params: { boardId: firstBoard.id } });
+          const firstBoard = boards[0];
+          console.log(firstBoard.id)
+          router.push({ name: "home", params: { boardId: firstBoard.id } });
         } else {
           router.push({ name: "Board" });
-        }       
+        }
       }
     } catch (error) {
       errorMessage.value = "Username or Password is incorrect";
@@ -76,14 +76,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex items-center justify-center bg-gradient-to-r from-[#F1D3CE] to-[#e6a195] min-h-screen">
+  <div class="flex items-center justify-center bg-gradient-to-r from-[#C8B2D4] to-[#E9BDCD] min-h-screen">
     <div class="w-full max-w-md">
       <form @submit.prevent="handleSubmit"
-        class="bg-white bg-opacity-30 backdrop-filter backdrop-blur-lg shadow-2xl rounded-lg px-8 pt-6 pb-8 mb-4">
-        <h2 class="text-3xl font-bold mb-6 text-center text-[#ed8ba7]">
-          Welcome to ITB-KK
-        </h2>
+        class="bg-white bg-opacity-30 backdrop-filter backdrop-blur-lg shadow-2xl rounded-3xl px-12 pt-12 pb-12">
 
+        <p class="text-3xl font-bold text-left mb-2 text-white">
+          Login
+        </p>
+        <p class="text-xs  mb-6 text-left text-white font-light">
+          Welcome to ITB-KK
+        </p>
 
         <!-- Error Message -->
         <div v-if="errorMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
@@ -91,60 +94,55 @@ onMounted(() => {
         </div>
 
         <!-- Username Field -->
-        <div class="mb-4">
-          <label class="block text-[#e295ab] text-sm font-bold mb-2" for="username">
-            Username
-          </label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#e7b0c0]" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
+        <div class="mb-6">
+          <div class="relative flex items-center">
             <input v-model="username" @input="clearErrorMessage"
-              class="itbkk-username shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-[#ec4e7b] leading-tight focus:outline-none focus:ring-2 focus:ring-[#e7b0c0]"
-              id="username" type="text" placeholder="Enter your username" maxlength="50" />
+              class="w-full text-white text-sm border-b border-white bg-transparent py-2 pl-3 focus:outline-none focus:border-b-2 focus:border-[#ffffff] placeholder-opacity-70 placeholder-white"
+              id="username" type="text" placeholder="Username" maxlength="50" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white opacity-50 absolute right-2" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
           </div>
         </div>
 
         <!-- Password Field -->
         <div class="mb-6">
-          <label class="block text-[#e295ab] text-sm font-bold mb-2" for="password">
-            Password
-          </label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#e7b0c0]" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
+          <div class="relative flex items-center">
             <input v-model="password" @input="clearErrorMessage"
-              class="itbkk-password shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-[#ec4e7b] leading-tight focus:outline-none focus:ring-2 focus:ring-[#e7b0c0]"
-              id="password" type="password" placeholder="Enter your password" maxlength="14" />
+              class="w-full text-white text-sm border-b border-white bg-transparent py-2 pl-3 focus:outline-none focus:border-b-2 focus:border-[#ffffff] placeholder-opacity-70 placeholder-white"
+              id="password" type="password" placeholder="Password" maxlength="14" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white opacity-50 absolute right-2" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
         </div>
 
+        <!-- Forgot Password -->
+        <div class="mb-6">
+          <label class="block text-white text-sm font-light opacity-80 text-left" for="forgot-password">
+            <a href="#" class="hover:underline">Forgot Password?</a>
+          </label>
+        </div>
+
         <!-- Sign In Button -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-center">
           <button :disabled="!isFormValid" :class="[
             'itbkk-button-signin',
-            'font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transform transition-all duration-300 ease-in-out',
+            'w-full font-light py-2 focus:outline-none focus:shadow-outline rounded-xl transform transition-all duration-300 ease-in-out',
             isFormValid
-              ? 'bg-[#ec4e7b]  text-white hover:scale-105'
-              : 'bg-[#ebebeb] bg-opacity-50 text-gray-500 cursor-not-allowed disabled',
+              ? 'bg-[#e38f80] text-white hover:scale-105'
+              : 'bg-[#ebebeb] bg-opacity-30 text-white cursor-not-allowed disabled',
           ]" type="submit">
             Sign In
           </button>
-          <a class="inline-block align-baseline font-bold text-sm text-[#e295ab] hover:text-[#e0829d]" href="#">
-            Forgot Password?
-          </a>
         </div>
       </form>
-      <p class="text-center text-white text-xs">
+
+      <p class="text-center text-white text-xs mt-4">
         &copy;2024 ITB-KK. All rights reserved.
       </p>
     </div>
