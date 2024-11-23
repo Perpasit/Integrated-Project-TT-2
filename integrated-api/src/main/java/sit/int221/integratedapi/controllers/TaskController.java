@@ -1,8 +1,11 @@
 package sit.int221.integratedapi.controllers;
 
+import org.springframework.core.io.Resource;
 import jakarta.validation.Path;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,12 +15,14 @@ import sit.int221.integratedapi.entities.TaskAttachment;
 import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
 import sit.int221.integratedapi.exceptions.ItemNotFoundException;
-import sit.int221.integratedapi.services.FileUploadService;
-import sit.int221.integratedapi.services.JwtTokenUtil;
-import sit.int221.integratedapi.services.TaskService;
+import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,16 +40,25 @@ public class TaskController {
 
     private final FileUploadService fileUploadService;
 
-    public TaskController(TaskService taskService, ListMapper listMapper,JwtTokenUtil jwtTokenUtil,FileUploadService fileUploadService) {
+    private final FileDownloadService fileDownloadService;
+
+    private final FileService fileService;
+
+
+
+    public TaskController(TaskService taskService, ListMapper listMapper,JwtTokenUtil jwtTokenUtil,FileUploadService fileUploadService, FileDownloadService fileDownloadService,FileService fileService) {
         this.taskService = taskService;
         this.listMapper = listMapper;
         this.jwtTokenUtil = jwtTokenUtil;
         this.fileUploadService = fileUploadService;
+        this.fileDownloadService = fileDownloadService;
+        this.fileService = fileService;
     }
 
     private boolean isValidSortBy(String sortBy) {
         return sortBy.equalsIgnoreCase("asc") || sortBy.equalsIgnoreCase("desc") || sortBy.equalsIgnoreCase("createOn");
     }
+
     @GetMapping("/{boardId}/tasks")
     public ResponseEntity<List<TaskDTO>> getTasksByBoardId(
             @RequestHeader(value = "Authorization", required = false) String token,  // ทำให้ optional
@@ -266,6 +280,38 @@ public class TaskController {
 
 
 
+    @GetMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}/download")
+    public ResponseEntity<Resource> downloadAttachment(
+            @PathVariable String boardId,
+            @PathVariable Integer taskId,
+            @PathVariable Integer attachmentId) {
+        try {
+            String filePath = fileService.getFilePathById(attachmentId);
+            String fileName = fileService.getFileNameById(attachmentId);
+
+            Resource resource = fileDownloadService.downloadFile(filePath);
+
+            String mimeType = fileDownloadService.determineMimeType(filePath);
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                    .replaceAll("\\+", "%20");
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(mimeType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+                    .body(resource);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
 
     @PutMapping("/{boardId}/tasks/{taskId}")
