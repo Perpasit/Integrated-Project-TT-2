@@ -61,12 +61,12 @@ const generateUniqueFileName = (fileName) => {
 }
 
 const uploadFiles = async () => {
-  if (isLoading.value) return // Prevent multiple uploads
+  if (isLoading.value) return
 
   isLoading.value = true
 
-  const boardId = route.params.boardId // Get boardId from URL params
-  const taskId = route.params.id // Get taskId from URL params
+  const boardId = route.params.boardId
+  const taskId = route.params.id
 
   if (!taskId) {
     uploadStatus.value = "Task ID is missing."
@@ -74,31 +74,27 @@ const uploadFiles = async () => {
     return
   }
 
-  // Creating new files with unique names
   const filesToUpload = Array.from(attachFileStore.selectedFiles).map(
     (file) => {
       const uniqueFileName = generateUniqueFileName(file.name)
-      // Create a new file with the same content but a unique name
       return new File([file], uniqueFileName, { type: file.type })
     }
   )
 
-  // Update the store with the newly named files
   attachFileStore.setSelectedFiles(filesToUpload)
 
-  console.log("boardId:", boardId, "taskId:", taskId) // Debugging output
-
-  // Call the store action to upload files
   try {
-    const response = await attachFileStore.uploadFiles(boardId, taskId)
-    if (response.status === 201) {
+    const uploadedFile = await attachFileStore.uploadFiles(boardId, taskId)
+    getAttachmentsFileName(boardId, taskId)
+    if (uploadedFile) {
       uploadStatus.value = "Files uploaded successfully!"
+    } else {
+      uploadStatus.value = attachFileStore.uploadStatus
     }
   } catch (error) {
     uploadStatus.value = "An error occurred during upload."
-    console.error("Upload error:", error)
   } finally {
-    isLoading.value = false // Reset loading status
+    isLoading.value = false
   }
 }
 

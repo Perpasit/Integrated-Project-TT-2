@@ -51,7 +51,10 @@ export const fetch = async (url, options = {}) => {
 
 
 export const fetchWithAuthCheck = async (url, options = {}) => {
-  const token = getToken(); 
+  const token = getToken();
+
+  console.log("Request URL:", url);
+  console.log("Request Options:", options);
 
   try {
     const response = await fetch(url, {
@@ -62,14 +65,14 @@ export const fetchWithAuthCheck = async (url, options = {}) => {
       },
     });
 
-    return response; 
-    
+    console.log("Fetch Response:", response); // ตรวจสอบว่า fetch ถูกเรียกจริงหรือไม่
+    return response;
   } catch (error) {
-    console.error("Fetch error:", error);
-    throw error; 
+    console.error("Fetch Error:", error);
+    throw error;
   }
-  
 };
+
 
 export const postRefreshToken = async (url) => {
   const refreshToken = getRefreshToken()
