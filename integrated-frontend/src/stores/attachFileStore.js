@@ -9,48 +9,35 @@ export const useAttachFileStore = defineStore("attachFileStore", {
   }),
 
   actions: {
-    // Action to select files
     setSelectedFiles(files) {
       this.selectedFiles = Array.from(files)
     },
 
-    // Action to upload files
     async uploadFiles(boardId, taskId) {
-      if (this.selectedFiles.length === 0) {
-        this.uploadStatus = "No files selected."
-        return
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
+        this.uploadStatus = "No files selected.";
+        console.warn(this.uploadStatus);
+        return null;
       }
-
-      const formData = new FormData()
+    
+      const formData = new FormData();
       this.selectedFiles.forEach((file) => {
-        formData.append("files", file)
-      })
-
+        formData.append("files", file);
+      });
+    
       try {
-        // Call the backend API to upload the files
-        const response = await fetchWithAuthCheck(
-          `${
-            import.meta.env.VITE_API_ENDPOINTV3
-          }/boards/${boardId}/tasks/${taskId}/attachments`,
-          {
-            method: "PATCH",
-            body: formData
-          }
-        )
-
-        // Check if the upload was successful
-        if (response.status === 201) {
-          this.uploadStatus = "Files uploaded successfully!"
-          return response
-        } else {
-          this.uploadStatus = `Failed to upload files. Status: ${response.status}`
-          return response
-        }
+        const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments`
+        const response = await fetchWithAuthCheck(url, {
+          method: "PATCH",
+          body: formData,
+        });
       } catch (error) {
-        this.uploadStatus = "An error occurred during upload."
-        console.error("Upload error:", error)
+        this.uploadStatus = "An error occurred during file upload.";
+        return false;
       }
-    },
+    }
+    ,
+    
 
     async getAttachments(boardId, taskId) {
       const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments`
