@@ -28,25 +28,15 @@ const uploadStatus = ref(null)
 
 const attachmentsFileNames = ref([])
 const getAttachmentsFileName = async (boardId, taskId) => {
-  try {
-    // ดึงข้อมูล attachments จาก store
-    const response = await attachFileStore.getAttachments(boardId, taskId)
+  const attachments = await attachFileStore.getAttachments(boardId, taskId)
+  console.log("Attachments from store:", attachments)
 
-    // ตรวจสอบว่า response มีข้อมูล attachments หรือไม่
-    if (response && response.attachments && response.attachments.length > 0) {
-      // ดึง fileName จากแต่ละ attachment
-      const fileNames = response.attachments.map(
-        (attachment) => attachment.fileName
-      )
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    const fileNames = attachments.map((attachment) => attachment.fileName)
 
-      // เก็บข้อมูลชื่อไฟล์ใน ref
-      attachmentsFileNames.value = fileNames
-      console.log(fileNames) // แสดง fileName ใน console
-    } else {
-      console.log("No attachments found")
-    }
-  } catch (error) {
-    console.error("Error fetching attachments:", error)
+    attachmentsFileNames.value = fileNames
+    console.log("File Names:", fileNames)
+  } else {
   }
 }
 
@@ -230,13 +220,15 @@ watch(
         if (userStore.getIsAuthenticated) {
           // ถ้า authenticated ให้เรียก getItems
           response = await getItems(
-            `${import.meta.env.VITE_API_ENDPOINTV3
+            `${
+              import.meta.env.VITE_API_ENDPOINTV3
             }/boards/${boardId}/tasks/${id}`
           )
         } else {
           // ถ้าไม่ authenticated ให้เรียก getItemsNoUser
           response = await getItemsNoUser(
-            `${import.meta.env.VITE_API_ENDPOINTV3
+            `${
+              import.meta.env.VITE_API_ENDPOINTV3
             }/boards/${boardId}/tasks/${id}`
           )
         }
@@ -383,6 +375,7 @@ const fetchTaskAndStatus = async (boardId) => {
 }
 
 onMounted(async () => {
+  userStore.loadFromLocalStorage()
   let boardId = route.params.boardId
 
   try {
@@ -420,9 +413,12 @@ onMounted(async () => {
       </div>
 
       <div
-        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto">
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
-          <div class="itbkk-title text-lg leading-6 font-medium text-gray-900 mb-4">
+          <div
+            class="itbkk-title text-lg leading-6 font-medium text-gray-900 mb-4"
+          >
             {{ mode === "add" ? "New Task" : "Edit Task" }}
           </div>
 
@@ -430,12 +426,18 @@ onMounted(async () => {
             <div class="mt-3 text-center sm:mt-5 sm:text-left w-full mr-6 ml-6">
               <div>
                 <label class="block text-sm font-bold mb-1">Title:</label>
-                <textarea rows="2" v-model="editedTask.title"
-                  class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                <textarea
+                  rows="2"
+                  v-model="editedTask.title"
+                  class="itbkk-title shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                ></textarea>
                 <p v-if="!editedTask.title" class="text-red-500 text-sm mt-1">
                   Title is required.
                 </p>
-                <p class="text-gray-500 text-sm mt-1" :class="{ 'text-red-500': isTitleTooLong }">
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isTitleTooLong }"
+                >
                   {{ editedTask.title ? editedTask.title.length : 0 }}/100
                   characters
                 </p>
@@ -443,10 +445,16 @@ onMounted(async () => {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea rows="5" v-model="editedTask.description"
+                <textarea
+                  rows="5"
+                  v-model="editedTask.description"
                   class="itbkk-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="No Description Provided"></textarea>
-                <p class="text-gray-500 text-sm mt-1" :class="{ 'text-red-500': isDescriptionTooLong }">
+                  placeholder="No Description Provided"
+                ></textarea>
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': isDescriptionTooLong }"
+                >
                   {{
                     editedTask.description ? editedTask.description.length : 0
                   }}/500 characters
@@ -454,21 +462,25 @@ onMounted(async () => {
               </div>
 
               <div v-if="mode === 'edit'">
-                <label class="block text-sm font-bold mb-1">Attachments :</label>
+                <label class="block text-sm font-bold mb-1"
+                  >Attachments :</label
+                >
 
-                <div>
-                  <!-- Display uploaded files (fileName only) -->
-                  <div v-if="attachmentsFileNames.length > 0">
-                    <h3>Uploaded Files: {{ attachmentsFileNames.length }}</h3>
-                    <ul>
-                      <li v-for="(file, index) in attachmentsFileNames" :key="index">
-                        {{ file }}
-                      </li>
-                    </ul>
-                  </div>
-                  <div v-else>
-                    <p>No files uploaded. (-)</p> <!-- Show '-' when no uploaded files -->
-                  </div>
+                <div v-if="attachmentsFileNames.length > 0">
+                  <h3>Uploaded Files: {{ attachmentsFileNames.length }}</h3>
+                  <ul>
+                    <li
+                      v-for="(file, index) in attachmentsFileNames"
+                      :key="index"
+                    >
+                      {{ file }}
+                    </li>
+                  </ul>
+                </div>
+                <div v-else>
+                  <p>No files uploaded. (-)</p>
+                  <!-- แสดง logs เพื่อ debug -->
+                  <p>Debug: {{ attachmentsFileNames }}</p>
                 </div>
 
                 <!-- File input to select multiple files -->
@@ -476,24 +488,37 @@ onMounted(async () => {
 
                 <!-- Display selected files with styling and remove button -->
                 <div v-if="attachFileStore.selectedFiles.length">
-                  <h3>Selected Files: {{ attachFileStore.selectedFiles.length }}</h3>
+                  <h3>
+                    Selected Files: {{ attachFileStore.selectedFiles.length }}
+                  </h3>
                   <div class="space-y-2">
-                    <div v-for="(file, index) in attachFileStore.selectedFiles" :key="file.name"
-                      class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg">
+                    <div
+                      v-for="(file, index) in attachFileStore.selectedFiles"
+                      :key="file.name"
+                      class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg"
+                    >
                       <span class="text-sm">{{ file.name }}</span>
-                      <button type="button" class="text-red-500" @click="attachFileStore.removeFile(index)">
+                      <button
+                        type="button"
+                        class="text-red-500"
+                        @click="attachFileStore.removeFile(index)"
+                      >
                         X
                       </button>
                     </div>
                   </div>
                 </div>
                 <div v-else>
-                  <p>No files selected. (-)</p> <!-- Show '-' when no selected files -->
+                  <p>No files selected. (-)</p>
+                  <!-- Show '-' when no selected files -->
                 </div>
 
                 <!-- Upload button -->
-                <button @click="uploadFiles" :disabled="isLoading"
-                  class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <button
+                  @click="uploadFiles"
+                  :disabled="isLoading"
+                  class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
                   Upload Files
                 </button>
 
@@ -505,17 +530,21 @@ onMounted(async () => {
                   {{ uploadStatus }}
                 </div>
               </div>
-
-
             </div>
 
             <div class="mt-3 text-center sm:mt-2 sm:text-left w-1/2 mr-6 ml-6">
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Assignees:</label>
-                <textarea rows="6" v-model="editedTask.assignees"
+                <textarea
+                  rows="6"
+                  v-model="editedTask.assignees"
                   class="itbkk-assignees shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                  placeholder="Unassigned"></textarea>
-                <p class="text-gray-500 text-sm mt-1" :class="{ 'text-red-500': areAssigneesTooLong }">
+                  placeholder="Unassigned"
+                ></textarea>
+                <p
+                  class="text-gray-500 text-sm mt-1"
+                  :class="{ 'text-red-500': areAssigneesTooLong }"
+                >
                   {{
                     editedTask.assignees ? editedTask.assignees.length : 0
                   }}/30 characters
@@ -524,15 +553,24 @@ onMounted(async () => {
 
               <div class="mt-2.5 mb-4">
                 <label class="block text-sm font-bold mb-1">Status:</label>
-                <select v-model="editedTask.status"
-                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">
-                  <option v-for="status in statusStore.statuses" :key="status.id" :value="status.id">
+                <select
+                  v-model="editedTask.status"
+                  class="itbkk-status shadow-sm p-3 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                >
+                  <option
+                    v-for="status in statusStore.statuses"
+                    :key="status.id"
+                    :value="status.id"
+                  >
                     {{ formatStatus(status.name) }}
                   </option>
                 </select>
               </div>
 
-              <div v-if="mode === 'add' || mode === 'edit'" class="text-sm text-gray-500 mb-4">
+              <div
+                v-if="mode === 'add' || mode === 'edit'"
+                class="text-sm text-gray-500 mb-4"
+              >
                 <template v-if="isLimitEnabled">
                   <p class="text-green-500">(Limit is enabled)</p>
                   <template v-if="getStatusUsage(editedTask.status) !== ''">
@@ -546,15 +584,21 @@ onMounted(async () => {
 
               <div v-if="mode === 'edit'">
                 <div class="mt-4">
-                  <label class="itbkk-timezone block text-sm font-bold mb-1">TimeZone : {{ localTimeZone }}</label>
+                  <label class="itbkk-timezone block text-sm font-bold mb-1"
+                    >TimeZone : {{ localTimeZone }}</label
+                  >
                 </div>
                 <div class="mt-4">
-                  <label class="itbkk-created-on block text-sm font-bold mb-1">Created On :
-                    {{ parseAndFormatDate(editedTask.createdOn) }}</label>
+                  <label class="itbkk-created-on block text-sm font-bold mb-1"
+                    >Created On :
+                    {{ parseAndFormatDate(editedTask.createdOn) }}</label
+                  >
                 </div>
                 <div class="mt-4">
-                  <label class="itbkk-updated-on block text-sm font-bold mb-1">Updated On :
-                    {{ parseAndFormatDate(editedTask.updatedOn) }}</label>
+                  <label class="itbkk-updated-on block text-sm font-bold mb-1"
+                    >Updated On :
+                    {{ parseAndFormatDate(editedTask.updatedOn) }}</label
+                  >
                   <p class="mt-1 text-sm text-gray-900"></p>
                 </div>
               </div>
@@ -565,35 +609,48 @@ onMounted(async () => {
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <div class="flex space-x-4">
             <!-- Button for non-board owners (when OIDs are not the same) -->
-            <button v-if="isSameOidOrHasWriteAccess" type="button"
+            <button
+              v-if="isSameOidOrHasWriteAccess"
+              type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                   isTitleValid,
                 'bg-gray-300 cursor-not-allowed': !isTitleValid
-              }" @click="isTitleValid && saveTask()" :disabled="!isTitleValid ||
+              }"
+              @click="isTitleValid && saveTask()"
+              :disabled="
+                !isTitleValid ||
                 isTitleTooLong ||
                 isDescriptionTooLong ||
                 areAssigneesTooLong
-                ">
+              "
+            >
               {{ mode === "add" ? "Add" : "Save" }}
             </button>
 
             <!-- Button for board owners (when OIDs are the same) -->
-            <button v-if="!isSameOidOrHasWriteAccess" type="button"
+            <button
+              v-if="!isSameOidOrHasWriteAccess"
+              type="button"
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                   isSameOidOrHasWriteAccess,
                 'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess
-              }" @click="isSameOidOrHasWriteAccess && saveTask()" :disabled="!isSameOidOrHasWriteAccess"
-              data-tip="You need to be the board owner to perform this action.">
+              }"
+              @click="isSameOidOrHasWriteAccess && saveTask()"
+              :disabled="!isSameOidOrHasWriteAccess"
+              data-tip="You need to be the board owner to perform this action."
+            >
               {{ mode === "add" ? "Add" : "Save" }}
             </button>
           </div>
-          <button type="button"
+          <button
+            type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="closeModal">
+            @click="closeModal"
+          >
             Cancel
           </button>
         </div>
@@ -605,20 +662,26 @@ onMounted(async () => {
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="itbkk-message text-lg leading-6 font-medium text-red-500">
+              <h3
+                class="itbkk-message text-lg leading-6 font-medium text-red-500"
+              >
                 The task does not exist.
               </h3>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="closeModal">
+            @click="closeModal"
+          >
             OK
           </button>
         </div>
@@ -631,7 +694,9 @@ onMounted(async () => {
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
         <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
       </div>
-      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto">
+      <div
+        class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full mx-auto"
+      >
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <div class="sm:flex sm:items-start">
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
@@ -645,9 +710,11 @@ onMounted(async () => {
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button"
+          <button
+            type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-            @click="errorMessage = ''">
+            @click="errorMessage = ''"
+          >
             OK
           </button>
         </div>
