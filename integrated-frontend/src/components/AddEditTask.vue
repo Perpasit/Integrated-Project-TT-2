@@ -29,17 +29,19 @@ const uploadStatus = ref(null)
 const attachmentsFileNames = ref([])
 const getAttachmentsFileName = async (boardId, taskId) => {
   if (!taskId) {
-    return
+    return;
   }
-  const attachments = await attachFileStore.getAttachments(boardId, taskId)
+
+  const attachments = await attachFileStore.getAttachments(boardId, taskId);
 
   if (Array.isArray(attachments) && attachments.length > 0) {
-    const fileNames = attachments.map((attachment) => attachment.fileName)
-
-    attachmentsFileNames.value = fileNames
+    const fileNames = attachments.map((attachment) => attachment.fileName);
+    attachmentsFileNames.value = fileNames;
   } else {
+    attachmentsFileNames.value = [];
   }
-}
+};
+
 
 const uploadStatusClass = computed(() => {
   if (uploadStatus.value === "Files uploaded successfully!") {
@@ -97,6 +99,8 @@ const uploadFiles = async () => {
   } finally {
     isLoading.value = false
   }
+
+  
 }
 
 const handleDeleteAttachment = async (index) => {
@@ -113,7 +117,7 @@ const handleDeleteAttachment = async (index) => {
 
   await attachFileStore.deleteAttachment(boardId, taskId, attachmentId)
 
-  getAttachmentsFileName(boardId, taskId)
+  await getAttachmentsFileName(boardId, taskId)
 }
 
 const handleDownloadAttachment = async (index) => {
