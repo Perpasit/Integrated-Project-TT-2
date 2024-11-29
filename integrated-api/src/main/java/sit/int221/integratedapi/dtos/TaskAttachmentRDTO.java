@@ -12,7 +12,6 @@ public class TaskAttachmentRDTO {
     private Long id;
     private String fileName;
     private String filePath;
-    private String thumbnailPath;
     private String fileType;
     private Long fileSize;
 }

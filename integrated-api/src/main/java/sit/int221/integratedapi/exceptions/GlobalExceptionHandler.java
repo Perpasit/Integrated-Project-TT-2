@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -260,6 +262,24 @@ public class GlobalExceptionHandler  {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<CustomErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "File size exceeds the maximum limit of 20MB.",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.singletonList(
+                        new CustomErrorResponse.ValidationError("files", "Each file must be less than 20MB.")
+                )
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
+
 
 
 }

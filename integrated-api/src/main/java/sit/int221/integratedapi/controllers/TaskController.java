@@ -12,9 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import sit.int221.integratedapi.dtos.*;
 import sit.int221.integratedapi.entities.Task;
 import sit.int221.integratedapi.entities.TaskAttachment;
-import sit.int221.integratedapi.exceptions.CustomAuthenticationException;
+import sit.int221.integratedapi.exceptions.*;
 import sit.int221.integratedapi.exceptions.IllegalArgumentException;
-import sit.int221.integratedapi.exceptions.ItemNotFoundException;
 import sit.int221.integratedapi.services.*;
 import sit.int221.integratedapi.utils.ListMapper;
 
@@ -135,71 +134,89 @@ public class TaskController {
     }
 
     @PatchMapping("/{boardId}/tasks/{taskId}/attachments")
-    public ResponseEntity<TaskAttachmentDTO> addAttachments(@RequestHeader(value = "Authorization", required = false) String token,
-                                                            @PathVariable String boardId,
-                                                            @PathVariable Integer taskId,
-                                                            @RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> addAttachments(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable String boardId,
+            @PathVariable Integer taskId,
+            @RequestParam(value = "files", required = false) MultipartFile[] files) {
 
-        String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+        // Validate authorization
+        String oidFromToken = jwtTokenUtil.getClaimFromToken(
+                token.replace("Bearer ", ""),
+                claims -> claims.get("oid", String.class)
+        );
         if (oidFromToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new CustomAuthenticationException("Unauthorized. Invalid token.");
         }
 
-        try {
-            taskService.validateWriteAccess(boardId, oidFromToken);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        taskService.validateWriteAccess(boardId, oidFromToken);
+
 
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            throw new ItemNotFoundException("Task not found with ID: " + taskId);
         }
 
-        if (files.length == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        final int MAX_FILES = 10;
+        final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+        final List<String> ALLOWED_FILE_TYPES = Arrays.asList(
+                "image/png", "image/jpeg", "image/jpg",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+                "text/plain", "application/rtf", "application/pdf"
+        );
+
+        if (files.length > MAX_FILES) {
+            throw new MaxFilesExceededException("File limit exceeded. Only " + MAX_FILES + " files are allowed per task.");
         }
 
-        final long MAX_FILE_SIZE = 20 * 1024 * 1024;
-
-        MultipartFile file = files[0];
-        if (file.getSize() > MAX_FILE_SIZE) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        for (MultipartFile file : files) {
+            if (file.getSize() > MAX_FILE_SIZE) {
+                throw new MaxFilesExceededException("File size exceeds the maximum limit of 20 MB.");
+            }
+            if (!ALLOWED_FILE_TYPES.contains(file.getContentType())) {
+                throw new IllegalArgumentException("Unsupported file type: " + file.getContentType() +
+                        ". Allowed types are: " + String.join(", ", ALLOWED_FILE_TYPES));
+            }
         }
 
         try {
-            String filePath = fileUploadService.saveFile(file, boardId, taskId);
 
-            // Create the thumbnail
-            String thumbnailPath = fileUploadService.createThumbnail(filePath, boardId, taskId);
+            List<TaskAttachmentDTO> savedAttachments = new ArrayList<>();
+            for (MultipartFile file : files) {
+                String filePath = fileUploadService.saveFile(file, boardId, taskId);
 
-            // Create and save the attachment
-            TaskAttachment attachment = new TaskAttachment();
-            attachment.setFileName(file.getOriginalFilename());
-            attachment.setFilePath(filePath);
-            attachment.setThumbnailPath(thumbnailPath);
-            attachment.setFileType(file.getContentType());
-            attachment.setFileSize(file.getSize());
-            attachment.setTask(existingTask);
 
-            taskService.saveAttachment(existingTask.getId(),
-                    attachment.getFileName(),
-                    attachment.getFilePath(),
-                    attachment.getThumbnailPath(),
-                    attachment.getFileType(),
-                    attachment.getFileSize());
+                TaskAttachment attachment = new TaskAttachment();
+                attachment.setFileName(file.getOriginalFilename());
+                attachment.setFilePath(filePath);
+                attachment.setFileType(file.getContentType());
+                attachment.setFileSize(file.getSize());
+                attachment.setTask(existingTask);
 
-            TaskAttachmentDTO attachmentDTO = new TaskAttachmentDTO();
-            attachmentDTO.setFileName(attachment.getFileName());
-            attachmentDTO.setFilePath(attachment.getFilePath());
-            attachmentDTO.setThumbnailPath(attachment.getThumbnailPath());
-            attachmentDTO.setFileType(attachment.getFileType());
-            attachmentDTO.setFileSize(attachment.getFileSize());
+                taskService.saveAttachment(
+                        existingTask.getId(),
+                        attachment.getFileName(),
+                        attachment.getFilePath(),
+                        attachment.getFileType(),
+                        attachment.getFileSize()
+                );
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(attachmentDTO);
+
+                TaskAttachmentDTO attachmentDTO = new TaskAttachmentDTO();
+                attachmentDTO.setFileName(attachment.getFileName());
+                attachmentDTO.setFilePath(attachment.getFilePath());
+                attachmentDTO.setFileType(attachment.getFileType());
+                attachmentDTO.setFileSize(attachment.getFileSize());
+
+                savedAttachments.add(attachmentDTO);
+            }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedAttachments);
 
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            throw new IllegalStateException("An error occurred while saving files: " + e.getMessage(), e);
         }
     }
 
@@ -218,16 +235,14 @@ public class TaskController {
             throw new CustomAuthenticationException("You do not have permission to access this resource.");
         }
 
-        // Validate board access
         taskService.validateBoardAccessForGet(boardId, oidFromToken);
 
-        // Validate task existence
+
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // Fetch and return attachments
         Map<String, List<TaskAttachmentRDTO>> response = taskService.getAttachmentsByTaskId(taskId);
         if (response.get("attachments").isEmpty()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -360,51 +375,40 @@ public class TaskController {
                     claims -> claims.get("oid", String.class)
             );
             if (oidFromToken == null) {
-
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
+
             taskService.validateWriteAccess(boardId, oidFromToken);
+
 
             Task existingTask = taskService.findTaskById(taskId);
             if (existingTask == null) {
-
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
 
 
             TaskAttachmentRDTO deletedAttachmentRDTO = taskService.deleteAttachmentById(attachmentId);
             if (deletedAttachmentRDTO == null) {
-
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
-            
+
             try {
                 fileUploadService.deleteFile(deletedAttachmentRDTO.getFilePath());
-
             } catch (IOException e) {
-
+                System.err.println("Error deleting file: " + e.getMessage());
             }
 
-            try {
-                fileUploadService.deleteFile(deletedAttachmentRDTO.getThumbnailPath());
-
-            } catch (IOException e) {
-
-            }
-
-
+            // Return the response
             return ResponseEntity.ok(deletedAttachmentRDTO);
 
         } catch (ItemNotFoundException e) {
-
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
         } catch (Exception e) {
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
 
 }

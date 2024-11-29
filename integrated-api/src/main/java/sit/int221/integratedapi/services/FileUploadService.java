@@ -1,6 +1,5 @@
 package sit.int221.integratedapi.services;
 
-import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,10 +7,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;  // Import the correct Path class for file handling
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
+import java.util.List;
+
 
 @Service
 public class FileUploadService {
@@ -20,14 +20,34 @@ public class FileUploadService {
     private String uploadDir;
 
     public String saveFile(MultipartFile file, String boardId, Integer taskId) throws IOException {
+        // Validate allowed file types
+        List<String> allowedFileTypes = List.of(
+                "text/plain", // .txt
+                "application/rtf", // .rtf
+                "image/png", // .png
+                "image/jpeg", // .jpg
+                "image/jpg", // .jpg
+                "application/pdf", // .pdf
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
+        );
+
+        if (!allowedFileTypes.contains(file.getContentType())) {
+            throw new IllegalArgumentException("Unsupported file type: " + file.getContentType());
+        }
+
         String directoryPath = uploadDir + "/" + boardId + "/tasks/" + taskId;
         File dir = new File(directoryPath);
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
-        // Define file path and save the file
-        String filePath = directoryPath + "/" + file.getOriginalFilename();
+
+        String originalFileName = file.getOriginalFilename();
+        String uniqueFileName = System.currentTimeMillis() + "_" + originalFileName;
+
+
+        String filePath = directoryPath + "/" + uniqueFileName;
         Path path = Paths.get(filePath);
         Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
@@ -42,28 +62,8 @@ public class FileUploadService {
             throw new IOException("File not found: " + filePath);
         }
     }
-
-    public String createThumbnail(String originalFilePath, String boardId, Integer taskId) throws IOException {
-        String thumbnailDir = uploadDir + "/" + boardId + "/tasks/" + taskId + "/thumbnails";
-        File dir = new File(thumbnailDir);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        String thumbnailFilePath = thumbnailDir + "/thumb_" + Paths.get(originalFilePath).getFileName().toString();
-
-        Thumbnails.of(new File(originalFilePath))
-                .size(150, 150)
-                .toFile(new File(thumbnailFilePath));
-
-        return thumbnailFilePath;
-    }
-
-    public String getThumbnailPath(String directoryPath, String originalFileName) {
-        return directoryPath + "/thumbnails/thumb_" + originalFileName;
-    }
-
 }
+
 
 
 
