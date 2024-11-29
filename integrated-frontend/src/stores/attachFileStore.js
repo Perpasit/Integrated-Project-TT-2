@@ -3,16 +3,15 @@ import { fetchWithAuthCheck } from "../utils/fetch" // assuming this function is
 
 export const useAttachFileStore = defineStore("attachFileStore", {
   state: () => ({
-    selectedFiles: [], // to store the files selected by the user
-    uploadStatus: null, // to track the upload status (success, error)
-    attachments: [] // to store the fetched attachments
+    selectedFiles: [], 
+    uploadStatus: null, 
+    attachments: [] 
   }),
 
   actions: {
     setSelectedFiles(files) {
       this.selectedFiles = Array.from(files)
     },
-
     async uploadFiles(boardId, taskId) {
       if (!this.selectedFiles || this.selectedFiles.length === 0) {
         this.uploadStatus = "No files selected."
@@ -64,11 +63,9 @@ export const useAttachFileStore = defineStore("attachFileStore", {
       }
     },
 
-    // Action to remove a file from the selected files list
     removeFile(index) {
-      // Validate the index before attempting to remove the file
       if (index >= 0 && index < this.selectedFiles.length) {
-        this.selectedFiles.splice(index, 1) // Remove the file at the given index
+        this.selectedFiles.splice(index, 1)
         console.log(`File at index ${index} removed.`)
       } else {
         console.error("Invalid file index.")
@@ -82,9 +79,7 @@ export const useAttachFileStore = defineStore("attachFileStore", {
           method: "DELETE",
         });
     
-        // ตรวจสอบ response
         if (response.ok) {
-          // อัปเดต attachments ใน state
           this.attachments = this.attachments.filter(
             (attachment) => attachment.id !== attachmentId
           );
@@ -98,7 +93,49 @@ export const useAttachFileStore = defineStore("attachFileStore", {
         console.error("An error occurred while deleting the attachment:", error);
         return false;
       }
+    },
+
+     // Download an attachment
+    async downloadAttachment(boardId, taskId, attachmentId) {
+      const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments/${attachmentId}/download`;
+      console.log("Fetching file with URL:", url);
+
+      try {
+        const response = await fetchWithAuthCheck(url, { method: "GET" });
+        if (!response.ok) {
+          console.error("Failed to fetch the file:", response.status, response.statusText);
+          return false;
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get("content-disposition");
+
+        // Extract the filename from the Content-Disposition header if available
+        let fileName = "downloaded_file";
+        if (contentDisposition && contentDisposition.includes("filename=")) {
+          fileName = contentDisposition.split("filename=")[1].replace(/"/g, "").trim();
+        }
+
+        // Trigger file download
+        const urlObject = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = urlObject;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+
+        // Clean up
+        document.body.removeChild(anchor);
+        window.URL.revokeObjectURL(urlObject);
+
+        console.log("File downloaded successfully:", fileName);
+        return true;
+      } catch (error) {
+        console.error("An error occurred during file download:", error);
+        return false;
+      }
     }
     
+
   }
 })

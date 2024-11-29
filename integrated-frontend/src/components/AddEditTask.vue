@@ -116,6 +116,34 @@ const handleDeleteAttachment = async (index) => {
   getAttachmentsFileName(boardId, taskId)
 }
 
+const handleDownloadAttachment = async (index) => {
+  const boardId = route.params.boardId;
+  const taskId = route.params.id;
+  const attachmentId = attachFileStore.attachments[index]?.id;
+
+  console.log("Downloading attachment:", { boardId, taskId, attachmentId });
+
+  if (!attachmentId) {
+    console.error("Attachment ID not found.");
+    return;
+  }
+
+  try {
+    const success = await attachFileStore.downloadAttachment(boardId, taskId, attachmentId);
+
+    if (success) {
+      console.log(`Attachment with ID ${attachmentId} downloaded successfully.`);
+    } else {
+      console.error("Failed to download the attachment.");
+      alert("Failed to download the attachment. Please try again.");
+    }
+  } catch (error) {
+    console.error("An error occurred while downloading the attachment:", error);
+    alert("An error occurred while downloading the file. Please try again.");
+  }
+};
+
+
 let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null)
@@ -491,9 +519,11 @@ onMounted(async () => {
                       class="flex items-center justify-between bg-gray-100 p-2 rounded-md shadow"
                     >
                       <span
-                        class="text-sm font-medium text-gray-700 truncate"
-                        >{{ fileName }}</span
+                        @click="handleDownloadAttachment(index)"
+                        class="text-sm font-medium text-blue-600 cursor-pointer truncate hover:underline"
                       >
+                        {{ fileName }}
+                      </span>
                       <button
                         @click="handleDeleteAttachment(index)"
                         class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
