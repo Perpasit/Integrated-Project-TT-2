@@ -27,8 +27,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-
-
 @RestController
 @RequestMapping("/v3/boards")
 @CrossOrigin(origins = {"http://localhost:4173/", "http://localhost:5173/", "http://ip23tt2.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th"})
@@ -45,8 +43,7 @@ public class TaskController {
     private final FileService fileService;
 
 
-
-    public TaskController(TaskService taskService, ListMapper listMapper,JwtTokenUtil jwtTokenUtil,FileUploadService fileUploadService, FileDownloadService fileDownloadService,FileService fileService) {
+    public TaskController(TaskService taskService, ListMapper listMapper, JwtTokenUtil jwtTokenUtil, FileUploadService fileUploadService, FileDownloadService fileDownloadService, FileService fileService) {
         this.taskService = taskService;
         this.listMapper = listMapper;
         this.jwtTokenUtil = jwtTokenUtil;
@@ -99,8 +96,6 @@ public class TaskController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
 
     @GetMapping("/{boardId}/tasks/{id}")
@@ -209,8 +204,6 @@ public class TaskController {
     }
 
 
-
-
     @GetMapping("/{boardId}/tasks/{taskId}/attachments")
     public ResponseEntity<?> getAttachments(
             @RequestHeader(value = "Authorization", required = false) String token,
@@ -276,8 +269,6 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
-
-
 
 
     @GetMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}/download")
@@ -354,19 +345,22 @@ public class TaskController {
 
 
     @DeleteMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}")
-    public ResponseEntity<TaskAttachmentRDTO> deleteAttachment(
+    public ResponseEntity<?> deleteAttachment(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @PathVariable Integer attachmentId) {
-
         try {
             if (token == null || token.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
-            String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+            String oidFromToken = jwtTokenUtil.getClaimFromToken(
+                    token.replace("Bearer ", ""),
+                    claims -> claims.get("oid", String.class)
+            );
             if (oidFromToken == null) {
+
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
@@ -374,26 +368,43 @@ public class TaskController {
 
             Task existingTask = taskService.findTaskById(taskId);
             if (existingTask == null) {
+
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
 
+
             TaskAttachmentRDTO deletedAttachmentRDTO = taskService.deleteAttachmentById(attachmentId);
-            fileUploadService.deleteFile(deletedAttachmentRDTO.getFilePath());
-            fileUploadService.deleteFile(deletedAttachmentRDTO.getThumbnailPath());
+            if (deletedAttachmentRDTO == null) {
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            
+            try {
+                fileUploadService.deleteFile(deletedAttachmentRDTO.getFilePath());
+
+            } catch (IOException e) {
+
+            }
+
+            try {
+                fileUploadService.deleteFile(deletedAttachmentRDTO.getThumbnailPath());
+
+            } catch (IOException e) {
+
+            }
+
+
             return ResponseEntity.ok(deletedAttachmentRDTO);
 
         } catch (ItemNotFoundException e) {
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-
         } catch (Exception e) {
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-
 
 
 }
