@@ -98,7 +98,7 @@ const uploadFiles = async () => {
   }
 }
 
-// เพิ่มฟังก์ชัน handleDeleteAttachment
+
 const handleDeleteAttachment = async (index) => {
   const boardId = route.params.boardId;
   const taskId = route.params.id;
@@ -415,7 +415,7 @@ onMounted(async () => {
   // // After fetching, you can access the attachments in the store:
   // const kut = await attachFileStore.getAttachments(boardId,taskId)
   // console.log(kut)
-
+  userStore.loadFromLocalStorage()
   getAttachmentsFileName(boardId, taskId)
 })
 </script>
