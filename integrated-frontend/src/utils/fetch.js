@@ -57,9 +57,9 @@ export const fetch = async (url, options = {}) => {
   }
 
   if (contentType && contentType.includes("application/json")) {
-    return await response.json()
+    return response.json()
   } else {
-    return await response.text()
+    return response
   }
 }
 
