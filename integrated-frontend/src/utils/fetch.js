@@ -4,75 +4,94 @@ import { useUserStore } from "../stores/userStore"
 // Define the fetch function to include token dynamically
 const getToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.accessToken  || JSON.parse(localStorage.getItem("userStore"))?.accessToken
+  return (
+    userStore.accessToken ||
+    JSON.parse(localStorage.getItem("userStore"))?.accessToken
+  )
 }
 const getRefreshToken = () => {
   const userStore = useUserStore() // Access the store within the function
-  return userStore.refreshToken  || JSON.parse(localStorage.getItem("userStore"))?.refreshToken
+  return (
+    userStore.refreshToken ||
+    JSON.parse(localStorage.getItem("userStore"))?.refreshToken
+  )
 }
 
-
 export const fetch = async (url, options = {}) => {
-
   const userStore = useUserStore()
-  // const router = useRouter()
 
-
-  const response = await window.fetch(url, {
+  let response = await window.fetch(url, {
     ...options,
     headers: {
       ...options.headers,
+      Authorization: `Bearer ${userStore.accessToken}`
     }
   })
+
   const contentType = response.headers.get("content-type")
 
-  // Handle non-ok responses, especially 401 Unauthorized
   if (response.status === 401) {
+    console.log("401 Unauthorized: Token expired. Attempting to refresh...")
+
     if (!userStore.refreshInProgress && userStore.isAccessTokenExpired()) {
-      console.log("Access token expired or about to expire, attempting refresh...");
-      await userStore.refreshAccessToken(); 
+      try {
+        await userStore.refreshAccessToken()
+        console.log("Access token refreshed successfully. Retrying request...")
+
+        response = await window.fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${userStore.accessToken}`
+          }
+        })
+      } catch (error) {
+        console.error("Failed to refresh access token:", error)
+        userStore.logout()
+        throw new Error("Unauthorized. Redirecting to login.")
+      }
+    } else {
+      userStore.logout()
+      throw new Error("Unauthorized. Redirecting to login.")
     }
-     // Assuming you have a logout action in your store
-    throw new Error("Unauthorized. Redirecting to login.")
   }
-
-
-  // if (response.status === 403) {
-  //   router.push({ name: "AccessDenied" }) // Redirect to the AccessDenied component
-  //   throw new Error("You do not have permission to change board visibility mode.")
-  // }
 
   if (contentType && contentType.includes("application/json")) {
     return await response.json()
   } else {
-    return response.text()
+    return await response.text()
   }
 }
 
-
 export const fetchWithAuthCheck = async (url, options = {}) => {
-  const token = getToken();
+  const token = getToken()
 
-  console.log("Request URL:", url);
-  console.log("Request Options:", options);
+  if (!token) {
+    console.error("No token available. Redirecting to login.")
+    router.push({ name: "login" })
+    return
+  }
 
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
+        Authorization: `Bearer ${token}`
+      }
+    })
 
-    console.log("Fetch Response:", response); // ตรวจสอบว่า fetch ถูกเรียกจริงหรือไม่
-    return response;
+    if (response.status === 401) {
+      console.error("Access token expired. Redirecting to login.")
+      router.push({ name: "login" })
+    }
+
+    return response
   } catch (error) {
-    console.error("Fetch Error:", error);
-    throw error;
+    console.error("Fetch Error:", error)
+    throw error
   }
-};
-
+}
 
 export const postRefreshToken = async (url) => {
   const refreshToken = getRefreshToken()
@@ -81,7 +100,7 @@ export const postRefreshToken = async (url) => {
       method: "POST",
       headers: {
         Authorization: `Bearer ${refreshToken}`
-      },
+      }
     })
   } catch (error) {
     throw error
@@ -98,7 +117,7 @@ export const getItems = async (url) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
-      },
+      }
     })
   } catch (error) {
     throw error
@@ -115,7 +134,6 @@ export const postItem = async (url, item) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
-
       },
       body: JSON.stringify(item)
     })
@@ -152,7 +170,7 @@ export const deleteItem = async (url) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`
-      },
+      }
     })
   } catch (error) {
     throw error
@@ -213,7 +231,6 @@ export const postItemLogin = async (url, item) => {
   }
 }
 
-
 export const fetchNoUser = async (url, options = {}) => {
   const response = await window.fetch(url, options)
   const contentType = response.headers.get("content-type")
@@ -243,14 +260,12 @@ export const getItemsNoUser = async (url) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
-      },
+      }
     })
   } catch (error) {
     throw error
   }
 }
-
-
 
 // import { useRouter } from "vue-router";
 // import { useUserStore } from "../stores/userStore";
