@@ -425,14 +425,13 @@ public class TaskService {
 
 
     @Transactional
-    public void saveAttachment(Integer taskId, String fileName, String filePath, String thumbnailPath, String fileType, Long fileSize) {
+    public void saveAttachment(Integer taskId, String fileName, String filePath, String fileType, Long fileSize) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Task with id " + taskId + " does not exist"));
 
         TaskAttachment attachment = new TaskAttachment();
         attachment.setFileName(fileName);
         attachment.setFilePath(filePath);
-        attachment.setThumbnailPath(thumbnailPath);
         attachment.setFileType(fileType);
         attachment.setFileSize(fileSize);
         attachment.setTask(task);
@@ -450,8 +449,7 @@ public class TaskService {
             dto.setFilePath(attachment.getFilePath());
             dto.setFileType(attachment.getFileType());
             dto.setFileSize(attachment.getFileSize());
-            String directoryPath = attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/"));
-            dto.setThumbnailPath(fileUploadService.getThumbnailPath(directoryPath, attachment.getFileName()));
+
 
             return dto;
         }).collect(Collectors.toList());
@@ -475,8 +473,6 @@ public class TaskService {
         attachmentRDTO.setId(attachment.getId());
         attachmentRDTO.setFileName(attachment.getFileName());
         attachmentRDTO.setFilePath(attachment.getFilePath());
-        String directoryPath = attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/"));
-        attachmentRDTO.setThumbnailPath(fileUploadService.getThumbnailPath(directoryPath, attachment.getFileName()));
         attachmentRDTO.setFileType(attachment.getFileType());
         attachmentRDTO.setFileSize(attachment.getFileSize());
 
@@ -496,9 +492,6 @@ public class TaskService {
         attachmentRDTO.setId(attachment.getId());
         attachmentRDTO.setFileName(attachment.getFileName());
         attachmentRDTO.setFilePath(attachment.getFilePath());
-        attachmentRDTO.setThumbnailPath(fileUploadService.getThumbnailPath(
-                attachment.getFilePath().substring(0, attachment.getFilePath().lastIndexOf("/")),
-                attachment.getFileName()));
         attachmentRDTO.setFileType(attachment.getFileType());
         attachmentRDTO.setFileSize(attachment.getFileSize());
 

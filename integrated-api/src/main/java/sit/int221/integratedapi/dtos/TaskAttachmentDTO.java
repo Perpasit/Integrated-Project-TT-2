@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 public class TaskAttachmentDTO {
     private String fileName;
     private String filePath;
-    private String thumbnailPath;
     private String fileType;
     private Long fileSize;
 }
