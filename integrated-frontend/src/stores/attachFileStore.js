@@ -78,15 +78,18 @@ export const useAttachFileStore = defineStore("attachFileStore", {
         const response = await fetchWithAuthCheck(url, {
           method: "DELETE",
         });
-    
-        if (response.ok) {
+
+        
+        if (response) {
+          console.log("door")
           this.attachments = this.attachments.filter(
             (attachment) => attachment.id !== attachmentId
           );
           console.log(`Attachment with ID ${attachmentId} deleted.`);
+          console.log(this.attachments)
           return true;
         } else {
-      
+          console.log("eiei")
           return false;
         }
       } catch (error) {
