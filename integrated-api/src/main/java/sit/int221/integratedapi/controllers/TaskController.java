@@ -288,10 +288,23 @@ public class TaskController {
 
     @GetMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}/download")
     public ResponseEntity<Resource> downloadAttachment(
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @PathVariable Integer attachmentId) {
         try {
+            // ตรวจสอบ Token
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            String oidFromToken = jwtTokenUtil.getClaimFromToken(token.replace("Bearer ", ""), claims -> claims.get("oid", String.class));
+            if (oidFromToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            taskService.validateBoardAccessForGet(boardId, oidFromToken);
+
             String filePath = fileService.getFilePathById(attachmentId);
             String fileName = fileService.getFileNameById(attachmentId);
 
