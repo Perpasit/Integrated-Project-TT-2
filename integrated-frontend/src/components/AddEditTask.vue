@@ -98,6 +98,25 @@ const uploadFiles = async () => {
   }
 }
 
+// เพิ่มฟังก์ชัน handleDeleteAttachment
+const handleDeleteAttachment = async (index) => {
+  const boardId = route.params.boardId;
+  const taskId = route.params.id;
+  const attachmentId = attachFileStore.attachments[index]?.id;
+
+  console.log("Deleting attachment:", { boardId, taskId, attachmentId });
+
+  if (!attachmentId) {
+    console.error("Attachment ID not found.");
+    return;
+  }
+
+  await attachFileStore.deleteAttachment(boardId, taskId, attachmentId);
+
+  getAttachmentsFileName(boardId, taskId)
+};
+
+
 let boardId = route.params.boardId
 const userOid = ref("")
 const boardOid = ref(null)
@@ -463,20 +482,32 @@ onMounted(async () => {
                 >
 
                 <div v-if="attachmentsFileNames.length > 0">
-                  <h3>Uploaded Files: {{ attachmentsFileNames.length }}</h3>
-                  <ul>
+                  <h3 class="text-lg font-bold mb-2">
+                    Uploaded Files: {{ attachmentsFileNames.length }}
+                  </h3>
+                  <ul class="space-y-2">
                     <li
-                      v-for="(file, index) in attachmentsFileNames"
+                      v-for="(fileName, index) in attachmentsFileNames"
                       :key="index"
+                      class="flex items-center justify-between bg-gray-100 p-2 rounded-md shadow"
                     >
-                      {{ file }}
+                      <span
+                        class="text-sm font-medium text-gray-700 truncate"
+                        >{{ fileName }}</span
+                      >
+                      <button
+                        @click="handleDeleteAttachment(index)"
+                        class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
                     </li>
                   </ul>
                 </div>
+
                 <div v-else>
                   <p>No files uploaded. (-)</p>
-                  <!-- แสดง logs เพื่อ debug -->
-                  <p>Debug: {{ attachmentsFileNames }}</p>
+                  <!-- <p>Debug: {{ attachmentsFileNames }}</p> -->
                 </div>
 
                 <!-- File input to select multiple files -->

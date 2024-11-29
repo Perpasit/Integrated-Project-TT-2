@@ -15,32 +15,33 @@ export const useAttachFileStore = defineStore("attachFileStore", {
 
     async uploadFiles(boardId, taskId) {
       if (!this.selectedFiles || this.selectedFiles.length === 0) {
-        this.uploadStatus = "No files selected.";
-        console.warn(this.uploadStatus);
-        return null;
+        this.uploadStatus = "No files selected."
+        console.warn(this.uploadStatus)
+        return null
       }
-    
-      const formData = new FormData();
+
+      const formData = new FormData()
       this.selectedFiles.forEach((file) => {
-        formData.append("files", file);
-      });
-    
+        formData.append("files", file)
+      })
+
       try {
-        const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments`
+        const url = `${
+          import.meta.env.VITE_API_ENDPOINTV3
+        }/boards/${boardId}/tasks/${taskId}/attachments`
         const response = await fetchWithAuthCheck(url, {
           method: "PATCH",
-          body: formData,
-        });
+          body: formData
+        })
       } catch (error) {
-        this.uploadStatus = "An error occurred during file upload.";
-        return false;
+        this.uploadStatus = "An error occurred during file upload."
+        return false
       }
-    }
-    ,
-    
-
+    },
     async getAttachments(boardId, taskId) {
-      const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments`
+      const url = `${
+        import.meta.env.VITE_API_ENDPOINTV3
+      }/boards/${boardId}/tasks/${taskId}/attachments`
       try {
         const response = await fetchWithAuthCheck(url, { method: "GET" })
 
@@ -72,6 +73,32 @@ export const useAttachFileStore = defineStore("attachFileStore", {
       } else {
         console.error("Invalid file index.")
       }
+    },
+    async deleteAttachment(boardId, taskId, attachmentId) {
+      const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments/${attachmentId}`;
+      
+      try {
+        const response = await fetchWithAuthCheck(url, {
+          method: "DELETE",
+        });
+    
+        // ตรวจสอบ response
+        if (response.ok) {
+          // อัปเดต attachments ใน state
+          this.attachments = this.attachments.filter(
+            (attachment) => attachment.id !== attachmentId
+          );
+          console.log(`Attachment with ID ${attachmentId} deleted.`);
+          return true;
+        } else {
+      
+          return false;
+        }
+      } catch (error) {
+        console.error("An error occurred while deleting the attachment:", error);
+        return false;
+      }
     }
+    
   }
 })
