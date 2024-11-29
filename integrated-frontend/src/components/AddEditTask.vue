@@ -28,14 +28,15 @@ const uploadStatus = ref(null)
 
 const attachmentsFileNames = ref([])
 const getAttachmentsFileName = async (boardId, taskId) => {
+  if (!taskId) {
+    return
+  }
   const attachments = await attachFileStore.getAttachments(boardId, taskId)
-  console.log("Attachments from store:", attachments)
 
   if (Array.isArray(attachments) && attachments.length > 0) {
     const fileNames = attachments.map((attachment) => attachment.fileName)
 
     attachmentsFileNames.value = fileNames
-    console.log("File Names:", fileNames)
   } else {
   }
 }
@@ -98,24 +99,22 @@ const uploadFiles = async () => {
   }
 }
 
-
 const handleDeleteAttachment = async (index) => {
-  const boardId = route.params.boardId;
-  const taskId = route.params.id;
-  const attachmentId = attachFileStore.attachments[index]?.id;
+  const boardId = route.params.boardId
+  const taskId = route.params.id
+  const attachmentId = attachFileStore.attachments[index]?.id
 
-  console.log("Deleting attachment:", { boardId, taskId, attachmentId });
+  console.log("Deleting attachment:", { boardId, taskId, attachmentId })
 
   if (!attachmentId) {
-    console.error("Attachment ID not found.");
-    return;
+    console.error("Attachment ID not found.")
+    return
   }
 
-  await attachFileStore.deleteAttachment(boardId, taskId, attachmentId);
+  await attachFileStore.deleteAttachment(boardId, taskId, attachmentId)
 
   getAttachmentsFileName(boardId, taskId)
-};
-
+}
 
 let boardId = route.params.boardId
 const userOid = ref("")
