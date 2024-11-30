@@ -132,8 +132,44 @@ export const useAttachFileStore = defineStore("attachFileStore", {
         console.error("An error occurred during file download:", error);
         return false;
       }
-    }
+    },
     
+
+    async loadFileDisplay(boardId, taskId, attachmentId) {
+      const url = `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/tasks/${taskId}/attachments/${attachmentId}/download`;
+
+      try {
+        const response = await fetchWithAuthCheck(url, { method: "GET" });
+        console.log(response)
+          
+          const contentType = response.headers.get('Content-Type')
+          const arrayBuffer = await response.arrayBuffer()
+
+          let binary = ''
+          const bytes = new Uint8Array(arrayBuffer)
+          bytes.forEach((byte) => {
+              binary += String.fromCharCode(byte)
+          })
+          const base64String = window.btoa(binary)
+
+          const base64URL = `data:${contentType};base64,${base64String}`
+          // const fileWindow = window.open(base64URL, "_blank")
+          // if (fileWindow) {
+          //     fileWindow.document.title = filename
+          //     if (contentType.includes("image")) {
+          //         fileWindow.document.body.innerHTML = `<img src="${base64URL}" alt="${filename}" />`
+          //     } else if (contentType.includes("pdf")) {
+          //         fileWindow.document.body.innerHTML = `<embed src="${base64URL}" width="100%" height="100%" type="application/pdf" />`
+          //     } else {
+          //         fileWindow.document.body.innerHTML = `<a href="${base64URL}" download="${filename}">Download ${filename}</a>`
+          //     }
+          // }
+
+          return base64URL
+      } catch (error) {
+          console.error(`Error fetching attachment by filename: ${error}`)
+      }
+  }
 
   }
 })

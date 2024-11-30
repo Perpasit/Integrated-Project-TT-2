@@ -29,19 +29,18 @@ const uploadStatus = ref(null)
 const attachmentsFileNames = ref([])
 const getAttachmentsFileName = async (boardId, taskId) => {
   if (!taskId) {
-    return;
+    return
   }
 
-  const attachments = await attachFileStore.getAttachments(boardId, taskId);
+  const attachments = await attachFileStore.getAttachments(boardId, taskId)
 
   if (Array.isArray(attachments) && attachments.length > 0) {
-    const fileNames = attachments.map((attachment) => attachment.fileName);
-    attachmentsFileNames.value = fileNames;
+    const fileNames = attachments.map((attachment) => attachment.fileName)
+    attachmentsFileNames.value = fileNames
   } else {
-    attachmentsFileNames.value = [];
+    attachmentsFileNames.value = []
   }
-};
-
+}
 
 const uploadStatusClass = computed(() => {
   if (uploadStatus.value === "Files uploaded successfully!") {
@@ -99,8 +98,6 @@ const uploadFiles = async () => {
   } finally {
     isLoading.value = false
   }
-
-  
 }
 
 const handleDeleteAttachment = async (index) => {
@@ -121,32 +118,35 @@ const handleDeleteAttachment = async (index) => {
 }
 
 const handleDownloadAttachment = async (index) => {
-  const boardId = route.params.boardId;
-  const taskId = route.params.id;
-  const attachmentId = attachFileStore.attachments[index]?.id;
+  const boardId = route.params.boardId
+  const taskId = route.params.id
+  const attachmentId = attachFileStore.attachments[index]?.id
 
-  console.log("Downloading attachment:", { boardId, taskId, attachmentId });
+  console.log("Downloading attachment:", { boardId, taskId, attachmentId })
 
   if (!attachmentId) {
-    console.error("Attachment ID not found.");
-    return;
+    console.error("Attachment ID not found.")
+    return
   }
 
   try {
-    const success = await attachFileStore.downloadAttachment(boardId, taskId, attachmentId);
+    const success = await attachFileStore.downloadAttachment(
+      boardId,
+      taskId,
+      attachmentId
+    )
 
     if (success) {
-      console.log(`Attachment with ID ${attachmentId} downloaded successfully.`);
+      console.log(`Attachment with ID ${attachmentId} downloaded successfully.`)
     } else {
-      console.error("Failed to download the attachment.");
-      alert("Failed to download the attachment. Please try again.");
+      console.error("Failed to download the attachment.")
+      alert("Failed to download the attachment. Please try again.")
     }
   } catch (error) {
-    console.error("An error occurred while downloading the attachment:", error);
-    alert("An error occurred while downloading the file. Please try again.");
+    console.error("An error occurred while downloading the attachment:", error)
+    alert("An error occurred while downloading the file. Please try again.")
   }
-};
-
+}
 
 let boardId = route.params.boardId
 const userOid = ref("")
@@ -217,8 +217,8 @@ watch(generalSetting, (newValue) => {
 const props = defineProps({
   mode: {
     type: String,
-    default: "add"
-  }
+    default: "add",
+  },
 })
 
 const editedTask = ref({
@@ -226,7 +226,7 @@ const editedTask = ref({
   title: "",
   description: "",
   assignees: "",
-  status: null
+  status: null,
 })
 
 const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
@@ -291,13 +291,13 @@ watch(
             ...data,
             description: data.description || "",
             assignees: data.assignees || "",
-            status: statusId || 1
+            status: statusId || 1,
           }
           originalTask.value = {
             ...data,
             description: data.description || "",
             assignees: data.assignees || "",
-            status: statusId || 1
+            status: statusId || 1,
           }
         }
       } catch (error) {
@@ -314,7 +314,7 @@ function resetForm() {
     title: "",
     description: "",
     assignees: "",
-    status: null
+    status: null,
   }
 }
 
@@ -337,7 +337,7 @@ async function saveTask() {
       assignees: editedTask.value.assignees
         ? editedTask.value.assignees.trim()
         : "",
-      status: { id: editedTask.value.status }
+      status: { id: editedTask.value.status },
     }
 
     if (props.mode === "edit") {
@@ -358,7 +358,7 @@ async function saveTask() {
         assignees: editedTask.value.assignees
           ? editedTask.value.assignees.trim()
           : "",
-        status: editedTask.value.status
+        status: editedTask.value.status,
       }
       // console.log(boardId, newTask);
       await taskStore.addTask(boardId, newTask)
@@ -420,6 +420,22 @@ const fetchTaskAndStatus = async (boardId) => {
   await taskStore.fetchAllTasks(boardId)
 }
 
+const fileUrls = ref({})
+
+const loadFileLocation = async (boardId, taskId, attachmentId, fileName) => {
+  try {
+    const fileUrl = await attachFileStore.loadFileDisplay(
+      boardId,
+      taskId,
+      attachmentId
+    )
+    fileUrls.value[fileName] = fileUrl // Ensure this line works correctly
+    console.log("File URL loaded:", fileUrls.value[fileName]) // Log for debugging
+  } catch (error) {
+    console.error(`Failed to load file: ${fileName}`, error)
+  }
+}
+
 onMounted(async () => {
   userStore.loadFromLocalStorage()
   let boardId = route.params.boardId
@@ -431,6 +447,17 @@ onMounted(async () => {
     userOid.value = userStore.getUserOid
     if (props.mode === "add" || !editedTask.value.status) {
       editedTask.value.status = statusStore.statuses[0]?.id || null
+    }
+
+    // Fetch attachments
+    const taskId = route.params.id
+    const attachments = await attachFileStore.getAttachments(boardId, taskId)
+
+    // Load files
+    for (const attachment of attachments) {
+      const fileName = attachment.fileName // Assuming this exists
+      const attachmentId = attachment.id
+      await loadFileLocation(boardId, taskId, attachmentId, fileName)
     }
   } catch (error) {
     console.error("Error fetching board or user OID:", error)
@@ -528,12 +555,48 @@ onMounted(async () => {
                       >
                         {{ fileName }}
                       </span>
+                      <div class="flex">
+
+                     
+                      <img
+                        v-if="
+                          fileName.endsWith('.png') ||
+                          fileName.endsWith('.jpg') ||
+                          fileName.endsWith('.jpeg')
+                        "
+                        :src="fileUrls[fileName]"
+                        alt="Attachment preview"
+                        class="w-auto h-[40px]"
+                      />
+                        
+                      <!-- <div
+                          v-if="
+                            fileName.endsWith('.png') ||
+                            fileName.endsWith('.jpg') ||
+                            fileName.endsWith('.jpeg')
+                          "
+                          class="relative group"
+                        >
+                          <span class="text-blue-600 underline cursor-pointer"
+                            >Preview</span
+                          >
+
+                         
+                          <img
+                            v-if="fileUrls[fileName]"
+                            :src="fileUrls[fileName]"
+                            alt="Attachment preview"
+                            class="absolute left-1/2 transform -translate-x-1/2 top-full w-auto h-auto mt-2 border border-gray-300 shadow-lg hidden group-hover:block z-10"
+                          />
+                        </div> -->
+
                       <button
                         @click="handleDeleteAttachment(index)"
                         class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
                       >
                         Delete
                       </button>
+                    </div>
                     </li>
                   </ul>
                 </div>
@@ -557,7 +620,12 @@ onMounted(async () => {
                       :key="file.name"
                       class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg"
                     >
+                      <!-- Display the file name -->
                       <span class="text-sm">{{ file.name }}</span>
+
+                     
+
+                      <!-- Button to remove the file -->
                       <button
                         type="button"
                         class="text-red-500"
@@ -676,7 +744,7 @@ onMounted(async () => {
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                   isTitleValid,
-                'bg-gray-300 cursor-not-allowed': !isTitleValid
+                'bg-gray-300 cursor-not-allowed': !isTitleValid,
               }"
               @click="isTitleValid && saveTask()"
               :disabled="
@@ -697,7 +765,7 @@ onMounted(async () => {
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
                   isSameOidOrHasWriteAccess,
-                'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess
+                'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess,
               }"
               @click="isSameOidOrHasWriteAccess && saveTask()"
               :disabled="!isSameOidOrHasWriteAccess"
