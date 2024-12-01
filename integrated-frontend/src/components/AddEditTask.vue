@@ -1,132 +1,138 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue"
-import { useTaskStore } from "../stores/task"
-import { useStatusStore } from "../stores/status"
-import { useModalStore } from "../stores/useModalStore"
-import { useBoardStore } from "../stores/boardStore"
-import { useUserStore } from "../stores/userStore"
-import { useGlobalSettingStore } from "../stores/global_setting"
-import { useRouter, useRoute } from "vue-router"
-import { getItems, getItemsNoUser } from "../utils/fetch"
-import { useCollabStore } from "../stores/collaboratorStore"
-import { useAttachFileStore } from "../stores/attachFileStore"
+import { ref, computed, watch, onMounted } from "vue";
+import { useTaskStore } from "../stores/task";
+import { useStatusStore } from "../stores/status";
+import { useModalStore } from "../stores/useModalStore";
+import { useBoardStore } from "../stores/boardStore";
+import { useUserStore } from "../stores/userStore";
+import { useGlobalSettingStore } from "../stores/global_setting";
+import { useRouter, useRoute } from "vue-router";
+import { getItems, getItemsNoUser } from "../utils/fetch";
+import { useCollabStore } from "../stores/collaboratorStore";
+import { useAttachFileStore } from "../stores/attachFileStore";
+import { storeToRefs } from "pinia";
 
-const router = useRouter()
-const route = useRoute()
-const taskStore = useTaskStore()
-const statusStore = useStatusStore()
-const modalStore = useModalStore()
-const boardStore = useBoardStore()
-const userStore = useUserStore()
-const collabStore = useCollabStore()
-const globalSettingStore = useGlobalSettingStore()
+const router = useRouter();
+const route = useRoute();
+const taskStore = useTaskStore();
+const statusStore = useStatusStore();
+const modalStore = useModalStore();
+const boardStore = useBoardStore();
+const userStore = useUserStore();
+const collabStore = useCollabStore();
+const globalSettingStore = useGlobalSettingStore();
 
-const attachFileStore = useAttachFileStore()
+const attachFileStore = useAttachFileStore();
 
-const isLoading = ref(false)
-const uploadStatus = ref(null)
+const isLoading = ref(false);
+const uploadStatus = ref(null);
 
-const attachmentsFileNames = ref([])
+const attachmentsFileNames = ref([]);
+const { attachments } = storeToRefs(attachFileStore);
+
 const getAttachmentsFileName = async (boardId, taskId) => {
   if (!taskId) {
-    return
+    return;
   }
 
-  const attachments = await attachFileStore.getAttachments(boardId, taskId)
+  const attachments = await attachFileStore.getAttachments(boardId, taskId);
 
   if (Array.isArray(attachments) && attachments.length > 0) {
-    const fileNames = attachments.map((attachment) => attachment.fileName)
-    attachmentsFileNames.value = fileNames
+    const fileNames = attachments.map((attachment) => attachment.fileName);
+    attachmentsFileNames.value = fileNames;
   } else {
-    attachmentsFileNames.value = []
+    attachmentsFileNames.value = [];
   }
-}
+};
 
 const uploadStatusClass = computed(() => {
   if (uploadStatus.value === "Files uploaded successfully!") {
-    return "success"
+    return "success";
   } else if (uploadStatus.value) {
-    return "error"
+    return "error";
   }
-})
+});
 
+// Initialize attachFile as a ref
+const attachFile = ref([]);
+
+// Watch for changes in attachFileStore.selectedFiles and update attachFile
+watch(
+  () => attachFileStore.selectedFiles,
+  (newFiles) => {
+    attachFile.value = newFiles;
+  },
+  { immediate: true }
+);
 // Function to handle file selection
 const handleFileChange = (event) => {
-  const files = event.target.files
-  attachFileStore.setSelectedFiles(files) // Set files to the store
-}
-const generateUniqueFileName = (fileName) => {
-  const timestamp = Date.now()
-  const extension = fileName.split(".").pop()
-  const baseName = fileName.replace(`.${extension}`, "")
-  return `${baseName}-${timestamp}.${extension}`
-}
+  const files = event.target.files;
+  attachFileStore.setSelectedFiles(files); // Set files to the store
+  // console.log('Selected files:', attachFileStore.selectedFiles);
+};
+
 
 const uploadFiles = async () => {
-  if (isLoading.value) return
+  if (isLoading.value) return;
 
-  isLoading.value = true
+  isLoading.value = true;
 
-  const boardId = route.params.boardId
-  const taskId = route.params.id
+  const boardId = route.params.boardId;
+  const taskId = route.params.id;
 
   if (!taskId) {
-    uploadStatus.value = "Task ID is missing."
-    isLoading.value = false
-    return
+    uploadStatus.value = "Task ID is missing.";
+    isLoading.value = false;
+    return;
   }
 
   const filesToUpload = Array.from(attachFileStore.selectedFiles).map(
     (file) => {
-      const uniqueFileName = generateUniqueFileName(file.name)
-      return new File([file], uniqueFileName, { type: file.type })
+      console.log(file);
+      return new File([file], file.name, { type: file.type });
     }
-  )
+  );
 
-  attachFileStore.setSelectedFiles(filesToUpload)
+  attachFileStore.setSelectedFiles(filesToUpload);
 
   try {
-    const uploadedFile = await attachFileStore.uploadFiles(boardId, taskId)
-    getAttachmentsFileName(boardId, taskId)
+    const uploadedFile = await attachFileStore.uploadFiles(boardId, taskId);
+    getAttachmentsFileName(boardId, taskId);
     if (uploadedFile) {
-      uploadStatus.value = "Files uploaded successfully!"
+      uploadStatus.value = "Files uploaded successfully!";
     } else {
-      uploadStatus.value = attachFileStore.uploadStatus
+      uploadStatus.value = attachFileStore.uploadStatus;
     }
   } catch (error) {
-    uploadStatus.value = "An error occurred during upload."
+    uploadStatus.value = "An error occurred during upload.";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
-const handleDeleteAttachment = async (index) => {
-  const boardId = route.params.boardId
-  const taskId = route.params.id
-  const attachmentId = attachFileStore.attachments[index]?.id
+let attachmentsToDelete = ref([]);
 
-  console.log("Deleting attachment:", { boardId, taskId, attachmentId })
-
-  if (!attachmentId) {
-    console.error("Attachment ID not found.")
-    return
+const handleDeleteAttachment = (index) => {
+  const attachmentId = attachFileStore.attachments[index]?.id;
+  attachFileStore.deleteAttachmentF(attachmentId);
+  if (attachmentId) {
+    attachmentsToDelete.value.push(attachmentId);
+    console.log(`Attachment with ID ${attachmentId} marked for deletion.`);
+  } else {
+    console.error("Attachment ID not found.");
   }
-
-  await attachFileStore.deleteAttachment(boardId, taskId, attachmentId)
-
-  await getAttachmentsFileName(boardId, taskId)
-}
+};
 
 const handleDownloadAttachment = async (index) => {
-  const boardId = route.params.boardId
-  const taskId = route.params.id
-  const attachmentId = attachFileStore.attachments[index]?.id
+  const boardId = route.params.boardId;
+  const taskId = route.params.id;
+  const attachmentId = attachFileStore.attachments[index]?.id;
 
-  console.log("Downloading attachment:", { boardId, taskId, attachmentId })
+  console.log("Downloading attachment:", { boardId, taskId, attachmentId });
 
   if (!attachmentId) {
-    console.error("Attachment ID not found.")
-    return
+    console.error("Attachment ID not found.");
+    return;
   }
 
   try {
@@ -134,92 +140,94 @@ const handleDownloadAttachment = async (index) => {
       boardId,
       taskId,
       attachmentId
-    )
+    );
 
     if (success) {
-      console.log(`Attachment with ID ${attachmentId} downloaded successfully.`)
+      console.log(
+        `Attachment with ID ${attachmentId} downloaded successfully.`
+      );
     } else {
-      console.error("Failed to download the attachment.")
-      alert("Failed to download the attachment. Please try again.")
+      console.error("Failed to download the attachment.");
+      alert("Failed to download the attachment. Please try again.");
     }
   } catch (error) {
-    console.error("An error occurred while downloading the attachment:", error)
-    alert("An error occurred while downloading the file. Please try again.")
+    console.error("An error occurred while downloading the attachment:", error);
+    alert("An error occurred while downloading the file. Please try again.");
   }
-}
+};
 
-let boardId = route.params.boardId
-const userOid = ref("")
-const boardOid = ref(null)
+let boardId = route.params.boardId;
+const userOid = ref("");
+const boardOid = ref(null);
 const hasWriteAccess = computed(() => {
   const collaboratorData = collabStore.getCollaboratorByBoardAndUser(
     userOid.value
-  )
-  return collaboratorData?.accessRight === "WRITE"
-})
+  );
+  return collaboratorData?.accessRight === "WRITE";
+});
 
 const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
-    return false
+    return false;
   }
 
-  return boardOid.value === userOid.value || hasWriteAccess.value
-})
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
 const fetchBoardAndUserOids = async (boardId) => {
   try {
-    const boardData = await boardStore.getBoardById(boardId)
+    const boardData = await boardStore.getBoardById(boardId);
     if (!boardData) {
-      throw new Error(`Board with id ${boardId} not found.`)
+      throw new Error(`Board with id ${boardId} not found.`);
     }
 
-    boardOid.value = boardData.owner.oid
-    userOid.value = userStore.getUserOid || null
+    boardOid.value = boardData.owner.oid;
+    userOid.value = userStore.getUserOid || null;
     // const visibility = boardData.visibility;
     // console.log("Board Visibility:", visibility);
     // console.log(isSameOidOrHasWriteAccess.value)
 
     if (!isSameOidOrHasWriteAccess.value) {
-      router.push({ name: "AccessDenied" })
+      router.push({ name: "AccessDenied" });
     }
   } catch (error) {
-    console.error("Error fetching board or user OID:", error)
-    router.push({ name: "AccessDenied" })
+    console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" });
   }
-}
+};
 
 const generalSetting = computed(
   () => globalSettingStore.getCurrentGlobalSetting
-)
-const maxTasks = ref(generalSetting.value?.maximumTaskLimit)
+);
+const maxTasks = ref(generalSetting.value?.maximumTaskLimit);
 
-const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask)
+const isLimitEnabled = ref(generalSetting.value?.limitMaximumTask);
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
-    boardId = newBoardId
-    await fetchBoardAndUserOids(newBoardId) // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
   }
-)
+);
 
 watch(
   () => route.params.boardId,
   async (newBoardId) => {
-    boardId = newBoardId
-    await fetchTaskAndStatus(boardId)
+    boardId = newBoardId;
+    await fetchTaskAndStatus(boardId);
   }
-)
+);
 
 watch(generalSetting, (newValue) => {
-  isLimitEnabled.value = newValue?.limitMaximumTask
-  maxTasks.value = newValue?.maximumTaskLimit
-})
+  isLimitEnabled.value = newValue?.limitMaximumTask;
+  maxTasks.value = newValue?.maximumTaskLimit;
+});
 
 const props = defineProps({
   mode: {
     type: String,
     default: "add",
   },
-})
+});
 
 const editedTask = ref({
   id: "",
@@ -227,15 +235,15 @@ const editedTask = ref({
   description: "",
   assignees: "",
   status: null,
-})
+});
 
-const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100)
+const isTitleTooLong = computed(() => editedTask.value?.title?.length > 100);
 const isDescriptionTooLong = computed(
   () => editedTask.value?.description?.length > 500
-)
+);
 const areAssigneesTooLong = computed(
   () => editedTask.value?.assignees?.length > 30
-)
+);
 
 const isTitleValid = computed(() => {
   return (
@@ -243,24 +251,32 @@ const isTitleValid = computed(() => {
     !isTitleTooLong.value &&
     !isDescriptionTooLong.value &&
     !areAssigneesTooLong.value &&
+
+
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedTask.value &&
         (editedTask.value.title !== originalTask.value.title ||
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
-          editedTask.value.status !== originalTask.value.status)))
-  )
-})
+          editedTask.value.status !== originalTask.value.status))) ||
+          attachFileStore.selectedFiles.length > 0 ||
+          attachmentsToDelete.value.length > 0
+  );
+});
 
-const originalTask = ref(null)
+editedTask.value.title.trim().length > 0 &&
+    !isTitleTooLong.value &&
+    attachFileStore.selectedFiles.length > 0
+
+const originalTask = ref(null);
 
 watch(
   () => router.currentRoute.value.params.id,
   async (id) => {
     if (props.mode === "edit") {
       try {
-        let response
+        let response;
 
         // ตรวจสอบว่า authenticated หรือไม่
         if (userStore.getIsAuthenticated) {
@@ -269,45 +285,45 @@ watch(
             `${
               import.meta.env.VITE_API_ENDPOINTV3
             }/boards/${boardId}/tasks/${id}`
-          )
+          );
         } else {
           // ถ้าไม่ authenticated ให้เรียก getItemsNoUser
           response = await getItemsNoUser(
             `${
               import.meta.env.VITE_API_ENDPOINTV3
             }/boards/${boardId}/tasks/${id}`
-          )
+          );
         }
         if (response.status === 404) {
-          editedTask.value = null
+          editedTask.value = null;
           setTimeout(() => {
-            closeModal()
-          }, 3000)
+            closeModal();
+          }, 3000);
         } else {
-          const data = await response
+          const data = await response;
 
-          const statusId = statusStore.getStatusByName(data.status)?.id
+          const statusId = statusStore.getStatusByName(data.status)?.id;
           editedTask.value = {
             ...data,
             description: data.description || "",
             assignees: data.assignees || "",
             status: statusId || 1,
-          }
+          };
           originalTask.value = {
             ...data,
             description: data.description || "",
             assignees: data.assignees || "",
             status: statusId || 1,
-          }
+          };
         }
       } catch (error) {
-        console.error("Error fetching task:", error)
-        editedTask.value = null
+        console.error("Error fetching task:", error);
+        editedTask.value = null;
       }
     }
   },
   { immediate: true }
-)
+);
 
 function resetForm() {
   editedTask.value = {
@@ -315,41 +331,56 @@ function resetForm() {
     description: "",
     assignees: "",
     status: null,
-  }
+  };
 }
 
 async function saveTask() {
-  try {
-    errorMessage.value = ""
+  let taskId = null;
 
-    // ตรวจสอบสิทธิ์เฉพาะเมื่อทำการบันทึก task
-    if (!isSameOidOrHasWriteAccess.value) {
-      console.error("You don't have permission to edit this task.")
-      errorMessage.value = "You don't have permission to edit this task."
-      return
-    }
+  if (props.mode === "edit") {
+    taskId = router.currentRoute.value.params.id;
+    if (taskId) {
+      try {
+        errorMessage.value = "";
 
-    const updatedTask = {
-      title: editedTask.value.title.trim(),
-      description: editedTask.value.description
-        ? editedTask.value.description.trim()
-        : "",
-      assignees: editedTask.value.assignees
-        ? editedTask.value.assignees.trim()
-        : "",
-      status: { id: editedTask.value.status },
-    }
+        // ตรวจสอบสิทธิ์เฉพาะเมื่อทำการบันทึก task
+        if (!isSameOidOrHasWriteAccess.value) {
+          console.error("You don't have permission to edit this task.");
+          errorMessage.value = "You don't have permission to edit this task.";
+          return;
+        }
 
-    if (props.mode === "edit") {
-      const taskId = router.currentRoute.value.params.id
-      if (taskId) {
-        await taskStore.updateTask(boardId, taskId, updatedTask)
-        fetchTaskAndStatus(boardId)
-        modalStore.openTaskSuccessModal(updatedTask.title, props.mode)
-      } else {
-        console.error("The task does not exist.")
+        const updatedTask = {
+          title: editedTask.value.title.trim(),
+          description: editedTask.value.description
+            ? editedTask.value.description.trim()
+            : "",
+          assignees: editedTask.value.assignees
+            ? editedTask.value.assignees.trim()
+            : "",
+          status: { id: editedTask.value.status },
+        };
+
+        await taskStore.updateTask(boardId, taskId, updatedTask);
+        fetchTaskAndStatus(boardId);
+        modalStore.openTaskSuccessModal(updatedTask.title, props.mode);
+      } catch (error) {
+        errorMessage.value = error.message;
       }
     } else {
+      console.error("The task does not exist.");
+    }
+  } else {
+    try {
+      errorMessage.value = "";
+
+      // ตรวจสอบสิทธิ์เฉพาะเมื่อทำการบันทึก task
+      if (!isSameOidOrHasWriteAccess.value) {
+        console.error("You don't have permission to edit this task.");
+        errorMessage.value = "You don't have permission to edit this task.";
+        return;
+      }
+
       const newTask = {
         title: editedTask.value.title.trim(),
         description: editedTask.value.description
@@ -359,68 +390,84 @@ async function saveTask() {
           ? editedTask.value.assignees.trim()
           : "",
         status: editedTask.value.status,
-      }
+      };
       // console.log(boardId, newTask);
-      await taskStore.addTask(boardId, newTask)
-      fetchTaskAndStatus(boardId)
-      router.push({ name: "home" })
-      modalStore.openTaskSuccessModal(newTask.title, props.mode)
+      const response = await taskStore.addTask(boardId, newTask);
+      taskId = response.id;
+      fetchTaskAndStatus(boardId);
+      router.push({ name: "home" });
+      modalStore.openTaskSuccessModal(newTask.title, props.mode);
 
-      const status = statusStore.statuses.find((s) => s.id === newTask.status)
+      const status = statusStore.statuses.find((s) => s.id === newTask.status);
       if (status) {
-        status.noOfTasks++
+        status.noOfTasks++;
       }
 
-      closeModal()
+      closeModal();
+    } catch (error) {
+      errorMessage.value = error.message;
     }
-    router.push({ name: "home" })
-    fetchTaskAndStatus(boardId)
-  } catch (error) {
-    errorMessage.value = error.message
   }
+  
+  await uploadFiles();
+  attachFileStore.clearSelectedFiles();
+  router.push({ name: "home" });
+  fetchTaskAndStatus(boardId);
+
+  // Perform the actual deletion of attachments
+  for (const attachmentId of attachmentsToDelete.value) {
+    try {
+      console.log(attachmentId)
+      await attachFileStore.deleteAttachment(boardId, taskId, attachmentId);
+      console.log(`Attachment with ID ${attachmentId} deleted successfully.`);
+    } catch (error) {
+      console.error(`Failed to delete attachment with ID ${attachmentId}:`, error);
+    }
+  }
+  attachmentsToDelete.value = []; // Clear the list after deletion
 }
 
-const errorMessage = ref("")
+const errorMessage = ref("");
 
-const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const parseAndFormatDate = (dateString) => {
-  const date = new Date(dateString)
+  const date = new Date(dateString);
   if (isNaN(date)) {
-    return "Invalid Date"
+    return "Invalid Date";
   }
-  return date.toLocaleString("en-GB", { timeZone: localTimeZone })
-}
+  return date.toLocaleString("en-GB", { timeZone: localTimeZone });
+};
 
 const formatStatus = (status) => {
-  return status
-}
+  return status;
+};
 
 function closeModal() {
-  router.push({ name: "home" })
-  resetForm()
-  taskStore.fetchAllTasks(boardId)
+  router.push({ name: "home" });
+  resetForm();
+  taskStore.fetchAllTasks(boardId);
 }
 
 const getStatusUsage = (statusId) => {
-  const status = statusStore.statuses.find((s) => s.id === statusId)
+  const status = statusStore.statuses.find((s) => s.id === statusId);
   if (status) {
     if (
       status.name.toLowerCase() === "no status" ||
       status.name.toLowerCase() === "done"
     ) {
-      return ""
+      return "";
     }
-    return `${status.noOfTasks || 0}/${maxTasks.value || 0} tasks`
+    return `${status.noOfTasks || 0}/${maxTasks.value || 0} tasks`;
   }
-  return "0/0 tasks"
-}
+  return "0/0 tasks";
+};
 
 const fetchTaskAndStatus = async (boardId) => {
-  await statusStore.fetchAllStatuses(boardId)
-  await taskStore.fetchAllTasks(boardId)
-}
+  await statusStore.fetchAllStatuses(boardId);
+  await taskStore.fetchAllTasks(boardId);
+};
 
-const fileUrls = ref({})
+const fileUrls = ref({});
 
 const loadFileLocation = async (boardId, taskId, attachmentId, fileName) => {
   try {
@@ -428,54 +475,56 @@ const loadFileLocation = async (boardId, taskId, attachmentId, fileName) => {
       boardId,
       taskId,
       attachmentId
-    )
-    fileUrls.value[fileName] = fileUrl // Ensure this line works correctly
-    console.log("File URL loaded:", fileUrls.value[fileName]) // Log for debugging
+    );
+    fileUrls.value[fileName] = fileUrl; // Ensure this line works correctly
+    console.log("File URL loaded:", fileUrls.value[fileName]); // Log for debugging
   } catch (error) {
-    console.error(`Failed to load file: ${fileName}`, error)
+    console.error(`Failed to load file: ${fileName}`, error);
   }
-}
+};
+
+
 
 onMounted(async () => {
-  userStore.loadFromLocalStorage()
-  let boardId = route.params.boardId
+  userStore.loadFromLocalStorage();
+  let boardId = route.params.boardId;
 
   try {
-    await fetchTaskAndStatus(boardId)
-    const boardData = await boardStore.getBoardById(boardId)
-    boardOid.value = boardData.owner.oid
-    userOid.value = userStore.getUserOid
+    await fetchTaskAndStatus(boardId);
+    const boardData = await boardStore.getBoardById(boardId);
+    boardOid.value = boardData.owner.oid;
+    userOid.value = userStore.getUserOid;
     if (props.mode === "add" || !editedTask.value.status) {
-      editedTask.value.status = statusStore.statuses[0]?.id || null
+      editedTask.value.status = statusStore.statuses[0]?.id || null;
     }
 
     // Fetch attachments
-    const taskId = route.params.id
-    const attachments = await attachFileStore.getAttachments(boardId, taskId)
+    const taskId = route.params.id;
+    const attachments = await attachFileStore.getAttachments(boardId, taskId);
 
     // Load files
     for (const attachment of attachments) {
-      const fileName = attachment.fileName // Assuming this exists
-      const attachmentId = attachment.id
-      await loadFileLocation(boardId, taskId, attachmentId, fileName)
+      const fileName = attachment.fileName; // Assuming this exists
+      const attachmentId = attachment.id;
+      await loadFileLocation(boardId, taskId, attachmentId, fileName);
     }
   } catch (error) {
-    console.error("Error fetching board or user OID:", error)
+    console.error("Error fetching board or user OID:", error);
   }
-  await fetchBoardAndUserOids(boardId)
+  await fetchBoardAndUserOids(boardId);
   if (isSameOidOrHasWriteAccess.value) {
-    await fetchTaskAndStatus(boardId)
+    await fetchTaskAndStatus(boardId);
   } else {
-    console.warn("You do not have permission to access this board.")
+    console.warn("You do not have permission to access this board.");
   }
 
-  const taskId = route.params.id
+  const taskId = route.params.id;
   // // After fetching, you can access the attachments in the store:
   // const kut = await attachFileStore.getAttachments(boardId,taskId)
   // console.log(kut)
-  userStore.loadFromLocalStorage()
-  getAttachmentsFileName(boardId, taskId)
-})
+  userStore.loadFromLocalStorage();
+  getAttachmentsFileName(boardId, taskId);
+});
 </script>
 
 <template>
@@ -545,7 +594,7 @@ onMounted(async () => {
                   </h3>
                   <ul class="space-y-2">
                     <li
-                      v-for="(fileName, index) in attachmentsFileNames"
+                      v-for="(fileName, index) in attachments"
                       :key="index"
                       class="flex items-center justify-between bg-gray-100 p-2 rounded-md shadow"
                     >
@@ -553,23 +602,21 @@ onMounted(async () => {
                         @click="handleDownloadAttachment(index)"
                         class="text-sm font-medium text-blue-600 cursor-pointer truncate hover:underline"
                       >
-                        {{ fileName }}
+                        {{ fileName.fileName }}
                       </span>
                       <div class="flex">
+                        <img
+                          v-if="
+                            fileName.fileName.endsWith('.png') ||
+                            fileName.fileName.endsWith('.jpg') ||
+                            fileName.fileName.endsWith('.jpeg')
+                          "
+                          :src="fileUrls[fileName.fileName]"
+                          alt="Attachment preview"
+                          class="w-auto h-[40px]"
+                        />
 
-                     
-                      <img
-                        v-if="
-                          fileName.endsWith('.png') ||
-                          fileName.endsWith('.jpg') ||
-                          fileName.endsWith('.jpeg')
-                        "
-                        :src="fileUrls[fileName]"
-                        alt="Attachment preview"
-                        class="w-auto h-[40px]"
-                      />
-                        
-                      <!-- <div
+                        <!-- <div
                           v-if="
                             fileName.endsWith('.png') ||
                             fileName.endsWith('.jpg') ||
@@ -590,13 +637,13 @@ onMounted(async () => {
                           />
                         </div> -->
 
-                      <button
-                        @click="handleDeleteAttachment(index)"
-                        class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                        <button
+                          @click="handleDeleteAttachment(index)"
+                          class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </li>
                   </ul>
                 </div>
@@ -616,14 +663,12 @@ onMounted(async () => {
                   </h3>
                   <div class="space-y-2">
                     <div
-                      v-for="(file, index) in attachFileStore.selectedFiles"
+                      v-for="(file, index) in attachFile"
                       :key="file.name"
                       class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg"
                     >
                       <!-- Display the file name -->
                       <span class="text-sm">{{ file.name }}</span>
-
-                     
 
                       <!-- Button to remove the file -->
                       <button
@@ -640,15 +685,6 @@ onMounted(async () => {
                   <p>No files selected. (-)</p>
                   <!-- Show '-' when no selected files -->
                 </div>
-
-                <!-- Upload button -->
-                <button
-                  @click="uploadFiles"
-                  :disabled="isLoading"
-                  class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Upload Files
-                </button>
 
                 <!-- Loading message -->
                 <div v-if="isLoading">Uploading...</div>
@@ -746,7 +782,7 @@ onMounted(async () => {
                   isTitleValid,
                 'bg-gray-300 cursor-not-allowed': !isTitleValid,
               }"
-              @click="isTitleValid && saveTask()"
+              @click="saveTask()"
               :disabled="
                 !isTitleValid ||
                 isTitleTooLong ||

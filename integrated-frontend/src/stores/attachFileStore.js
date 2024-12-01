@@ -12,6 +12,15 @@ export const useAttachFileStore = defineStore("attachFileStore", {
     setSelectedFiles(files) {
       this.selectedFiles = Array.from(files)
     },
+    clearSelectedFiles() {
+      this.selectedFiles = [];
+    },
+    deleteAttachmentF(attachmentId) {
+      this.attachments = this.attachments.filter(
+        (attachment) => attachment.id !== attachmentId
+      );
+      
+    },
     async uploadFiles(boardId, taskId) {
       if (!this.selectedFiles || this.selectedFiles.length === 0) {
         this.uploadStatus = "No files selected."
@@ -169,7 +178,6 @@ export const useAttachFileStore = defineStore("attachFileStore", {
       } catch (error) {
           console.error(`Error fetching attachment by filename: ${error}`)
       }
-  }
-
+    }
   }
 })
