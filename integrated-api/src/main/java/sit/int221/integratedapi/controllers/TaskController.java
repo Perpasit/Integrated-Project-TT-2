@@ -149,9 +149,7 @@ public class TaskController {
             throw new CustomAuthenticationException("Unauthorized. Invalid token.");
         }
 
-
         taskService.validateWriteAccess(boardId, oidFromToken);
-
 
         Task existingTask = taskService.findTaskById(taskId);
         if (existingTask == null) {
@@ -160,12 +158,6 @@ public class TaskController {
 
         final int MAX_FILES = 10;
         final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
-        final List<String> ALLOWED_FILE_TYPES = Arrays.asList(
-                "image/png", "image/jpeg", "image/jpg",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-                "text/plain", "application/rtf", "application/pdf"
-        );
 
         if (files.length > MAX_FILES) {
             throw new MaxFilesExceededException("File limit exceeded. Only " + MAX_FILES + " files are allowed per task.");
@@ -175,18 +167,13 @@ public class TaskController {
             if (file.getSize() > MAX_FILE_SIZE) {
                 throw new MaxFilesExceededException("File size exceeds the maximum limit of 20 MB.");
             }
-            if (!ALLOWED_FILE_TYPES.contains(file.getContentType())) {
-                throw new IllegalArgumentException("Unsupported file type: " + file.getContentType() +
-                        ". Allowed types are: " + String.join(", ", ALLOWED_FILE_TYPES));
-            }
+
         }
 
         try {
-
             List<TaskAttachmentDTO> savedAttachments = new ArrayList<>();
             for (MultipartFile file : files) {
                 String filePath = fileUploadService.saveFile(file, boardId, taskId);
-
 
                 TaskAttachment attachment = new TaskAttachment();
                 attachment.setFileName(file.getOriginalFilename());
@@ -203,7 +190,6 @@ public class TaskController {
                         attachment.getFileSize()
                 );
 
-
                 TaskAttachmentDTO attachmentDTO = new TaskAttachmentDTO();
                 attachmentDTO.setFileName(attachment.getFileName());
                 attachmentDTO.setFilePath(attachment.getFilePath());
@@ -219,6 +205,7 @@ public class TaskController {
             throw new IllegalStateException("An error occurred while saving files: " + e.getMessage(), e);
         }
     }
+
 
 
     @GetMapping("/{boardId}/tasks/{taskId}/attachments")
