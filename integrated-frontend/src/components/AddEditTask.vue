@@ -246,13 +246,20 @@ const areAssigneesTooLong = computed(
 );
 
 const isTitleValid = computed(() => {
+  // console.log(attachFile.value.map((file) => file.name));
+  // console.log(attachments.value.map((attachment) => attachment.fileName)); 
+  const isDuplicateFileName = () => {
+  return attachFile.value.some((file) =>
+    attachments.value.some((attachment) => attachment.fileName === file.name)
+  );
+};
+
+
   return (
     editedTask.value.title.trim() !== "" &&
     !isTitleTooLong.value &&
     !isDescriptionTooLong.value &&
     !areAssigneesTooLong.value &&
-
-
     (props.mode === "add" ||
       (props.mode === "edit" &&
         editedTask.value &&
@@ -260,14 +267,10 @@ const isTitleValid = computed(() => {
           editedTask.value.description !== originalTask.value.description ||
           editedTask.value.assignees !== originalTask.value.assignees ||
           editedTask.value.status !== originalTask.value.status))) ||
-          attachFileStore.selectedFiles.length > 0 ||
-          attachmentsToDelete.value.length > 0
+    (attachFileStore.selectedFiles.length > 0 && !isDuplicateFileName()) ||
+    attachmentsToDelete.value.length > 0
   );
 });
-
-editedTask.value.title.trim().length > 0 &&
-    !isTitleTooLong.value &&
-    attachFileStore.selectedFiles.length > 0
 
 const originalTask = ref(null);
 
@@ -444,7 +447,9 @@ const formatStatus = (status) => {
 
 function closeModal() {
   router.push({ name: "home" });
+  attachFileStore.clearSelectedFiles();
   resetForm();
+
   taskStore.fetchAllTasks(boardId);
 }
 
