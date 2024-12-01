@@ -28,6 +28,18 @@ const isLoading = ref(false);
 const uploadStatus = ref(null);
 
 const attachmentsFileNames = ref([]);
+watch(
+  () => attachFileStore.attachments,
+  (newVal) => {
+    if (Array.isArray(newVal) && newVal.length > 0) {
+      const fileNames = newVal.map((attachment) => attachment.fileName);
+      attachmentsFileNames.value = fileNames;
+    } else {
+      attachmentsFileNames.value = [];
+    }
+  },
+  { immediate: true }
+);
 const { attachments } = storeToRefs(attachFileStore);
 
 const getAttachmentsFileName = async (boardId, taskId) => {
