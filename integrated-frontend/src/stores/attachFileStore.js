@@ -19,8 +19,8 @@ export const useAttachFileStore = defineStore("attachFileStore", {
       this.attachments = this.attachments.filter(
         (attachment) => attachment.id !== attachmentId
       );
-      
     },
+    
     async uploadFiles(boardId, taskId) {
       if (!this.selectedFiles || this.selectedFiles.length === 0) {
         this.uploadStatus = "No files selected."
