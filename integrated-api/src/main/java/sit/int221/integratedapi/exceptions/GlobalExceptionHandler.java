@@ -263,21 +263,34 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<CustomErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, WebRequest request) {
+    @ExceptionHandler({MaxUploadSizeExceededException.class, MaxFilesExceededException.class})
+    public ResponseEntity<CustomErrorResponse> handleUploadExceptions(RuntimeException ex, WebRequest request) {
+        String errorMessage;
+        String fieldError;
+
+        if (ex instanceof MaxUploadSizeExceededException) {
+            errorMessage = "File size exceeds the maximum limit of 20MB.";
+            fieldError = "Each file must be less than 20MB.";
+        } else if (ex instanceof MaxFilesExceededException) {
+            errorMessage = ex.getMessage(); // Message from MaxFilesExceededException
+            fieldError = "The total number of files per task must not exceed the allowed limit.";
+        } else {
+            errorMessage = "An unexpected upload error occurred.";
+            fieldError = "Unexpected error.";
+        }
+
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
-                "File size exceeds the maximum limit of 20MB.",
+                errorMessage,
                 request.getDescription(false).replace("uri=", ""),
                 Collections.singletonList(
-                        new CustomErrorResponse.ValidationError("files", "Each file must be less than 20MB.")
+                        new CustomErrorResponse.ValidationError("files", fieldError)
                 )
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-
 
 
 
