@@ -122,7 +122,9 @@ public class TaskService {
         }
     }
 
-
+    public int countAttachmentsByTaskId(Integer taskId) {
+        return taskRepository.countAttachmentsByTaskId(taskId);
+    }
 
 
     public Task findTaskById(Integer taskId) {

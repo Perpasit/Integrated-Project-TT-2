@@ -156,18 +156,21 @@ public class TaskController {
             throw new ItemNotFoundException("Task not found with ID: " + taskId);
         }
 
+        // Check existing attachments count
+        int existingFileCount = taskService.countAttachmentsByTaskId(taskId);
         final int MAX_FILES = 10;
         final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
-        if (files.length > MAX_FILES) {
-            throw new MaxFilesExceededException("File limit exceeded. Only " + MAX_FILES + " files are allowed per task.");
+        if (existingFileCount + files.length > MAX_FILES) {
+            throw new MaxFilesExceededException("File limit exceeded. This task already has "
+                    + existingFileCount + " files attached. You can upload up to "
+                    + (MAX_FILES - existingFileCount) + " more files.");
         }
 
         for (MultipartFile file : files) {
             if (file.getSize() > MAX_FILE_SIZE) {
                 throw new MaxFilesExceededException("File size exceeds the maximum limit of 20 MB.");
             }
-
         }
 
         try {

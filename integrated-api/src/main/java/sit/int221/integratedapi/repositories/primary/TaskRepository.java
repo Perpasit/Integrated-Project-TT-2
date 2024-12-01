@@ -2,6 +2,8 @@ package sit.int221.integratedapi.repositories.primary;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import sit.int221.integratedapi.entities.Task;
 
@@ -28,5 +30,6 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
 
     List<Task> findFirstByBoardIdAndStatusNameIn(String boardId, List<String> statusNames, Sort sort);
 
-
+    @Query("SELECT COUNT(a) FROM TaskAttachment a WHERE a.task.id = :taskId")
+    int countAttachmentsByTaskId(@Param("taskId") Integer taskId);
 }
