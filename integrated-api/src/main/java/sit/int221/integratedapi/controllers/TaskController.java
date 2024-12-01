@@ -167,9 +167,15 @@ public class TaskController {
                     + (MAX_FILES - existingFileCount) + " more files.");
         }
 
+        // Retrieve existing file names for the task
+        List<String> existingFileNames = taskService.getAttachmentFileNamesByTaskId(taskId);
+
         for (MultipartFile file : files) {
             if (file.getSize() > MAX_FILE_SIZE) {
                 throw new MaxFilesExceededException("File size exceeds the maximum limit of 20 MB.");
+            }
+            if (existingFileNames.contains(file.getOriginalFilename())) {
+                throw new IllegalArgumentException("File with the same filename cannot be added: " + file.getOriginalFilename());
             }
         }
 
@@ -208,6 +214,7 @@ public class TaskController {
             throw new IllegalStateException("An error occurred while saving files: " + e.getMessage(), e);
         }
     }
+
 
 
 

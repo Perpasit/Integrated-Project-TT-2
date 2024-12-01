@@ -27,15 +27,15 @@ public class FileUploadService {
         }
 
         String originalFileName = file.getOriginalFilename();
-        String uniqueFileName = System.currentTimeMillis() + "_" + originalFileName;
 
-        String filePath = directoryPath + "/" + uniqueFileName;
+        String filePath = directoryPath + "/" + originalFileName;
         Path path = Paths.get(filePath);
 
         Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
         return filePath;
     }
+
 
 
     public void deleteFile(String filePath) throws IOException {

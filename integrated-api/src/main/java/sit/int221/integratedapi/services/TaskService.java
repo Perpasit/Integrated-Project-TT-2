@@ -126,6 +126,11 @@ public class TaskService {
         return taskRepository.countAttachmentsByTaskId(taskId);
     }
 
+    public List<String> getAttachmentFileNamesByTaskId(Integer taskId) {
+        return taskAttachmentRepository.findAttachmentFileNamesByTaskId(taskId);
+    }
+
+
 
     public Task findTaskById(Integer taskId) {
         return taskRepository.findById(taskId)
