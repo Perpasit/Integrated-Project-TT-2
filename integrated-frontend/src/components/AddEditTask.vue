@@ -71,7 +71,6 @@ const handleFileChange = (event) => {
   // console.log('Selected files:', attachFileStore.selectedFiles);
 };
 
-
 const uploadFiles = async () => {
   if (isLoading.value) return;
 
@@ -245,29 +244,36 @@ const areAssigneesTooLong = computed(
   () => editedTask.value?.assignees?.length > 30
 );
 
-const isTitleValid = computed(() => {
-  // console.log(attachFile.value.map((file) => file.name));
-  // console.log(attachments.value.map((attachment) => attachment.fileName)); 
-  const isDuplicateFileName = () => {
+const checkAttachFile = computed(() => {
+  return attachFile.value.length + attachments.value.length > 10;
+});
+
+const isDuplicateFileName = computed(() => {
   return attachFile.value.some((file) =>
     attachments.value.some((attachment) => attachment.fileName === file.name)
   );
-};
+});
 
 
+const isTitleValid = computed(() => {
+  // console.log(attachFile.value.map((file) => file.name));
+  // console.log(attachments.value.map((attachment) => attachment.fileName));
+  console.log(attachFile.value.length);
+  console.log(attachments.value.length);
+  console.log(isDuplicateFileName.value)
   return (
-    editedTask.value.title.trim() !== "" &&
-    !isTitleTooLong.value &&
-    !isDescriptionTooLong.value &&
-    !areAssigneesTooLong.value &&
-    (props.mode === "add" ||
-      (props.mode === "edit" &&
-        editedTask.value &&
-        (editedTask.value.title !== originalTask.value.title ||
-          editedTask.value.description !== originalTask.value.description ||
-          editedTask.value.assignees !== originalTask.value.assignees ||
-          editedTask.value.status !== originalTask.value.status))) ||
-    (attachFileStore.selectedFiles.length > 0 && !isDuplicateFileName()) ||
+    (editedTask.value.title.trim() !== "" &&
+      !isTitleTooLong.value &&
+      !isDescriptionTooLong.value &&
+      !areAssigneesTooLong.value &&
+      (props.mode === "add" ||
+        (props.mode === "edit" &&
+          editedTask.value &&
+          (editedTask.value.title !== originalTask.value.title ||
+            editedTask.value.description !== originalTask.value.description ||
+            editedTask.value.assignees !== originalTask.value.assignees ||
+            editedTask.value.status !== originalTask.value.status)))) ||
+    (attachFileStore.selectedFiles.length > 0 && !isDuplicateFileName.value) ||
     attachmentsToDelete.value.length > 0
   );
 });
@@ -411,7 +417,7 @@ async function saveTask() {
       errorMessage.value = error.message;
     }
   }
-  
+
   await uploadFiles();
   attachFileStore.clearSelectedFiles();
   router.push({ name: "home" });
@@ -420,11 +426,14 @@ async function saveTask() {
   // Perform the actual deletion of attachments
   for (const attachmentId of attachmentsToDelete.value) {
     try {
-      console.log(attachmentId)
+      console.log(attachmentId);
       await attachFileStore.deleteAttachment(boardId, taskId, attachmentId);
       console.log(`Attachment with ID ${attachmentId} deleted successfully.`);
     } catch (error) {
-      console.error(`Failed to delete attachment with ID ${attachmentId}:`, error);
+      console.error(
+        `Failed to delete attachment with ID ${attachmentId}:`,
+        error
+      );
     }
   }
   attachmentsToDelete.value = []; // Clear the list after deletion
@@ -487,8 +496,6 @@ const loadFileLocation = async (boardId, taskId, attachmentId, fileName) => {
     console.error(`Failed to load file: ${fileName}`, error);
   }
 };
-
-
 
 onMounted(async () => {
   userStore.loadFromLocalStorage();
@@ -597,59 +604,41 @@ onMounted(async () => {
                   <h3 class="text-lg font-bold mb-2">
                     Uploaded Files: {{ attachmentsFileNames.length }}
                   </h3>
-                  <ul class="space-y-2">
-                    <li
-                      v-for="(fileName, index) in attachments"
-                      :key="index"
-                      class="flex items-center justify-between bg-gray-100 p-2 rounded-md shadow"
-                    >
-                      <span
-                        @click="handleDownloadAttachment(index)"
-                        class="text-sm font-medium text-blue-600 cursor-pointer truncate hover:underline"
+
+                  <ul>
+                    <div class="flex flex-col overflow-y-auto max-h-40 gap-2">
+                      <li
+                        v-for="(fileName, index) in attachments"
+                        :key="index"
+                        class="flex items-center justify-between bg-gray-100 p-2 rounded-md shadow"
                       >
-                        {{ fileName.fileName }}
-                      </span>
-                      <div class="flex">
-                        <img
-                          v-if="
-                            fileName.fileName.endsWith('.png') ||
-                            fileName.fileName.endsWith('.jpg') ||
-                            fileName.fileName.endsWith('.jpeg')
-                          "
-                          :src="fileUrls[fileName.fileName]"
-                          alt="Attachment preview"
-                          class="w-auto h-[40px]"
-                        />
-
-                        <!-- <div
-                          v-if="
-                            fileName.endsWith('.png') ||
-                            fileName.endsWith('.jpg') ||
-                            fileName.endsWith('.jpeg')
-                          "
-                          class="relative group"
+                        <span
+                          @click="handleDownloadAttachment(index)"
+                          class="text-sm font-medium text-blue-600 cursor-pointer truncate hover:underline"
                         >
-                          <span class="text-blue-600 underline cursor-pointer"
-                            >Preview</span
-                          >
-
-                         
+                          {{ fileName.fileName }}
+                        </span>
+                        <div class="flex">
                           <img
-                            v-if="fileUrls[fileName]"
-                            :src="fileUrls[fileName]"
+                            v-if="
+                              fileName.fileName.endsWith('.png') ||
+                              fileName.fileName.endsWith('.jpg') ||
+                              fileName.fileName.endsWith('.jpeg')
+                            "
+                            :src="fileUrls[fileName.fileName]"
                             alt="Attachment preview"
-                            class="absolute left-1/2 transform -translate-x-1/2 top-full w-auto h-auto mt-2 border border-gray-300 shadow-lg hidden group-hover:block z-10"
+                            class="w-auto h-[40px]"
                           />
-                        </div> -->
 
-                        <button
-                          @click="handleDeleteAttachment(index)"
-                          class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </li>
+                          <button
+                            @click="handleDeleteAttachment(index)"
+                            class="ml-4 bg-red-500 text-white font-bold rounded px-2 py-1 hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </li>
+                    </div>
                   </ul>
                 </div>
 
@@ -667,22 +656,24 @@ onMounted(async () => {
                     Selected Files: {{ attachFileStore.selectedFiles.length }}
                   </h3>
                   <div class="space-y-2">
-                    <div
-                      v-for="(file, index) in attachFile"
-                      :key="file.name"
-                      class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg"
-                    >
-                      <!-- Display the file name -->
-                      <span class="text-sm">{{ file.name }}</span>
-
-                      <!-- Button to remove the file -->
-                      <button
-                        type="button"
-                        class="text-red-500"
-                        @click="attachFileStore.removeFile(index)"
+                    <div class="flex flex-col overflow-y-auto max-h-20 gap-2">
+                      <div
+                        v-for="(file, index) in attachFile"
+                        :key="file.name"
+                        class="flex justify-between items-center bg-gray-200 text-black p-2 rounded-lg"
                       >
-                        X
-                      </button>
+                        <!-- Display the file name -->
+                        <span class="text-sm">{{ file.name }}</span>
+
+                        <!-- Button to remove the file -->
+                        <button
+                          type="button"
+                          class="text-red-500"
+                          @click="attachFileStore.removeFile(index)"
+                        >
+                          X
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -771,6 +762,26 @@ onMounted(async () => {
                   <p class="mt-1 text-sm text-gray-900"></p>
                 </div>
               </div>
+              <div class="alertData flex flex-col text-red-400">
+                <p v-if="checkAttachFile">
+                  &#9888;
+                  <span class="text-xs"
+                    >Each Task can have atmost 10 files</span
+                  >
+                </p>
+                <p >
+                  &#9888;
+                  <span class="text-xs"
+                    >Each file cannot be larger than 20 MB</span
+                  >
+                </p>
+                <p v-if="isDuplicateFileName">
+                  &#9888;
+                  <span class="text-xs"
+                    >File with the same Filename cannot be add</span
+                  >
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -784,12 +795,14 @@ onMounted(async () => {
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                  isTitleValid,
-                'bg-gray-300 cursor-not-allowed': !isTitleValid,
+                  isTitleValid && !checkAttachFile,
+                'bg-gray-300 cursor-not-allowed':
+                  !isTitleValid || checkAttachFile,
               }"
               @click="saveTask()"
               :disabled="
                 !isTitleValid ||
+                checkAttachFile ||
                 isTitleTooLong ||
                 isDescriptionTooLong ||
                 areAssigneesTooLong
