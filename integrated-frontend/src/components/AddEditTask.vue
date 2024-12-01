@@ -61,6 +61,7 @@ watch(
   () => attachFileStore.selectedFiles,
   (newFiles) => {
     attachFile.value = newFiles;
+
   },
   { immediate: true }
 );
@@ -253,7 +254,9 @@ const isDuplicateFileName = computed(() => {
     attachments.value.some((attachment) => attachment.fileName === file.name)
   );
 });
-
+const checkFileSize = computed(() => {
+      return attachFile.value.some((file) => file.size > 20000000);
+});
 
 const isTitleValid = computed(() => {
   // console.log(attachFile.value.map((file) => file.name));
@@ -274,7 +277,8 @@ const isTitleValid = computed(() => {
             editedTask.value.assignees !== originalTask.value.assignees ||
             editedTask.value.status !== originalTask.value.status)))) ||
     (attachFileStore.selectedFiles.length > 0 && !isDuplicateFileName.value) ||
-    attachmentsToDelete.value.length > 0
+    attachmentsToDelete.value.length > 0 
+
   );
 });
 
@@ -648,7 +652,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- File input to select multiple files -->
-                <input type="file" @change="handleFileChange" multiple />
+                <input type="file" @change="handleFileChange" multiple  />
 
                 <!-- Display selected files with styling and remove button -->
                 <div v-if="attachFileStore.selectedFiles.length">
@@ -769,7 +773,7 @@ onMounted(async () => {
                     >Each Task can have atmost 10 files</span
                   >
                 </p>
-                <p >
+                <p v-if="checkFileSize">
                   &#9888;
                   <span class="text-xs"
                     >Each file cannot be larger than 20 MB</span
@@ -795,14 +799,15 @@ onMounted(async () => {
               class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
               :class="{
                 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
-                  isTitleValid && !checkAttachFile,
+                  isTitleValid && !checkAttachFile && !checkFileSize,
                 'bg-gray-300 cursor-not-allowed':
-                  !isTitleValid || checkAttachFile,
+                  !isTitleValid || checkAttachFile || checkFileSize,
               }"
               @click="saveTask()"
               :disabled="
                 !isTitleValid ||
                 checkAttachFile ||
+                checkFileSize ||
                 isTitleTooLong ||
                 isDescriptionTooLong ||
                 areAssigneesTooLong
