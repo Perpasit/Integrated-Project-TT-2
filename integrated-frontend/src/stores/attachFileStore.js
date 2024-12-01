@@ -11,6 +11,7 @@ export const useAttachFileStore = defineStore("attachFileStore", {
   actions: {
     setSelectedFiles(files) {
       this.selectedFiles = Array.from(files)
+      
     },
     clearSelectedFiles() {
       this.selectedFiles = [];
