@@ -20,39 +20,23 @@ public class FileUploadService {
     private String uploadDir;
 
     public String saveFile(MultipartFile file, String boardId, Integer taskId) throws IOException {
-        // Validate allowed file types
-        List<String> allowedFileTypes = List.of(
-                "text/plain", // .txt
-                "application/rtf", // .rtf
-                "image/png", // .png
-                "image/jpeg", // .jpg
-                "image/jpg", // .jpg
-                "application/pdf", // .pdf
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
-        );
-
-        if (!allowedFileTypes.contains(file.getContentType())) {
-            throw new IllegalArgumentException("Unsupported file type: " + file.getContentType());
-        }
-
         String directoryPath = uploadDir + "/" + boardId + "/tasks/" + taskId;
         File dir = new File(directoryPath);
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
-
         String originalFileName = file.getOriginalFilename();
         String uniqueFileName = System.currentTimeMillis() + "_" + originalFileName;
 
-
         String filePath = directoryPath + "/" + uniqueFileName;
         Path path = Paths.get(filePath);
+
         Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
         return filePath;
     }
+
 
     public void deleteFile(String filePath) throws IOException {
         Path path = Paths.get(filePath);
