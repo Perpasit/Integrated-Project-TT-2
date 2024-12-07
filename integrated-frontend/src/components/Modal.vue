@@ -69,6 +69,39 @@ const loadFileLocation = async (boardId, taskId, attachmentId, fileName) => {
   }
 };
 
+const handleDownloadAttachment = async (index) => {
+  const boardId = route.params.boardId;
+  const taskId =  route.params.taskId;
+  const attachmentId = attachFileStore.attachments[index]?.id;
+
+  console.log("Downloading attachment:", { boardId, taskId, attachmentId });
+
+  if (!attachmentId) {
+    console.error("Attachment ID not found.");
+    return;
+  }
+
+  try {
+    const success = await attachFileStore.downloadAttachment(
+      boardId,
+      taskId,
+      attachmentId
+    );
+
+    if (success) {
+      console.log(
+        `Attachment with ID ${attachmentId} downloaded successfully.`
+      );
+    } else {
+      console.error("Failed to download the attachment.");
+      alert("Failed to download the attachment. Please try again.");
+    }
+  } catch (error) {
+    console.error("An error occurred while downloading the attachment:", error);
+    alert("An error occurred while downloading the file. Please try again.");
+  }
+};
+
 onMounted(async () => {
   if (route.state && route.state.task) {
     editedTask.value = route.state.task;
@@ -175,9 +208,12 @@ onMounted(async () => {
                         :key="index"
                         class="flex items-center justify-between p-2 border border-gray-300 rounded-md shadow"
                       >
-                        <p>
+                      <span
+                          @click="handleDownloadAttachment(index)"
+                          class="text-sm font-medium text-blue-600 cursor-pointer truncate hover:underline"
+                        >
                           {{ fileName }}
-                        </p>
+                        </span>
                         <img
                           v-if="
                             fileName.endsWith('.png') ||
