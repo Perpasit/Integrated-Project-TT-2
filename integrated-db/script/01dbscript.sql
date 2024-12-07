@@ -11,7 +11,7 @@ CREATE TABLE boards (
     id CHAR(10) PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     owner_id CHAR(36) NOT NULL,
-    visibility ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PRIVATE', -- ใช้ ENUM สำหรับการตั้งค่า visibility
+    visibility ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PRIVATE',
     created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT chk_board_id CHECK (id REGEXP '^[A-Za-z0-9_-]{10}$'),
@@ -48,14 +48,39 @@ CREATE TABLE tasks (
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
     FOREIGN KEY (status_id) REFERENCES statuses(id) ON DELETE SET NULL
 );
+CREATE TABLE invitations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inviter_name VARCHAR(100) NOT NULL,  
+    invitee_name VARCHAR(100) NOT NULL,
+    invitee_email VARCHAR(100) NOT NULL,
+    board_id CHAR(10) NOT NULL,
+    access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
+    status ENUM('PENDING', 'ACCEPTED', 'DECLINED') NOT NULL DEFAULT 'PENDING',  
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_invitation_per_board (board_id, invitee_email)
+);
 CREATE TABLE collaborators (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_oid CHAR(36) NOT NULL,
-    email VARCHAR(100) NOT NULL,  
     board_id CHAR(10) NOT NULL,
+    email VARCHAR(100) NOT NULL,  -- Added email column
     access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
     added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_collaborator_per_board (board_id, user_oid)  -- ปรับ UNIQUE key ให้รวม user_oid ด้วย
+    UNIQUE KEY unique_collaborator_per_board (board_id, user_oid)
+);
+CREATE TABLE task_attachments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_type VARCHAR(255) NOT NULL,
+    file_size BIGINT, 
+    added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    update_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    CONSTRAINT fk_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    CONSTRAINT unique_attachment_per_task UNIQUE (task_id, file_name)
 );
