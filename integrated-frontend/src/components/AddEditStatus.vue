@@ -1,23 +1,78 @@
-
 <script setup>
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch ,onMounted} from "vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
+import { getItems,getItemsNoUser } from "../utils/fetch"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const router = useRouter()
+const route = useRoute()
 const statusStore = useStatusStore()
 const modalStore = useModalStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
+const collabStore = useCollabStore();
 const successModalTimeout = ref(null)
+
+let boardId = route.params.boardId
+const userOid = ref("")
+const boardOid = ref(null); 
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false;
+  }
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+    // const visibility = boardData.visibility;
+    // console.log("Board Visibility:", visibility);
+    // console.log(isSameOidOrHasWriteAccess.value)
+
+    if (!isSameOidOrHasWriteAccess.value) {
+      router.push({ name: "AccessDenied" });
+    }
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
+  }
+};
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
+
 const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 const isNameTooLong = computed(() => editedStatus.value.name.length > 50)
-const isDescriptionTooLong = computed(() => editedStatus.value.description.length > 200);
+const isDescriptionTooLong = computed(
+  () => editedStatus.value.description.length > 200
+)
 
 const props = defineProps({
   mode: {
     type: String,
-    default: "add"
-  }
+    default: "add",
+  },
 })
 
 const emit = defineEmits(["close", "statusSaved"])
@@ -25,7 +80,7 @@ const editedStatus = ref({
   id: "",
   name: "",
   description: "",
-  colorCode: "#000000"
+  colorCode: "#000000",
 })
 
 const isDuplicateName = computed(() => {
@@ -35,7 +90,6 @@ const isDuplicateName = computed(() => {
       status.id !== editedStatus.value.id
   )
 })
-
 
 const isNameValid = computed(() => {
   return (
@@ -60,22 +114,38 @@ watch(
   async (id) => {
     if (props.mode === "edit") {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/statuses/${id}`)
-        // console.log(response)
+        let response;
+
+        // ตรวจสอบว่า authenticated หรือไม่
+        if (userStore.getIsAuthenticated) {
+          // ถ้า authenticated ให้เรียก getItems
+          response = await getItems(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+          );
+        } else {
+          // ถ้าไม่ authenticated ให้เรียก getItemsNoUser
+          response = await getItemsNoUser(
+            `${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses/${id}`
+          );
+        }
+   
         if (response.status === 404) {
           setTimeout(() => {
-            router.push("/status/manage")
+            router.push({ name: "ManageStatus" })
           }, 3000)
           throw new Error("Status not found")
         } else {
-          const data = await response.json()
+          const data = await response
           editedStatus.value = {
             ...data,
-            name: data.name || null, 
-            description: data.description || "", 
-            colorCode: data.colorCode
+            name: data.name || null,
+            description: data.description || "",
+            colorCode: data.colorCode,
           }
-          originalStatus.value = { ...data,description: data.description || "" }
+          originalStatus.value = {
+            ...data,
+            description: data.description || "",
+          }
         }
       } catch (error) {
         editedStatus.value = null
@@ -90,7 +160,7 @@ function resetForm() {
   editedStatus.value = {
     name: "",
     description: "",
-    colorCode: "#000000"
+    colorCode: "#000000",
   }
 }
 
@@ -98,40 +168,48 @@ async function saveStatus() {
   try {
     const updatedStatus = {
       name: editedStatus.value.name.trim(),
-      description: editedStatus.value.description ? editedStatus.value.description.trim() : null,
+      description: editedStatus.value.description
+        ? editedStatus.value.description.trim()
+        : null,
       colorCode: editedStatus.value.colorCode,
-      globalSettingId: editedStatus.value.globalSetting?.id || null 
+      globalSettingId: editedStatus.value.globalSetting?.id || null,
     }
 
     if (props.mode === "edit") {
       const statusId = router.currentRoute.value.params.id
       if (statusId) {
-        await statusStore.updateStatus(statusId, updatedStatus)
+        await statusStore.updateStatus(boardId, statusId, updatedStatus)
         fetchStatus()
         emit("statusSaved")
-        modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+        modalStore.openStatusSuccessModal(
+          updatedStatus.name,
+          props.mode,
+          "status"
+        )
 
-     
         successModalTimeout.value = setTimeout(() => {
           modalStore.closeStatusSuccessModal()
-          resetForm() 
+          resetForm()
         }, 3000)
       } else {
         console.error("The status does not exist.")
       }
     } else {
-      await statusStore.createStatus(updatedStatus)
+      await statusStore.createStatus(boardId, updatedStatus)
       fetchStatus()
-      modalStore.openStatusSuccessModal(updatedStatus.name, props.mode, "status")
+      modalStore.openStatusSuccessModal(
+        updatedStatus.name,
+        props.mode,
+        "status"
+      )
 
-     
       successModalTimeout.value = setTimeout(() => {
         modalStore.closeStatusSuccessModal()
-        resetForm() 
+        resetForm()
       }, 3000)
     }
 
-    router.push("/status/manage")
+    router.push({ name: "ManageStatus" })
   } catch (error) {
     console.error("Error saving status:", error)
   }
@@ -146,15 +224,25 @@ const parseAndFormatDate = (dateString) => {
 }
 
 function closeModal() {
-  router.push("/status/manage")
+  router.push({ name: "ManageStatus" })
   resetForm()
 }
 
 const fetchStatus = async () => {
-  await statusStore.fetchAllStatuses()
+  await statusStore.fetchAllStatuses(boardId)
 }
-
-
+onMounted(async () => {
+  let boardId = route.params.boardId
+  await fetchBoardAndUserOids(boardId);
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    boardOid.value = boardData.owner.oid;
+    userOid.value = userStore.getUserOid;
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+  }
+}
+)
 </script>
 
 <template>
@@ -201,7 +289,12 @@ const fetchStatus = async () => {
 
               <div class="mt-4">
                 <label class="block text-sm font-bold mb-1">Description:</label>
-                <textarea rows="5" v-model="editedStatus.description" class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="No Description Provided"></textarea>
+                <textarea
+                  rows="5"
+                  v-model="editedStatus.description"
+                  class="itbkk-status-description shadow-sm p-1 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  placeholder="No Description Provided"
+                ></textarea>
                 <p
                   class="itbkk-status-description text-gray-500 text-sm mt-1"
                   :class="{ 'text-red-500': isDescriptionTooLong }"
@@ -248,31 +341,55 @@ const fetchStatus = async () => {
         </div>
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-            :class="{
-              'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+          <div class="flex space-x-4">
+            <!-- Button for non-board owners (when OIDs are not the same) -->
+            <button
+              v-if="isSameOidOrHasWriteAccess"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+              :class="{
+                'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500':
+                  isNameValid &&
+                  !isDuplicateName &&
+                  !isNameTooLong &&
+                  !isDescriptionTooLong,
+                'bg-gray-300 cursor-not-allowed':
+                  !isNameValid ||
+                  isDuplicateName ||
+                  isNameTooLong ||
+                  isDescriptionTooLong,
+              }"
+              @click="
                 isNameValid &&
-                !isDuplicateName &&
-                !isNameTooLong &&
-                !isDescriptionTooLong,
-              'bg-gray-300 cursor-not-allowed':
+                  !isDuplicateName &&
+                  !isNameTooLong &&
+                  !isDescriptionTooLong &&
+                  saveStatus()
+              "
+              :disabled="
                 !isNameValid ||
                 isDuplicateName ||
                 isNameTooLong ||
                 isDescriptionTooLong
-            }"
-            @click="saveStatus"
-            :disabled="
-              !isNameValid ||
-              isDuplicateName ||
-              isNameTooLong ||
-              isDescriptionTooLong
-            "
-          >
-            {{ mode === "add" ? "Add" : "Save" }}
-          </button>
+              "
+            >
+              {{ mode === "add" ? "Add" : "Save" }}
+            </button>
+
+            <!-- Button for board owners (when OIDs are the same) -->
+            <button
+              v-if="!isSameOidOrHasWriteAccess"
+              type="button"
+              class="itbkk-button-confirm w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm tooltip tooltip-secondary tooltip-left"
+              :class="{
+                'bg-gray-300 cursor-not-allowed': !isSameOidOrHasWriteAccess,
+              }"
+              :disabled="true"
+              data-tip="Only the board owner can perform this action."
+            >
+              {{ mode === "add" ? "Add" : "Save" }} 
+            </button>
+          </div>
           <button
             type="button"
             class="itbkk-button-cancel mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

@@ -1,16 +1,23 @@
-
 <script setup>
-import { ref, onMounted, computed } from "vue"
-import { useRouter } from "vue-router"
+import { ref, onMounted, computed ,watch, onBeforeMount} from "vue"
+import { useRouter, useRoute } from "vue-router"
 import Header from "./Header.vue"
 import AddEditStatus from "./AddEditStatus.vue"
 import { useStatusStore } from "../stores/status"
 import { useModalStore } from "../stores/useModalStore"
+import { useBoardStore } from "../stores/boardStore"
+import { useUserStore } from "../stores/userStore"
+import { getItems,getItemsNoUser } from "../utils/fetch";
+import { useCollabStore } from "../stores/collaboratorStore";
 
 const showDeleteConfirmationModal = ref(false)
 const modalStore = useModalStore()
 const statusStore = useStatusStore()
+const boardStore = useBoardStore()
+const userStore = useUserStore()
+const collabStore = useCollabStore();
 const router = useRouter()
+const route = useRoute()
 const statuses = computed(() => statusStore.getStatuses)
 const deleteResult = ref(null)
 const selectedStatus = ref(null)
@@ -23,11 +30,87 @@ let selectedStatusToDelete = null
 const showDeleteTransferModal = ref(false)
 const showCannotEditDeleteModal = ref(false)
 const cannotDeleteEditTimeout = ref(null)
-const newStatusId = ref(1)
+const newStatusId = ref(null)
+watch(statuses, (newStatuses) => {
+  if (newStatuses.length > 0) {
+    newStatusId.value = newStatuses[0].id 
+  }
+})
+
+let boardId = route.params.boardId
+const userOid = ref("")
+const boardOid = ref(null); 
+const hasWriteAccess = computed(() => {
+  const collaboratorData = collabStore.getCollaboratorByBoardAndUser(userOid.value);
+  return collaboratorData?.accessRight === "WRITE";
+});
+
+const isSameOidOrHasWriteAccess = computed(() => {
+  if (!boardOid.value || !userOid.value) {
+    return false;
+  }
+
+  return boardOid.value === userOid.value || hasWriteAccess.value;
+});
+const fetchBoardAndUserOids = async (boardId) => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId);
+    if (!boardData) {
+      throw new Error(`Board with id ${boardId} not found.`);
+    }
+
+    boardOid.value = boardData.owner.oid; 
+    userOid.value = userStore.getUserOid || null; 
+
+    // console.log("Board ID:", boardId, "User OID:", userOid.value);
+    
+    const visibility = boardData.visibility;
+
+    await collabStore.fetchCollaborators(boardId);
+
+    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
+    // console.log("Collaborators:", collabStore.collabs);
+
+    // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
+    if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
+      // ตรวจสอบว่าผู้ใช้มีสิทธิ์การเข้าถึงแบบ READ หรือ WRITE หรือไม่
+      const collaboratorData = await collabStore.getCollaboratorByBoardAndUser(userOid.value);
+      console.log(collaboratorData)
+      if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
+        // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
+        console.log(collaboratorData)
+        router.push({ name: "AccessDenied" });
+      }
+    }
+
+  } catch (error) {
+    console.error("Error fetching board or user OID:", error);
+    router.push({ name: "AccessDenied" }); 
+  }
+};
+watch(
+  () => route.params.boardId,
+  async (newBoardId) => {
+    boardId = newBoardId;
+    await fetchBoardAndUserOids(newBoardId); // เรียกฟังก์ชันเพื่อ fetch boardOid และ userOid
+  }
+);
+
+const boardName = ref("")
+
+const fetchBoardDetails = async () => {
+  try {
+    const boardData = await boardStore.getBoardById(boardId)
+    boardName.value = boardData.name
+  } catch (error) {
+    console.error("Error fetching board details:", error)
+  }
+}
+
 const showStatusDetail = (status) => {
   router.push({
     name: "statusDetail",
-    params: { statusId: status.id }
+    params: { statusId: status.id },
   })
 }
 
@@ -38,7 +121,10 @@ const closeCannotDeleteModal = () => {
 }
 
 const editStatus = (status) => {
-  if (status.name.toLowerCase() !== "no status" && status.name.toLowerCase() !== "done") {
+  if (
+    status.name.toLowerCase() !== "no status" &&
+    status.name.toLowerCase() !== "done"
+  ) {
     router.push({ name: "EditStatus", params: { id: status.id } })
   } else {
     showCannotEditDeleteModal.value = true
@@ -57,16 +143,20 @@ const saveStatus = (status) => {
   }
   selectedStatus.value = null
 }
+
 async function confirmDeleteStatus() {
   if (selectedStatusToDelete) {
     try {
-      const result = await statusStore.deleteStatus(selectedStatusToDelete.id)
 
+      const result = await statusStore.deleteStatus(
+        boardId,
+        selectedStatusToDelete.id
+      )
       if (result.notFound) {
         showDeleteConfirmationModal.value = false
         selectedStatusToDelete = null
         showNotFoundModal.value = true
-        fetchStatuses()
+        fetchStatuses(boardId)
         setTimeout(() => {
           showNotFoundModal.value = false
         }, 3000)
@@ -81,11 +171,11 @@ async function confirmDeleteStatus() {
           router.push({ name: "ManageStatus" })
         }, 3000)
       }
-    }catch (error) {
-      fetchStatuses()
+    } catch (error) {
+      fetchStatuses(boardId)
     }
     setTimeout(() => {
-      fetchStatuses()
+      fetchStatuses(boardId)
       closeDeleteModal()
     }, 3000)
   }
@@ -110,24 +200,29 @@ const closeCannotEditDeleteModal = () => {
   selectedStatusToDelete = null
 }
 
-
 const deleteAndTransfer = async (newStatusId) => {
   if (canDeleteStatus.value) {
+    console.log(
+      "selectStatus : ",
+      selectedStatusToDelete.id,
+      "newStatus : ",
+      newStatusId
+    )
     try {
       const result = await statusStore.deleteStatusTransfer(
+        boardId,
         selectedStatusToDelete.id,
         newStatusId
       )
       deleteResult.value = result
       selectedStatusToDelete = null
       showDeleteTransferModal.value = false
-      fetchStatuses()
+      fetchStatuses(boardId)
 
       if (result.notFound) {
         showNotFoundModal.value = true
       } else if (result.status === 500) {
         showNotFoundModal.value = true
-     
       } else {
         showSuccessModal.value = true
       }
@@ -139,7 +234,6 @@ const deleteAndTransfer = async (newStatusId) => {
     }
     setTimeout(() => {
       closeDeleteModal()
-  
     }, 3000)
   }
 }
@@ -148,8 +242,8 @@ function closeDeleteModal() {
   showNotFoundModal.value = false
 }
 
-const fetchStatuses = async () => {
-  await statusStore.fetchAllStatuses()
+const fetchStatuses = async (boardId) => {
+  await statusStore.fetchAllStatuses(boardId)
 }
 const cancelDeleteTransfer = () => {
   selectedStatusToDelete = null
@@ -160,23 +254,66 @@ const getStatusColor = (status) => {
   return statusStore.getStatusColorByName(status.name)
 }
 
+const handleDeleteClick = (status) => {
+
+  if (
+    status.name.toLowerCase() === "no status" ||
+    status.name.toLowerCase() === "done"
+  ) {
+    showCannotEditDeleteModal.value = true
+    selectedStatusToDelete = status
+  } else {
+    showDeleteConfirmationModal.value = true
+    selectedStatusToDelete = status
+  }
+}
+
+
+
 onMounted(async () => {
-  fetchStatuses()
-})
+    let boardId = route.params.boardId;
+    const userStoreData = JSON.parse(localStorage.getItem('userStore'));
+    try {
+      let data;
+      if (userStoreData && userStoreData.isAuthenticated) {
+        data = await getItems(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      } else {
+        data = await getItemsNoUser(`${import.meta.env.VITE_API_ENDPOINTV3}/boards/${boardId}/statuses`);
+      }
+      statusStore.setStatuses(data || []); // Assuming you have a method to set statuses in your store
+    } catch (error) {
+      console.error("Error fetching statuses:", error);
+    }
+        
+
+    try {
+      await fetchBoardAndUserOids(boardId); // Fetch board and user OIDs after token validation
+      fetchStatuses(boardId); // Fetch statuses
+      fetchBoardDetails(); // Fetch board details
+    } catch (error) {
+      console.error("Error during component mount:", error);
+    } finally {
+      // Clear the reload flag if necessary when leaving the page
+      localStorage.removeItem('hasReloaded');
+    }
+  
+});
+
 </script>
 
 <template>
-  
   <div
     class="manage-status-page bg-gradient-to-t from-[#ffc3ee] to-[#A9C9FF] min-h-screen"
   >
-
     <Header
       @addStatus="selectedStatus = { id: null, name: '', description: '' }"
     />
 
-    <div class="container mx-auto px-4 pt-12">
-      <div class="overflow-x-auto">
+    <div class="container mx-auto  pt-2 ">
+      <div class="flex flex-col mb-5 justify-center items-center gap-8">
+        <div class="flex text-4xl mt-10 text-white font-extrabold">
+        {{ boardName }}
+      </div>
         <table
           class="table-fixed w-full max-w-6xl mx-auto border-separate border-spacing-y-2"
         >
@@ -231,11 +368,17 @@ onMounted(async () => {
               </td>
 
               <td
-              class="itbkk-button-action px-4 py-2 rounded-r-lg text-center"
+                class="itbkk-button-action px-4 py-2 rounded-r-lg text-center"
               >
                 <button
                   class="itbkk-button-edit hover:scale-110 transition-all duration-200 ease-in-out px-2 py-1"
+                  :class="{
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    !isSameOidOrHasWriteAccess, // Grey and disabled when OID is the same
+                }"
                   @click="editStatus(status)"
+                  :disabled="!isSameOidOrHasWriteAccess"
+                  data-tip="You need to be the board owner to perform this action."
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -254,15 +397,14 @@ onMounted(async () => {
                 </button>
                 <button
                   class="itbkk-button-delete hover:scale-110 transition-all duration-200 ease-in-out ml-2"
-                  @click="
-                    if (status.name.toLowerCase() === 'no status' || status.name.toLowerCase() === 'done') {
-                      showCannotEditDeleteModal = true;
-                      selectedStatusToDelete = status;
-                    } else {
-                      showDeleteConfirmationModal = true;
-                      selectedStatusToDelete = status;
-                    }
-                  "
+                  :class="{
+                  'color-gray-500 cursor-not-allowed tooltip tooltip-secondary':
+                    !isSameOidOrHasWriteAccess, // Grey and disabled when OID is the same
+                }"
+                  @click="handleDeleteClick(status)"
+                  :disabled="!isSameOidOrHasWriteAccess"
+                  data-tip="You need to be the board owner to perform this action."
+                
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -305,13 +447,14 @@ onMounted(async () => {
         >
           <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
             <div class="flex justify-between items-center">
-              <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
+              <div
+                class="itbkk-message text-lg leading-6 font-medium text-red-600"
+              >
                 {{
                   selectedStatusToDelete
-                    ? 'Cannot Delete  Default Status'
-                    : 'Cannot Edit Default Status'
+                    ? "Cannot Delete  Default Status"
+                    : "Cannot Edit Default Status"
                 }}
-              
               </div>
               <button
                 type="button"
@@ -397,7 +540,7 @@ onMounted(async () => {
             class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
             @click="deleteAndTransfer(newStatusId)"
           >
-          Transfer and Delete
+            Transfer and Delete
           </button>
         </div>
       </div>
@@ -411,7 +554,9 @@ onMounted(async () => {
       >
         <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
           <div class="flex justify-between items-center">
-            <div class="itbkk-message text-lg leading-6 font-medium text-gray-900">
+            <div
+              class="itbkk-message text-lg leading-6 font-medium text-gray-900"
+            >
               Success
             </div>
             <button
@@ -455,14 +600,16 @@ onMounted(async () => {
     </div>
   </div>
 
-<div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div
-      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-    >
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
+  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div
+              class="itbkk-message text-lg leading-6 font-medium text-red-600"
+            >
               {{
                 deleteResult?.status === 500
                   ? "Status Limit Reached"
@@ -515,133 +662,137 @@ onMounted(async () => {
   </div>
 
   <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div
-      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-    >
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
-            {{
-              deleteResult?.status === 500
-                ? "Status Limit Reached"
-                : "Status Not Found"
-            }}
-          </div>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-            @click="closeDeleteModal"
-          >
-            <svg
-              class="h-6 w-6"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 24 24"
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div
+              class="itbkk-message text-lg leading-6 font-medium text-red-600"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            </svg>
-          </button>
+              {{
+                deleteResult?.status === 500
+                  ? "Status Limit Reached"
+                  : "Status Not Found"
+              }}
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeDeleteModal"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="itbkk-message text-sm leading-5 text-red-600">
+              {{
+                deleteResult?.status === 500
+                  ? `Cannot transfer to "${
+                      statuses.find((s) => s.id === newStatusId).name
+                    }" status since it will exceed the limit. Please choose another status to transfer to.`
+                  : "An error has occurred, the status does not exist."
+              }}
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="itbkk-message text-sm leading-5 text-red-600">
-            {{
-              deleteResult?.status === 500
-                ? `Cannot transfer to "${statuses.find(s => s.id === newStatusId).name}" status since it will exceed the limit. Please choose another status to transfer to.`
-                : "An error has occurred, the status does not exist."
-            }}
-          </p>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeDeleteModal"
+            >
+              OK
+            </button>
+          </span>
         </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button
-            type="button"
-            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-            @click="closeDeleteModal"
-          >
-            OK
-          </button>
-        </span>
       </div>
     </div>
   </div>
-</div>
 
-
-
-
-<div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div
-      class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
-    >
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="itbkk-message text-lg leading-6 font-medium text-red-600">
-            {{
-              deleteResult?.status === 500
-                ? "Status Limit Reached"
-                : "Status Not Found"
-            }}
-          </div>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-            @click="closeDeleteModal"
-          >
-            <svg
-              class="h-6 w-6"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 24 24"
+  <div v-if="showNotFoundModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div
+              class="itbkk-message text-lg leading-6 font-medium text-red-600"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            </svg>
-          </button>
+              {{
+                deleteResult?.status === 500
+                  ? "Status Limit Reached"
+                  : "Status Not Found"
+              }}
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="closeDeleteModal"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <p class="itbkk-message text-sm leading-5 text-red-600">
+              {{
+                deleteResult?.status === 500
+                  ? `Cannot transfer to "${
+                      statuses.find((s) => s.id === newStatusId).name
+                    }" status since it will exceed the limit. Please choose another status to transfer to.`
+                  : "An error has occurred, the status does not exist."
+              }}
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="itbkk-message text-sm leading-5 text-red-600">
-            {{
-              deleteResult?.status === 500
-                ? `Cannot transfer to "${statuses.find(s => s.id === newStatusId).name}" status since it will exceed the limit. Please choose another status to transfer to.`
-                : "An error has occurred, the status does not exist."
-            }}
-          </p>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="closeDeleteModal"
+            >
+              OK
+            </button>
+          </span>
         </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button
-            type="button"
-            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-            @click="closeDeleteModal"
-          >
-            OK
-          </button>
-        </span>
       </div>
     </div>
   </div>
-</div>
 
-
-<div
+  <div
     v-if="showDeleteConfirmationModal"
     class="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75"
   >
     <div class="bg-white p-8 rounded-lg">
-      <p class="itbkk-message text-lg mb-4 ">
+      <p class="itbkk-message text-lg mb-4">
         Are you sure you want to delete the status "{{
           selectedStatusToDelete.name
         }}"?
@@ -656,52 +807,83 @@ onMounted(async () => {
         >
           Cancel
         </button>
-        <button
-          class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-          @click="confirmDeleteStatus"
-        >
-          Delete
-        </button>
+        <div class="flex space-x-4">
+          <!-- Button for non-board owners (when OIDs are not the same) -->
+          <button
+            v-if="isSameOidOrHasWriteAccess"
+            class="itbkk-button-confirm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+            @click="confirmDeleteStatus"
+          >
+            Delete
+          </button>
+
+          <!-- Button for board owners (when OIDs are the same) -->
+          <button
+            v-if="!isSameOidOrHasWriteAccess"
+            class="itbkk-button-confirm bg-gray-300 cursor-not-allowed text-white px-4 py-2 rounded tooltip tooltip-secondary tooltip-left"
+            data-tip="Only the board owner can delete."
+            disabled
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   </div>
-  <div v-if="modalStore.showStatusSuccessModal" class="fixed z-50 inset-0 overflow-y-auto">
-  <div class="flex items-start justify-center min-h-screen">
-    <div class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-      <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
-        <div class="flex justify-between items-center">
-          <div class="text-lg leading-6 font-medium text-gray-900">
-            Success
+  <div
+    v-if="modalStore.showStatusSuccessModal"
+    class="fixed z-50 inset-0 overflow-y-auto"
+  >
+    <div class="flex items-start justify-center min-h-screen">
+      <div
+        class="bg-white mt-2 rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+      >
+        <div class="bg-white px-4 sm:p-4 sm:pb-4 py-0">
+          <div class="flex justify-between items-center">
+            <div class="text-lg leading-6 font-medium text-gray-900">
+              Success
+            </div>
+            <button
+              type="button"
+              class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+              @click="modalStore.closeStatusSuccessModal()"
+            >
+              <svg
+                class="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
           </div>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
-            @click="modalStore.closeStatusSuccessModal()"
-          >
-            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+          <div>
+            <p class="text-sm leading-5 text-gray-500">
+              The status "{{ modalStore.statusName }}" has been
+              {{ modalStore.mode === "add" ? "added" : "updated" }}
+              successfully.
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="text-sm leading-5 text-gray-500">
-            The status "{{ modalStore.statusName }}" has been {{ modalStore.mode === 'add' ? 'added' : 'updated' }} successfully.
-          </p>
+        <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
+          <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
+            <button
+              type="button"
+              class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
+              @click="modalStore.closeStatusSuccessModal()"
+            >
+              OK
+            </button>
+          </span>
         </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-1 sm:px-6 sm:flex sm:flex-row-reverse">
-        <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-          <button
-            type="button"
-            class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-indigo-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:shadow-outline-indigo transition ease-in-out duration-150 sm:text-sm sm:leading-3"
-            @click="modalStore.closeStatusSuccessModal()"
-          >
-            OK
-          </button>
-        </span>
       </div>
     </div>
   </div>
-</div>
   <router-view />
 </template>

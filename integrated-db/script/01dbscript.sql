@@ -7,28 +7,80 @@ CREATE TABLE global_settings (
     maximumTaskLimit INT NOT NULL DEFAULT 10,
     limitMaximumTask BOOLEAN NOT NULL DEFAULT TRUE
 );
+CREATE TABLE boards (
+    id CHAR(10) PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    owner_id CHAR(36) NOT NULL,
+    visibility ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PRIVATE',
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT chk_board_id CHECK (id REGEXP '^[A-Za-z0-9_-]{10}$'),
+    CONSTRAINT chk_board_name CHECK (TRIM(name) != '')
+) ENGINE = InnoDB;
 CREATE TABLE statuses (
-    statusId INT AUTO_INCREMENT PRIMARY KEY,
-    statusName VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL UNIQUE,
-    statusDescription VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    colorCode VARCHAR(7) NOT NULL,
-    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(200),
+    color VARCHAR(7) NOT NULL,
+    board_id CHAR(10) NOT NULL,
     global_settings_id INT NOT NULL,
-    CONSTRAINT CHK_statusName_not_empty CHECK (statusName <> ''),
-    CONSTRAINT CHK_statusName_trim CHECK (statusName = TRIM(statusName)),
-    CONSTRAINT CHK_statusDescription_trim CHECK (statusDescription = TRIM(statusDescription) OR statusDescription IS NULL),
-    CONSTRAINT CHK_colorCode_valid CHECK (colorCode RLIKE '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'),
-    CONSTRAINT fk_global_settings FOREIGN KEY (global_settings_id) REFERENCES global_settings(id)
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_status_name_length CHECK (TRIM(name) != '' AND LENGTH(TRIM(name)) <= 50),
+    CONSTRAINT chk_status_description CHECK (description IS NULL OR (TRIM(description) != '' AND LENGTH(TRIM(description)) <= 200)),
+    CONSTRAINT chk_status_color CHECK (color REGEXP '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'),
+    CONSTRAINT fk_global_settings FOREIGN KEY (global_settings_id) REFERENCES global_settings(id),
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_status_per_board (name, board_id)
 );
 CREATE TABLE tasks (
-    taskId INT AUTO_INCREMENT PRIMARY KEY,
-    taskTitle VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    taskDescription VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    taskAssignees VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    statusId INT DEFAULT NULL,
-    createdOn DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updatedOn DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT CHK_taskTitle_not_empty CHECK (taskTitle <> ''),
-    CONSTRAINT fk_status FOREIGN KEY (statusId) REFERENCES statuses(statusId) ON DELETE SET NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    board_id CHAR(10) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    assignees VARCHAR(30),
+    status_id INT,
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_task_title_length CHECK (TRIM(title) != '' AND LENGTH(TRIM(title)) <= 100),
+    CONSTRAINT chk_task_description CHECK (description IS NULL OR (TRIM(description) != '' AND LENGTH(TRIM(description)) <= 500)),
+    CONSTRAINT chk_task_assignees CHECK (assignees IS NULL OR (TRIM(assignees) != '' AND LENGTH(TRIM(assignees)) <= 30)),
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    FOREIGN KEY (status_id) REFERENCES statuses(id) ON DELETE SET NULL
+);
+CREATE TABLE invitations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inviter_name VARCHAR(100) NOT NULL,  
+    invitee_name VARCHAR(100) NOT NULL,
+    invitee_email VARCHAR(100) NOT NULL,
+    board_id CHAR(10) NOT NULL,
+    access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
+    status ENUM('PENDING', 'ACCEPTED', 'DECLINED') NOT NULL DEFAULT 'PENDING',  
+    created_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_invitation_per_board (board_id, invitee_email)
+);
+CREATE TABLE collaborators (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_oid CHAR(36) NOT NULL,
+    board_id CHAR(10) NOT NULL,
+    email VARCHAR(100) NOT NULL,  -- Added email column
+    access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ',
+    added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_collaborator_per_board (board_id, user_oid)
+);
+CREATE TABLE task_attachments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_type VARCHAR(255) NOT NULL,
+    file_size BIGINT, 
+    added_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    update_on DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    CONSTRAINT fk_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+    CONSTRAINT unique_attachment_per_task UNIQUE (task_id, file_name)
 );

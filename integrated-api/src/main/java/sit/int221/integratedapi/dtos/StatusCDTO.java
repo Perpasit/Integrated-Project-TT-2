@@ -14,5 +14,6 @@ public class StatusCDTO {
     private String name;
     @Size(max = 200, message = "Description size must be between 0 and 200 characters")
     private String description;
+    private String boardId;
     private String colorCode;
 }

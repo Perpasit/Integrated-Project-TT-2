@@ -1,12 +1,18 @@
 package sit.int221.integratedapi.exceptions;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,7 +21,6 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler  {
-
     @ExceptionHandler(ValidationErrorException.class)
     public ResponseEntity<Object> handleValidationErrorException(ValidationErrorException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -36,14 +41,15 @@ public class GlobalExceptionHandler  {
     public ResponseEntity<Object> handleItemNotFoundException(ItemNotFoundException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.NOT_FOUND.value(), 
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", ""),
                 Collections.emptyList()
         );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
 
     @ExceptionHandler(DuplicateStatusException.class)
     public ResponseEntity<Object> handleDuplicateStatusException(DuplicateStatusException ex, WebRequest request) {
@@ -148,8 +154,8 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<CustomErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+    @ExceptionHandler(CustomAuthenticationException.class)
+    public ResponseEntity<CustomErrorResponse> handleAuthenticationException(CustomAuthenticationException ex, WebRequest request) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 ZonedDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
@@ -159,6 +165,133 @@ public class GlobalExceptionHandler  {
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<CustomErrorResponse> handleExpiredJwtException(ExpiredJwtException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token has expired",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(MalformedJwtException.class)
+    public ResponseEntity<CustomErrorResponse> handleMalformedJwtException(MalformedJwtException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token is malformed",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<CustomErrorResponse> handleSignatureException(SignatureException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "JWT token signature is invalid",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(BoardOwnershipException.class)
+    public ResponseEntity<CustomErrorResponse> handleBoardOwnershipException(BoardOwnershipException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<CustomErrorResponse> handleForbiddenException(ForbiddenException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<CustomErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(HttpMessageNotReadableException .class)
+    public ResponseEntity<CustomErrorResponse> handleHttpMessageNotReadableException (HttpMessageNotReadableException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Invalid visibility value. Must be either PUBLIC or PRIVATE.",
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<CustomErrorResponse> handleConflictException(ConflictException ex, WebRequest request) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                Collections.emptyList()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({MaxUploadSizeExceededException.class, MaxFilesExceededException.class})
+    public ResponseEntity<CustomErrorResponse> handleUploadExceptions(RuntimeException ex, WebRequest request) {
+        String errorMessage;
+        String fieldError;
+
+        if (ex instanceof MaxUploadSizeExceededException) {
+            errorMessage = "File size exceeds the maximum limit of 20MB.";
+            fieldError = "Each file must be less than 20MB.";
+        } else if (ex instanceof MaxFilesExceededException) {
+            errorMessage = ex.getMessage(); // Message from MaxFilesExceededException
+            fieldError = "The total number of files per task must not exceed the allowed limit.";
+        } else {
+            errorMessage = "An unexpected upload error occurred.";
+            fieldError = "Unexpected error.";
+        }
+
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ZonedDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                errorMessage,
+                request.getDescription(false).replace("uri=", ""),
+                Collections.singletonList(
+                        new CustomErrorResponse.ValidationError("files", fieldError)
+                )
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 
 
 
