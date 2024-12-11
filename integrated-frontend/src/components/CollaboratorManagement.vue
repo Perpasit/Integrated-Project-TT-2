@@ -5,7 +5,7 @@ import CollabTablle from './CollabTable.vue';
 </script>
 
 <template>
-  <div class="flex flex-col bg-gradient-to-br from-[#c4e4e0] to-[#9ad4d3] min-h-screen">
+  <div class="flex flex-col bg-gradient-to-br from-[#f6d465e5] to-[#fd9f859a] min-h-screen">
     <Header />
     <CollabTablle />
 

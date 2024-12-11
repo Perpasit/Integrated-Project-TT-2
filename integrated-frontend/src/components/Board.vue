@@ -9,7 +9,7 @@ import PersonalBoard from "./PersonalBoard.vue";
 <template>
   <div
     id="app"
-    class="bg-gradient-to-br from-[#c4e4e0] to-[#9ad4d3] min-h-screen"
+    class="bg-gradient-to-br from-[#bdc2e8] to-[#e6dee9] min-h-screen"
   >
     <HeaderBoard />
     <PersonalBoard />

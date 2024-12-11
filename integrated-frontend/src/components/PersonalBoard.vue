@@ -124,7 +124,8 @@ onMounted(async () => {
       <div class="flex justify-end mb-6 pb-4 border-b border-white">
         <button
           @click="openAddEditBoardModal()"
-          class="itbkk-button-create relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium text-white rounded-lg group bg-gradient-to-br from-[#eddbe8] to-[#e9b9de] group-hover:from-teal-300 transition duration-300 ease-in-out transform hover:scale-105"
+          class="itbkk-button-create relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium text-[#ed6ea0] rounded-lg group hover:bg-gradient-to-r from-[#ed6ea0] to-[#e9b9de] hover:text-white transition-all duration-200 ease-in-out border border-[#ed6ea0] shadow-lg shadow-[#ed6ea0] hover:border-transparent"
+
         >
           <span
             class="relative px-5 py-2.5 transition-all ease-in duration-75 dark:bg-gray-900 rounded-md group-hover:bg-opacity-0"

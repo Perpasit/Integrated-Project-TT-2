@@ -271,15 +271,16 @@ onMounted(async () => {
         v-show="isManageStatusPage"
         @click="isSameOidOrHasWriteAccess ? addStatus() : null"
         :class="{
-          'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-orange-300 to-amber-300 text-orange-700 font-semibold hover:text-white py-3 px-5 border border-orange-500 shadow-lg shadow-amber-500 hover:border-transparent rounded': true,
-          'text-orange-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
+          'itbkk-button-add hover:scale-110 transition-all duration-200 ease-in-out ml-4 bg-transparent hover:bg-gradient-to-r from-purple-300 to-purple-500 text-purple-700 font-semibold hover:text-white py-3 px-5 border border-purple-500 shadow-lg shadow-purple-500 hover:border-transparent rounded': true,
+          'text-purple-700 cursor-not-allowed tooltip tooltip-secondary tooltip-bottom':
             !isSameOidOrHasWriteAccess
         }"
         :disabled="!isSameOidOrHasWriteAccess"
         data-tip="You need to be board owner to perform this action."
       >
         ADD STATUS
-      </button>
+</button>
+
       <button
         v-show="isCollaboratorPage"
         @click="isSameOid ? addCollab() : null"
