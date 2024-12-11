@@ -48,7 +48,6 @@ const isSameOidOrHasWriteAccess = computed(() => {
   if (!boardOid.value || !userOid.value) {
     return false;
   }
-
   return boardOid.value === userOid.value || hasWriteAccess.value;
 });
 
@@ -60,18 +59,12 @@ const fetchBoardAndUserOids = async (boardId) => {
       throw new Error(`Board with id ${boardId} not found.`);
     }
 
-    boardOid.value = boardData.owner.oid; 
+    boardOid.value = boardData.owner.oid || null; 
     userOid.value = userStore.getUserOid || null; 
 
-  
-    
     const visibility = boardData.visibility;
 
     await collabStore.fetchCollaborators(boardId);
-
-    // ตรวจสอบว่า collaborator ถูกดึงมาหรือไม่
-    // console.log("Collaborators:", collabStore.collabs);
-
 
     // ตรวจสอบว่าเป็นบอร์ด Private และผู้ใช้ไม่ใช่เจ้าของบอร์ด
     if (!isSameOidOrHasWriteAccess.value && visibility === "PRIVATE") {
@@ -81,13 +74,13 @@ const fetchBoardAndUserOids = async (boardId) => {
       if (!collaboratorData || (collaboratorData.accessRight !== "READ" && collaboratorData.accessRight !== "WRITE")) {
         // ถ้าไม่มีสิทธิ์ทั้ง READ และ WRITE ให้ redirect ไปที่หน้า AccessDenied
         console.log(collaboratorData)
-        // router.push({ name: "AccessDenied" });
+        router.push({ name: "AccessDenied" });
       }
     }
 
   } catch (error) {
     console.error("Error fetching board or user OID:", error);
-    // router.push({ name: "AccessDenied" }); 
+    router.push({ name: "AccessDenied" }); 
   }
 };
 

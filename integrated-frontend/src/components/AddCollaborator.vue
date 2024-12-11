@@ -114,28 +114,23 @@ const errorText = ref("")
 
 const handleSubmit = async () => {
   try {
-    // เพิ่ม collaborator ใหม่
     const data = await collabStore.addCollaborator(boardId.value, email.value, accessRight.value);
-    // ตรวจสอบว่าผู้ใช้นี้เป็น collaborator อยู่แล้วหรือไม่
-    if (data.status === 500 || data === 'The user is already a collaborator or has a pending invitation for this board.') {
+    if (data.status === 500 ) {
       errorText.value = 'The user is already a collaborator or has a pending invitation for this board.';
       return;
     }
-    // ตรวจสอบว่าผู้ใช้นี้ไม่พบอีเมลหรือไม่
-    if (typeof data === 'string' && data.includes("User not found with email")) {
+    if (data.status === 404) {
       errorText.value = "The user does not exists";
       return;
     }
 
    await fetchCollaborator();
-    // ถ้าไม่มีปัญหาใด ๆ ให้รีเซ็ตฟิลด์ข้อมูล
     email.value = "";
     errorText.value = "";
     accessRight.value = "READ";
-    navigateBack(); // กลับไปหน้าก่อนหน้า
+    navigateBack(); 
 
   } catch (error) {
-    // จัดการข้อผิดพลาดที่เกิดขึ้น
     console.error("Error adding collaborator:", error);
     console.log("cant add");
   }
