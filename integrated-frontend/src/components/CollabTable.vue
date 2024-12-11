@@ -272,7 +272,7 @@ onMounted(async () => {
               <p class="itbkk-email truncate">{{ collaborator.email }}</p>
             </td>
 
-            <td class="px-4 py-2">
+            <td class="px-4 py-2 ">
               <div
                 :class="{
                   'cursor-not-allowed tooltip tooltip-secondary w-full':
@@ -294,8 +294,10 @@ onMounted(async () => {
             </td>
 
             <td
-              class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly"
+              class="itbkk-button-action px-4 py-5 rounded-r-lg "
             >
+            <div class="flex justify-evenly">
+
               <button
                 v-if="collaborator.status === 'PENDING'"
                 :class="{
@@ -335,6 +337,8 @@ onMounted(async () => {
                   />
                 </svg>
               </button>
+            </div>
+
             </td>
           </tr>
         </tbody>

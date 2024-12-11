@@ -197,8 +197,11 @@ onMounted(async () => {
             </td>
 
             <td
-              class="itbkk-button-action px-4 py-5 rounded-r-lg flex justify-evenly"
+              class="itbkk-button-action px-4 py-5 rounded-r-lg "
             >
+            <div class="flex justify-evenly">
+
+
               <button
                 v-if="board.status === 'PENDING'"
                 class="itbkk-invite-button bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-all duration-200 ease-in-out"
@@ -213,6 +216,8 @@ onMounted(async () => {
               >
                 Leave
               </button>
+            </div>
+
             </td>
           </tr>
         </tbody>
