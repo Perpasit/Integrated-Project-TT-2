@@ -49,7 +49,7 @@ const handleSubmit = async () => {
           response.refresh_token
         )
         await boardStore.fetchAllBoards();
-        const boards = boardStore.getBoards;
+        const boards = boardStore.getBoardsPersonal ;
 
         if (boards && boards.length > 0) {
           const firstBoard = boards[0];
