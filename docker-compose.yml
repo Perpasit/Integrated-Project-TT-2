@@ -20,8 +20,6 @@ services:
       dockerfile: Dockerfile
     container_name: db
     restart: always
-    # ports:
-    #   - "33061:3306"
     networks:
       - integrated-network
 
@@ -30,8 +28,6 @@ services:
     build:
       context: ./integrated-frontend
       dockerfile: Dockerfile
-    # ports:
-    #   - "80:80"
     networks:
       - integrated-network
 
@@ -43,9 +39,11 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"  
+    volumes:
+      - ./integrated-proxy/ssl:/etc/nginx/ssl  
     networks:
       - integrated-network
-
 
 networks:
   integrated-network:
