@@ -256,7 +256,7 @@ export const getItemsNoUser = async (url) => {
   const userStore = useUserStore()
   try {
     userStore.loadFromLocalStorage()
-    return await fetch(url, {
+    return await fetchNoUser(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
